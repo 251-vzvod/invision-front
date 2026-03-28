@@ -1,4 +1,5 @@
 import { z } from 'zod/v4'
+import { MOTIVATION_ALLOWED_MIME_TYPES, MOTIVATION_ALLOWED_EXTENSIONS } from './constants'
 
 /* ─── Helpers ─── */
 
@@ -139,6 +140,55 @@ export const educationTabSchema = z.object({
   education: educationSchema,
 })
 
+/* ─── Motivation ─── */
+
+const hasAllowedLetterExtension = (fileName: string): boolean => {
+  const extension = fileName.split('.').pop()?.toLowerCase()
+  if (!extension) {
+    return false
+  }
+
+  return MOTIVATION_ALLOWED_EXTENSIONS.includes(
+    extension as (typeof MOTIVATION_ALLOWED_EXTENSIONS)[number],
+  )
+}
+
+const motivationLetterSchema = z
+  .object({
+    fileName: z.string().min(1, { message: 'File name is required' }),
+    mimeType: z.string().min(1, { message: 'MIME type is required' }),
+    base64: z.string().min(1, { message: 'File content is required' }),
+    size: z.number().int().positive(),
+    lastModified: z.number().int().nonnegative(),
+  })
+  .superRefine((value, ctx) => {
+    const hasAllowedMime = MOTIVATION_ALLOWED_MIME_TYPES.includes(
+      value.mimeType as (typeof MOTIVATION_ALLOWED_MIME_TYPES)[number],
+    )
+    const hasAllowedExtension = hasAllowedLetterExtension(value.fileName)
+
+    if (!hasAllowedMime && !hasAllowedExtension) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Only DOC, DOCX, PDF, and TXT files are allowed',
+        path: ['fileName'],
+      })
+    }
+  })
+
+export const motivationSchema = z.object({
+  motivationLetter: motivationLetterSchema.nullable(),
+  motivationQuestions: z.record(
+    z.string(),
+    z.string().trim().min(50, { message: 'Please provide a more detailed answer' }),
+  ),
+})
+
+export const motivationTabSchema = z.object({
+  motivation: motivationSchema,
+})
+
 export type PersonalTabFormValues = z.infer<typeof personalTabSchema>
 export type ContactTabFormValues = z.infer<typeof contactTabSchema>
 export type EducationTabFormValues = z.infer<typeof educationTabSchema>
+export type MotivationTabFormValues = z.infer<typeof motivationTabSchema>

@@ -1,7 +1,8 @@
-"use client";
+'use client'
 
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
+import { serializedLetterToFile } from '../types'
 import type {
   ApplicationFormData,
   ApplicationTab,
@@ -12,32 +13,33 @@ import type {
   Education,
   MotivationData,
   Agreements,
-} from "../types";
-import { INITIAL_FORM_DATA } from "../constants";
+} from '../types'
+import { INITIAL_FORM_DATA } from '../constants'
 
 interface ApplicationFormState {
-  data: ApplicationFormData;
-  activeTab: ApplicationTab;
-  hasGuardian: boolean;
+  data: ApplicationFormData
+  activeTab: ApplicationTab
+  hasGuardian: boolean
 
   /* Actions */
-  setActiveTab: (tab: ApplicationTab) => void;
-  setProgram: (program: SelectedProgram) => void;
-  setPersonalInformation: (info: Partial<PersonalInformation>) => void;
-  setFamilyDetails: (details: Partial<FamilyDetails>) => void;
-  setContactInformation: (info: Partial<ContactInformation>) => void;
-  setEducation: (edu: Partial<Education>) => void;
-  setMotivation: (motivation: Partial<MotivationData>) => void;
-  setAgreements: (agreements: Partial<Agreements>) => void;
-  toggleGuardian: () => void;
-  resetForm: () => void;
+  setActiveTab: (tab: ApplicationTab) => void
+  setProgram: (program: SelectedProgram) => void
+  setPersonalInformation: (info: Partial<PersonalInformation>) => void
+  setFamilyDetails: (details: Partial<FamilyDetails>) => void
+  setContactInformation: (info: Partial<ContactInformation>) => void
+  setEducation: (edu: Partial<Education>) => void
+  setMotivation: (motivation: Partial<MotivationData>) => void
+  getMotivationLetterFile: () => File | null
+  setAgreements: (agreements: Partial<Agreements>) => void
+  toggleGuardian: () => void
+  resetForm: () => void
 }
 
 export const useApplicationFormStore = create<ApplicationFormState>()(
   persist(
     (set) => ({
       data: INITIAL_FORM_DATA,
-      activeTab: "personal",
+      activeTab: 'personal',
       hasGuardian: false,
 
       setActiveTab: (tab) => set({ activeTab: tab }),
@@ -96,6 +98,15 @@ export const useApplicationFormStore = create<ApplicationFormState>()(
           },
         })),
 
+      getMotivationLetterFile: () => {
+        const storedLetter = useApplicationFormStore.getState().data.motivation.motivationLetter
+        if (!storedLetter) {
+          return null
+        }
+
+        return serializedLetterToFile(storedLetter)
+      },
+
       setAgreements: (agreements) =>
         set((state) => ({
           data: {
@@ -106,7 +117,7 @@ export const useApplicationFormStore = create<ApplicationFormState>()(
 
       toggleGuardian: () =>
         set((state) => {
-          const newHasGuardian = !state.hasGuardian;
+          const newHasGuardian = !state.hasGuardian
           return {
             hasGuardian: newHasGuardian,
             data: {
@@ -115,39 +126,32 @@ export const useApplicationFormStore = create<ApplicationFormState>()(
                 ...state.data.familyDetails,
                 guardian: newHasGuardian
                   ? {
-                      firstName: "",
-                      lastName: "",
-                      patronymic: "",
-                      phone: "",
+                      firstName: '',
+                      lastName: '',
+                      patronymic: '',
+                      phone: '',
                     }
                   : null,
               },
             },
-          };
+          }
         }),
 
       resetForm: () =>
         set({
           data: INITIAL_FORM_DATA,
-          activeTab: "personal",
+          activeTab: 'personal',
           hasGuardian: false,
         }),
     }),
     {
-      name: "invision-application-form",
+      name: 'invision-application-form',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        data: {
-          ...state.data,
-          // File cannot be serialized — skip it
-          motivation: {
-            ...state.data.motivation,
-            motivationLetter: null,
-          },
-        },
+        data: state.data,
         activeTab: state.activeTab,
         hasGuardian: state.hasGuardian,
       }),
     },
   ),
-);
+)

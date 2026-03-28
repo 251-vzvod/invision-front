@@ -9,6 +9,7 @@ import { useApplicationFormStore } from '../hooks/use-application-form'
 import { PersonalInformationForm } from './personal-information-form'
 import { ContactInformationForm } from './contact-information-form'
 import { EducationForm } from './education-form'
+import { MotivationForm } from './motivation-form'
 import { ProgramSelectorDialog } from './program-selector-dialog'
 import type { ApplicationTab } from '../types'
 import { Pencil, Lock } from 'lucide-react'
@@ -105,9 +106,7 @@ export function ApplicationForm() {
               </TabsContent>
 
               <TabsContent value="motivation" className="mt-0">
-                <div className="text-muted-foreground flex items-center justify-center py-16">
-                  Motivation — coming soon
-                </div>
+                <MotivationForm />
               </TabsContent>
             </div>
           </Tabs>
