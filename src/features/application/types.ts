@@ -103,9 +103,31 @@ export interface Education {
 
 /* ─── Motivation ─── */
 
+export interface SerializedMotivationLetter {
+  fileName: string;
+  mimeType: string;
+  base64: string;
+  size: number;
+  lastModified: number;
+}
+
 export interface MotivationData {
-  motivationLetter: File | null;
+  motivationLetter: SerializedMotivationLetter | null;
   motivationQuestions: Record<string, string>;
+}
+
+export function serializedLetterToFile(letter: SerializedMotivationLetter): File {
+  const binaryString = atob(letter.base64);
+  const bytes = new Uint8Array(binaryString.length);
+
+  for (let index = 0; index < binaryString.length; index += 1) {
+    bytes[index] = binaryString.charCodeAt(index);
+  }
+
+  return new File([bytes], letter.fileName, {
+    type: letter.mimeType,
+    lastModified: letter.lastModified,
+  });
 }
 
 /* ─── Agreements ─── */

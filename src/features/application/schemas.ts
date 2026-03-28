@@ -13,6 +13,16 @@ const phoneSchema = z
   .min(1, { message: 'Phone is required' })
   .regex(/^\+?[\d\s\-()]+$/, { message: 'Invalid phone format' })
 
+const isYouTubeLink = (value: string): boolean => {
+  try {
+    const url = new URL(value)
+    const host = url.hostname.replace(/^www\./, '').toLowerCase()
+    return host === 'youtube.com' || host === 'youtu.be' || host === 'm.youtube.com'
+  } catch {
+    return false
+  }
+}
+
 /* ─── Identity Document ─── */
 
 export const identityDocumentSchema = z.object({
@@ -86,5 +96,49 @@ export const contactTabSchema = z.object({
   contactInformation: contactInformationSchema,
 })
 
+/* ─── Education ─── */
+
+export const educationSchema = z.object({
+  videoPresentationLink: z
+    .string()
+    .url({ message: 'Enter a valid URL' })
+    .refine(isYouTubeLink, { message: 'Presentation link must be a YouTube URL' }),
+  englishProficiency: z
+    .object({
+      type: z.enum(['ielts', 'toefl']),
+      score: z.number({ error: 'English score is required' }).nonnegative(),
+    })
+    .superRefine((value, ctx) => {
+      if (value.type === 'ielts' && value.score > 9) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'IELTS score must be between 0 and 9',
+          path: ['score'],
+        })
+      }
+
+      if (value.type === 'toefl' && value.score > 120) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'TOEFL score must be between 0 and 120',
+          path: ['score'],
+        })
+      }
+    }),
+  schoolCertificate: z.object({
+    type: z.literal('unt'),
+    score: z
+      .number({ error: 'UNT score is required' })
+      .int({ message: 'UNT score must be an integer' })
+      .min(0, { message: 'UNT score cannot be negative' })
+      .max(140, { message: 'UNT score must be between 0 and 140' }),
+  }),
+})
+
+export const educationTabSchema = z.object({
+  education: educationSchema,
+})
+
 export type PersonalTabFormValues = z.infer<typeof personalTabSchema>
 export type ContactTabFormValues = z.infer<typeof contactTabSchema>
+export type EducationTabFormValues = z.infer<typeof educationTabSchema>
