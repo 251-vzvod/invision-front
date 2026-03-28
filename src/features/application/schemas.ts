@@ -1,5 +1,9 @@
 import { z } from 'zod/v4'
-import { MOTIVATION_ALLOWED_MIME_TYPES, MOTIVATION_ALLOWED_EXTENSIONS } from './constants'
+import {
+  MOTIVATION_ALLOWED_MIME_TYPES,
+  MOTIVATION_ALLOWED_EXTENSIONS,
+  MOTIVATION_QUESTIONS,
+} from './constants'
 
 /* ─── Helpers ─── */
 
@@ -177,15 +181,53 @@ const motivationLetterSchema = z
   })
 
 export const motivationSchema = z.object({
-  motivationLetter: motivationLetterSchema.nullable(),
-  motivationQuestions: z.record(
-    z.string(),
-    z.string().trim().min(50, { message: 'Please provide a more detailed answer' }),
-  ),
+  motivationLetter: motivationLetterSchema,
+  motivationQuestions: z
+    .record(
+      z.string(),
+      z.string().trim().min(50, { message: 'Please provide a more detailed answer' }),
+    )
+    .superRefine((answers, ctx) => {
+      for (const question of MOTIVATION_QUESTIONS) {
+        if (!answers[question.id]) {
+          ctx.addIssue({
+            code: 'custom',
+            path: [question.id],
+            message: 'Answer is required',
+          })
+        }
+      }
+    }),
 })
 
 export const motivationTabSchema = z.object({
   motivation: motivationSchema,
+})
+
+/* ─── Full Application Submit ─── */
+
+export const agreementsSchema = z.object({
+  personalDataConsent: z.literal(true, {
+    error: 'Personal data consent is required',
+  }),
+  underageParentConsent: z.literal(true, {
+    error: 'Age and guardian confirmation is required',
+  }),
+})
+
+export const applicationSubmitSchema = z.object({
+  program: z.object({
+    level: z.enum(['undergraduate', 'foundation']),
+    facultyId: z.string().nullable(),
+    specialityId: z.string().nullable(),
+    displayLabel: z.string().min(1, { message: 'Program is required' }),
+  }),
+  personalInformation: personalInformationSchema,
+  familyDetails: familyDetailsSchema,
+  contactInformation: contactInformationSchema,
+  education: educationSchema,
+  motivation: motivationSchema,
+  agreements: agreementsSchema,
 })
 
 export type PersonalTabFormValues = z.infer<typeof personalTabSchema>
