@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "InVision",
-  description: "InVision — your project management platform",
+  description: "InVision — checking applicants much more easier",
 };
 
 export default function RootLayout({
