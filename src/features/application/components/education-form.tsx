@@ -16,13 +16,6 @@ export function EducationForm() {
     setEducation,
   } = useApplicationFormStore()
 
-  const handleVideoPresentationLinkChange = useCallback(
-    (value: string) => {
-      setEducation({ videoPresentationLink: value.trim() })
-    },
-    [setEducation],
-  )
-
   const handleEnglishTypeChange = useCallback(
     (type: EnglishProficiencyType) => {
       setEducation({
@@ -65,24 +58,6 @@ export function EducationForm() {
 
   return (
     <div className="space-y-8">
-      <section>
-        <h3 className="mb-2 text-base font-semibold">Personal presentation</h3>
-        <p className="text-muted-foreground mb-4 text-sm">
-          Add a link to your YouTube presentation.
-        </p>
-
-        <FormField label="Link to your presentation" required>
-          <Input
-            type="url"
-            placeholder="https://www.youtube.com/watch?v=..."
-            value={education.videoPresentationLink}
-            onChange={(event) => handleVideoPresentationLinkChange(event.target.value)}
-          />
-        </FormField>
-      </section>
-
-      <Separator />
-
       <section>
         <h3 className="mb-2 text-base font-semibold">English proficiency results</h3>
         <p className="text-muted-foreground mb-4 text-sm">Select an exam and enter your score.</p>

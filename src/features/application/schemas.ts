@@ -1,17 +1,11 @@
 import { z } from 'zod/v4'
-import {
-  MOTIVATION_ALLOWED_MIME_TYPES,
-  MOTIVATION_ALLOWED_EXTENSIONS,
-  MOTIVATION_QUESTIONS,
-} from './constants'
+import { MOTIVATION_ALLOWED_MIME_TYPES, MOTIVATION_ALLOWED_EXTENSIONS } from './constants'
 
 /* ─── Helpers ─── */
 
 const dateRegex = /^\d{2}\.\d{2}\.\d{4}$/
 
 const dateString = z.string().regex(dateRegex, { message: 'Format: DD.MM.YYYY' })
-
-const iinSchema = z.string().regex(/^\d{12}$/, { message: 'IIN must be exactly 12 digits' })
 
 const phoneSchema = z
   .string()
@@ -28,15 +22,6 @@ const isYouTubeLink = (value: string): boolean => {
   }
 }
 
-/* ─── Identity Document ─── */
-
-export const identityDocumentSchema = z.object({
-  type: z.enum(['passport', 'id_card']),
-  number: z.string().min(1, { message: 'Document number is required' }),
-  issuedBy: z.string().min(1, { message: 'Issuing authority is required' }),
-  issueDate: dateString,
-})
-
 /* ─── Personal Information ─── */
 
 export const personalInformationSchema = z.object({
@@ -47,36 +32,12 @@ export const personalInformationSchema = z.object({
   gender: z.enum(['MALE', 'FEMALE'], {
     message: 'Please select gender',
   }),
-  citizenship: z.string().min(1, { message: 'Citizenship is required' }),
-  iin: iinSchema,
-  document: identityDocumentSchema,
-})
-
-/* ─── Family Member ─── */
-
-export const familyMemberSchema = z.object({
-  firstName: z.string().min(1, { message: 'First name is required' }),
-  lastName: z.string().min(1, { message: 'Last name is required' }),
-  patronymic: z.string().optional().default(''),
-  phone: phoneSchema,
-})
-
-export const familyDetailsSchema = z.object({
-  father: familyMemberSchema,
-  mother: familyMemberSchema,
-  guardian: familyMemberSchema.nullable().optional(),
+  citizenship: z.literal('Kazakhstan', {
+    error: 'Only Kazakhstan citizenship is allowed',
+  }),
 })
 
 /* ─── Contact Information ─── */
-
-export const addressSchema = z.object({
-  country: z.string().min(1, { message: 'Country is required' }),
-  region: z.string().min(1, { message: 'Region is required' }),
-  city: z.string().min(1, { message: 'City is required' }),
-  street: z.string().min(1, { message: 'Street is required' }),
-  house: z.string().min(1, { message: 'House is required' }),
-  flat: z.string().optional().default(''),
-})
 
 export const contactsSchema = z.object({
   phone: phoneSchema,
@@ -86,7 +47,6 @@ export const contactsSchema = z.object({
 })
 
 export const contactInformationSchema = z.object({
-  address: addressSchema,
   contacts: contactsSchema,
 })
 
@@ -94,7 +54,6 @@ export const contactInformationSchema = z.object({
 
 export const personalTabSchema = z.object({
   personalInformation: personalInformationSchema,
-  familyDetails: familyDetailsSchema,
 })
 
 export const contactTabSchema = z.object({
@@ -104,10 +63,6 @@ export const contactTabSchema = z.object({
 /* ─── Education ─── */
 
 export const educationSchema = z.object({
-  videoPresentationLink: z
-    .string()
-    .url({ message: 'Enter a valid URL' })
-    .refine(isYouTubeLink, { message: 'Presentation link must be a YouTube URL' }),
   englishProficiency: z
     .object({
       type: z.enum(['ielts', 'toefl']),
@@ -159,11 +114,10 @@ const hasAllowedLetterExtension = (fileName: string): boolean => {
 
 const motivationLetterSchema = z
   .object({
+    fileUrl: z.string().url({ message: 'Uploaded file URL is required' }),
     fileName: z.string().min(1, { message: 'File name is required' }),
     mimeType: z.string().min(1, { message: 'MIME type is required' }),
-    base64: z.string().min(1, { message: 'File content is required' }),
     size: z.number().int().positive(),
-    lastModified: z.number().int().nonnegative(),
   })
   .superRefine((value, ctx) => {
     const hasAllowedMime = MOTIVATION_ALLOWED_MIME_TYPES.includes(
@@ -181,23 +135,11 @@ const motivationLetterSchema = z
   })
 
 export const motivationSchema = z.object({
+  presentationLink: z
+    .string()
+    .url({ message: 'Enter a valid URL' })
+    .refine(isYouTubeLink, { message: 'Presentation link must be a YouTube URL' }),
   motivationLetter: motivationLetterSchema,
-  motivationQuestions: z
-    .record(
-      z.string(),
-      z.string().trim().min(50, { message: 'Please provide a more detailed answer' }),
-    )
-    .superRefine((answers, ctx) => {
-      for (const question of MOTIVATION_QUESTIONS) {
-        if (!answers[question.id]) {
-          ctx.addIssue({
-            code: 'custom',
-            path: [question.id],
-            message: 'Answer is required',
-          })
-        }
-      }
-    }),
 })
 
 export const motivationTabSchema = z.object({
@@ -223,7 +165,6 @@ export const applicationSubmitSchema = z.object({
     displayLabel: z.string().min(1, { message: 'Program is required' }),
   }),
   personalInformation: personalInformationSchema,
-  familyDetails: familyDetailsSchema,
   contactInformation: contactInformationSchema,
   education: educationSchema,
   motivation: motivationSchema,

@@ -26,14 +26,6 @@ export interface SelectedProgram {
 /* ─── Personal Information ─── */
 
 export type Gender = 'MALE' | 'FEMALE'
-export type DocumentType = 'passport' | 'id_card'
-
-export interface IdentityDocument {
-  type: DocumentType
-  number: string
-  issuedBy: string
-  issueDate: string // DD.MM.YYYY
-}
 
 export interface PersonalInformation {
   firstName: string
@@ -42,35 +34,9 @@ export interface PersonalInformation {
   birthDate: string // DD.MM.YYYY
   gender: Gender | null
   citizenship: string
-  iin: string
-  document: IdentityDocument
-}
-
-/* ─── Family Details (part of Personal Info tab) ─── */
-
-export interface FamilyMember {
-  firstName: string
-  lastName: string
-  patronymic: string
-  phone: string
-}
-
-export interface FamilyDetails {
-  father: FamilyMember
-  mother: FamilyMember
-  guardian: FamilyMember | null
 }
 
 /* ─── Contact Information ─── */
-
-export interface Address {
-  country: string
-  region: string
-  city: string
-  street: string
-  house: string
-  flat: string
-}
 
 export interface Contacts {
   phone: string
@@ -80,7 +46,6 @@ export interface Contacts {
 }
 
 export interface ContactInformation {
-  address: Address
   contacts: Contacts
 }
 
@@ -90,7 +55,6 @@ export type EnglishProficiencyType = 'ielts' | 'toefl'
 export type SchoolCertificateType = 'unt'
 
 export interface Education {
-  videoPresentationLink: string
   englishProficiency: {
     type: EnglishProficiencyType
     score: number | null
@@ -104,30 +68,15 @@ export interface Education {
 /* ─── Motivation ─── */
 
 export interface SerializedMotivationLetter {
+  fileUrl: string
   fileName: string
   mimeType: string
-  base64: string
   size: number
-  lastModified: number
 }
 
 export interface MotivationData {
   motivationLetter: SerializedMotivationLetter | null
-  motivationQuestions: Record<string, string>
-}
-
-export function serializedLetterToFile(letter: SerializedMotivationLetter): File {
-  const binaryString = atob(letter.base64)
-  const bytes = new Uint8Array(binaryString.length)
-
-  for (let index = 0; index < binaryString.length; index += 1) {
-    bytes[index] = binaryString.charCodeAt(index)
-  }
-
-  return new File([bytes], letter.fileName, {
-    type: letter.mimeType,
-    lastModified: letter.lastModified,
-  })
+  presentationLink: string
 }
 
 /* ─── Agreements ─── */
@@ -145,7 +94,6 @@ export interface ApplicationFormData {
   program: SelectedProgram | null
   status: ApplicationStatus
   personalInformation: PersonalInformation
-  familyDetails: FamilyDetails
   contactInformation: ContactInformation
   education: Education
   motivation: MotivationData
@@ -153,3 +101,24 @@ export interface ApplicationFormData {
 }
 
 export type ApplicationTab = 'personal' | 'contact' | 'education' | 'motivation'
+
+export type ChatSender = 'Agent' | 'User'
+
+export interface ChatMessage {
+  question_id: number
+  sender: ChatSender
+  text: string
+}
+
+export interface ChatRequestPayload {
+  user_id: string
+  history: ChatMessage[]
+}
+
+export interface ChatResponsePayload {
+  question_id: number
+  sender: 'Agent'
+  text: string
+}
+
+export type ApplicationViewMode = 'form' | 'testIntro' | 'testChat' | 'testFinished'

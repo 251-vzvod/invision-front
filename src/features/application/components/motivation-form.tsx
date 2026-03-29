@@ -1,18 +1,18 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
+import { Input } from '@/shared/ui/input'
 import { Button } from '@/shared/ui/button'
 import { Label } from '@/shared/ui/label'
 import { Separator } from '@/shared/ui/separator'
 import { cn } from '@/shared/lib/utils'
+import { useDeleteMotivationLetterMutation, useUploadMotivationLetterMutation } from '../api'
 import { useApplicationFormStore } from '../hooks/use-application-form'
 import {
   MOTIVATION_FILE_ACCEPT,
   MOTIVATION_ALLOWED_EXTENSIONS,
   MOTIVATION_ALLOWED_MIME_TYPES,
-  MOTIVATION_QUESTIONS,
 } from '../constants'
-import type { SerializedMotivationLetter } from '../types'
 import { Upload, FileText, Trash2 } from 'lucide-react'
 
 const MAX_MOTIVATION_FILE_SIZE_MB = 5
@@ -24,6 +24,8 @@ export function MotivationForm() {
     setMotivation,
   } = useApplicationFormStore()
 
+  const uploadMutation = useUploadMotivationLetterMutation()
+  const deleteMutation = useDeleteMotivationLetterMutation()
   const [fileError, setFileError] = useState<string>('')
 
   const selectedFile = motivation.motivationLetter
@@ -37,28 +39,7 @@ export function MotivationForm() {
     return `${sizeInMb.toFixed(2)} MB`
   }, [selectedFile])
 
-  const fileToBase64 = useCallback((file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-
-      reader.onload = () => {
-        const dataUrl = String(reader.result ?? '')
-        const base64 = dataUrl.split(',')[1]
-        if (!base64) {
-          reject(new Error('Unable to read file as base64'))
-          return
-        }
-
-        resolve(base64)
-      }
-
-      reader.onerror = () => {
-        reject(new Error('Unable to read file'))
-      }
-
-      reader.readAsDataURL(file)
-    })
-  }, [])
+  const isBusy = uploadMutation.isPending || deleteMutation.isPending
 
   const hasAllowedExtension = useCallback((fileName: string): boolean => {
     const extension = fileName.split('.').pop()?.toLowerCase()
@@ -81,12 +62,29 @@ export function MotivationForm() {
     )
   }, [])
 
+  const removeUploadedLetter = useCallback(async (): Promise<boolean> => {
+    const currentFileUrl = motivation.motivationLetter?.fileUrl
+    if (!currentFileUrl) {
+      setMotivation({ motivationLetter: null })
+      return true
+    }
+
+    try {
+      await deleteMutation.mutateAsync(currentFileUrl)
+      setMotivation({ motivationLetter: null })
+      return true
+    } catch {
+      setFileError('Unable to delete uploaded file. Please try again.')
+      return false
+    }
+  }, [deleteMutation, motivation.motivationLetter?.fileUrl, setMotivation])
+
   const handleLetterUpload = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0]
       event.target.value = ''
 
-      if (!file) {
+      if (!file || isBusy) {
         return
       }
 
@@ -102,47 +100,77 @@ export function MotivationForm() {
         return
       }
 
-      try {
-        const base64 = await fileToBase64(file)
-
-        const serializableLetter: SerializedMotivationLetter = {
-          fileName: file.name,
-          mimeType: file.type || 'application/octet-stream',
-          base64,
-          size: file.size,
-          lastModified: file.lastModified,
+      if (motivation.motivationLetter?.fileUrl) {
+        const removed = await removeUploadedLetter()
+        if (!removed) {
+          return
         }
+      }
 
+      try {
+        const response = await uploadMutation.mutateAsync(file)
         setMotivation({
-          motivationLetter: serializableLetter,
+          motivationLetter: {
+            fileUrl: response.file_url,
+            fileName: file.name,
+            mimeType: file.type || 'application/octet-stream',
+            size: file.size,
+          },
         })
         setFileError('')
       } catch {
-        setFileError('Unable to read selected file. Try again.')
+        setFileError('Unable to upload selected file. Try again.')
       }
     },
-    [fileToBase64, hasAllowedExtension, hasAllowedMime, setMotivation],
+    [
+      hasAllowedExtension,
+      hasAllowedMime,
+      isBusy,
+      motivation.motivationLetter?.fileUrl,
+      removeUploadedLetter,
+      setMotivation,
+      uploadMutation,
+    ],
   )
 
-  const handleRemoveLetter = useCallback(() => {
-    setMotivation({ motivationLetter: null })
-    setFileError('')
-  }, [setMotivation])
+  const handleRemoveLetter = useCallback(async () => {
+    if (isBusy) {
+      return
+    }
 
-  const handleAnswerChange = useCallback(
-    (questionId: string, value: string) => {
-      setMotivation({
-        motivationQuestions: {
-          ...motivation.motivationQuestions,
-          [questionId]: value,
-        },
-      })
+    const removed = await removeUploadedLetter()
+    if (removed) {
+      setFileError('')
+    }
+  }, [isBusy, removeUploadedLetter])
+
+  const handlePresentationLinkChange = useCallback(
+    (value: string) => {
+      setMotivation({ presentationLink: value.trim() })
     },
-    [motivation.motivationQuestions, setMotivation],
+    [setMotivation],
   )
 
   return (
     <div className="space-y-8">
+      <section>
+        <h3 className="mb-2 text-base font-semibold">Presentation</h3>
+        <p className="text-muted-foreground mb-4 text-sm">
+          Add a YouTube link to your presentation.
+        </p>
+
+        <FormField label="Presentation link" required>
+          <Input
+            type="url"
+            placeholder="https://www.youtube.com/watch?v=..."
+            value={motivation.presentationLink}
+            onChange={(event) => handlePresentationLinkChange(event.target.value)}
+          />
+        </FormField>
+      </section>
+
+      <Separator />
+
       <section>
         <h3 className="mb-2 text-base font-semibold">Motivation Letter</h3>
         <p className="text-muted-foreground mb-4 text-sm">
@@ -158,6 +186,7 @@ export function MotivationForm() {
             type="file"
             accept={MOTIVATION_FILE_ACCEPT}
             onChange={handleLetterUpload}
+            disabled={isBusy}
             className="sr-only"
           />
 
@@ -166,10 +195,11 @@ export function MotivationForm() {
               htmlFor="motivation-letter-upload"
               className={cn(
                 'border-border hover:border-primary/50 hover:bg-accent-1 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-8 text-sm transition-colors',
+                isBusy && 'pointer-events-none opacity-60',
               )}
             >
               <Upload className="size-4" />
-              Upload motivation letter
+              {uploadMutation.isPending ? 'Uploading file...' : 'Upload motivation letter'}
             </label>
           )}
 
@@ -185,36 +215,19 @@ export function MotivationForm() {
                 </p>
               </div>
 
-              <Button type="button" variant="ghost" size="icon-sm" onClick={handleRemoveLetter}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={handleRemoveLetter}
+                disabled={isBusy}
+              >
                 <Trash2 className="size-4" />
               </Button>
             </div>
           )}
 
           {fileError && <p className="text-destructive text-sm">{fileError}</p>}
-        </div>
-      </section>
-
-      <Separator />
-
-      <section>
-        <h3 className="mb-2 text-base font-semibold">Motivation Questions</h3>
-        <p className="text-muted-foreground mb-4 text-sm">Answer in as much detail as possible.</p>
-
-        <div className="space-y-6">
-          {MOTIVATION_QUESTIONS.map((question, index) => (
-            <FormField key={question.id} label={`${index + 1}. ${question.prompt}`} required>
-              <textarea
-                className={cn(
-                  'border-input bg-background placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 min-h-28 w-full rounded-md border px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none',
-                  'focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
-                )}
-                placeholder="Write your answer here..."
-                value={motivation.motivationQuestions[question.id] ?? ''}
-                onChange={(event) => handleAnswerChange(question.id, event.target.value)}
-              />
-            </FormField>
-          ))}
         </div>
       </section>
     </div>

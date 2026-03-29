@@ -1,7 +1,11 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useSubmitApplicationMutation, prepareSubmitApplicationPayload } from '../api'
+import {
+  useInternalTestChatMutation,
+  useSubmitApplicationMutation,
+  prepareSubmitApplicationPayload,
+} from '../api'
 import {
   applicationSubmitSchema,
   contactTabSchema,
@@ -9,8 +13,13 @@ import {
   motivationTabSchema,
   personalTabSchema,
 } from '../schemas'
-import { MOTIVATION_QUESTIONS } from '../constants'
-import type { ApplicationFormData, ApplicationTab } from '../types'
+import type {
+  ApplicationFormData,
+  ApplicationTab,
+  ApplicationViewMode,
+  ChatMessage,
+  ChatResponsePayload,
+} from '../types'
 
 interface TabFieldError {
   field: string
@@ -32,60 +41,27 @@ const TAB_FIELD_LABELS: Record<ApplicationTab, Record<string, string>> = {
     'personalInformation.birthDate': 'Date of Birth',
     'personalInformation.gender': 'Gender',
     'personalInformation.citizenship': 'Citizenship',
-    'personalInformation.iin': 'Individual Identification Number (IIN)',
-    'personalInformation.document.type': 'Document Type',
-    'personalInformation.document.number': 'Document Number',
-    'personalInformation.document.issuedBy': 'Issued By',
-    'personalInformation.document.issueDate': 'Issue Date',
-    'familyDetails.father.firstName': 'Father First Name',
-    'familyDetails.father.lastName': 'Father Last Name',
-    'familyDetails.father.patronymic': 'Father Patronymic',
-    'familyDetails.father.phone': 'Father Phone',
-    'familyDetails.mother.firstName': 'Mother First Name',
-    'familyDetails.mother.lastName': 'Mother Last Name',
-    'familyDetails.mother.patronymic': 'Mother Patronymic',
-    'familyDetails.mother.phone': 'Mother Phone',
-    'familyDetails.guardian.firstName': 'Guardian First Name',
-    'familyDetails.guardian.lastName': 'Guardian Last Name',
-    'familyDetails.guardian.patronymic': 'Guardian Patronymic',
-    'familyDetails.guardian.phone': 'Guardian Phone',
   },
   contact: {
-    'contactInformation.address.country': 'Country',
-    'contactInformation.address.region': 'Region',
-    'contactInformation.address.city': 'City',
-    'contactInformation.address.street': 'Street',
-    'contactInformation.address.house': 'House',
-    'contactInformation.address.flat': 'Apartment',
     'contactInformation.contacts.phone': 'Mobile Phone Number',
     'contactInformation.contacts.whatsapp': 'WhatsApp',
     'contactInformation.contacts.instagram': 'Instagram',
     'contactInformation.contacts.telegram': 'Telegram',
   },
   education: {
-    'education.videoPresentationLink': 'Presentation Link',
     'education.englishProficiency.type': 'English Exam Type',
     'education.englishProficiency.score': 'English Exam Score',
     'education.schoolCertificate.type': 'School Certificate Type',
     'education.schoolCertificate.score': 'UNT Score',
   },
   motivation: {
+    'motivation.presentationLink': 'Presentation Link',
+    'motivation.motivationLetter.fileUrl': 'Motivation Letter URL',
     'motivation.motivationLetter.fileName': 'Motivation Letter File',
     'motivation.motivationLetter.mimeType': 'Motivation Letter File Type',
-    'motivation.motivationLetter.base64': 'Motivation Letter Content',
     'motivation.motivationLetter.size': 'Motivation Letter Size',
-    'motivation.motivationLetter.lastModified': 'Motivation Letter Metadata',
-    'motivation.motivationQuestions': 'Motivation Questions',
   },
 }
-
-const MOTIVATION_QUESTION_LABELS = MOTIVATION_QUESTIONS.reduce<Record<string, string>>(
-  (acc, question, index) => {
-    acc[question.id] = `Question ${index + 1}`
-    return acc
-  },
-  {},
-)
 
 function toPathKey(path: ReadonlyArray<string | number | symbol>) {
   return path.map((segment) => String(segment)).join('.')
@@ -113,11 +89,6 @@ function mapTabIssuesToFieldErrors(
     const pathKey = toPathKey(issue.path)
     let field = TAB_FIELD_LABELS[tab][pathKey] ?? humanizePath(pathKey)
 
-    if (tab === 'motivation' && pathKey.startsWith('motivation.motivationQuestions.')) {
-      const questionId = pathKey.split('.').at(-1) ?? ''
-      field = MOTIVATION_QUESTION_LABELS[questionId] ?? `Motivation Question (${questionId})`
-    }
-
     const dedupeKey = `${field}:${issue.message}`
     if (dedupe.has(dedupeKey)) {
       return acc
@@ -139,12 +110,28 @@ interface UseApplicationFormFlowParams {
   tabs: ReadonlyArray<{ value: ApplicationTab }>
 }
 
+const INTERNAL_TEST_GREETING: ChatMessage = {
+  question_id: 0,
+  sender: 'Agent',
+  text: 'Congratulations. Your application has been submitted successfully. You now need to complete an internal test with our AI agent. The test usually includes around 15 questions to identify your strongest skills. Please answer carefully and provide thoughtful details.',
+}
+
+const normalizeAgentMessage = (message: ChatResponsePayload): ChatMessage => ({
+  question_id: Number.isFinite(message.question_id) ? message.question_id : 0,
+  sender: 'Agent',
+  text: message.text?.trim() || 'Thank you. Please continue with the next answer.',
+})
+
 export function useApplicationFormFlow({
   data,
   activeTab,
   setActiveTab,
   tabs,
 }: UseApplicationFormFlowParams) {
+  const [viewMode, setViewMode] = useState<ApplicationViewMode>('form')
+  const [internalTestUserId, setInternalTestUserId] = useState<string | null>(null)
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([])
+  const [chatError, setChatError] = useState<string | null>(null)
   const [touchedTabs, setTouchedTabs] = useState<Record<ApplicationTab, boolean>>({
     personal: true,
     contact: false,
@@ -152,15 +139,14 @@ export function useApplicationFormFlow({
     motivation: false,
   })
   const [submissionError, setSubmissionError] = useState<string | null>(null)
-  const [submissionSuccess, setSubmissionSuccess] = useState<string | null>(null)
   const [stepNavigationWarning, setStepNavigationWarning] = useState<string | null>(null)
 
   const submitMutation = useSubmitApplicationMutation()
+  const chatMutation = useInternalTestChatMutation()
 
   const tabValidationState = useMemo(() => {
     const personalResult = personalTabSchema.safeParse({
       personalInformation: data.personalInformation,
-      familyDetails: data.familyDetails,
     })
 
     const contactResult = contactTabSchema.safeParse({
@@ -207,7 +193,6 @@ export function useApplicationFormFlow({
 
   const clearSubmissionStatus = () => {
     setSubmissionError(null)
-    setSubmissionSuccess(null)
   }
 
   const clearStepNavigationWarning = () => {
@@ -298,7 +283,6 @@ export function useApplicationFormFlow({
     const fullValidation = applicationSubmitSchema.safeParse({
       program: data.program,
       personalInformation: data.personalInformation,
-      familyDetails: data.familyDetails,
       contactInformation: data.contactInformation,
       education: data.education,
       motivation: data.motivation,
@@ -320,8 +304,16 @@ export function useApplicationFormFlow({
 
     try {
       const payload = prepareSubmitApplicationPayload(data)
-      await submitMutation.mutateAsync(payload)
-      setSubmissionSuccess('Application has been sent successfully.')
+      const response = await submitMutation.mutateAsync(payload)
+
+      if (!response.user_id) {
+        throw new Error('The server did not return user_id for internal test initialization.')
+      }
+
+      setInternalTestUserId(response.user_id)
+      setViewMode('testIntro')
+      setChatHistory([])
+      setChatError(null)
     } catch (error) {
       setSubmissionError(
         error instanceof Error ? error.message : 'Failed to send application. Please try again.',
@@ -329,20 +321,108 @@ export function useApplicationFormFlow({
     }
   }
 
+  const requestAgentMessage = async (history: ChatMessage[]) => {
+    if (!internalTestUserId) {
+      throw new Error('user_id is missing. Please submit the application again.')
+    }
+
+    const response = await chatMutation.mutateAsync({
+      user_id: internalTestUserId,
+      history,
+    })
+
+    return normalizeAgentMessage(response)
+  }
+
+  const handleStartInternalTest = async () => {
+    if (chatMutation.isPending) {
+      return
+    }
+
+    if (!internalTestUserId) {
+      setChatError('Unable to start internal test: user_id is missing.')
+      return
+    }
+
+    setViewMode('testChat')
+    setChatError(null)
+    setChatHistory([INTERNAL_TEST_GREETING])
+
+    try {
+      const firstAgentQuestion = await requestAgentMessage([INTERNAL_TEST_GREETING])
+      setChatHistory((prev) => [...prev, firstAgentQuestion])
+
+      if (firstAgentQuestion.question_id === 0) {
+        setViewMode('testFinished')
+      }
+    } catch (error) {
+      setChatError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to start the internal test. Please try again.',
+      )
+    }
+  }
+
+  const handleSendChatMessage = async (text: string) => {
+    const trimmedText = text.trim()
+    if (!trimmedText || chatMutation.isPending) {
+      return
+    }
+
+    if (!internalTestUserId) {
+      setChatError('Unable to continue internal test: user_id is missing.')
+      return
+    }
+
+    const latestQuestionId =
+      [...chatHistory]
+        .reverse()
+        .find((message) => message.sender === 'Agent' && message.question_id > 0)?.question_id ?? 1
+
+    const userMessage: ChatMessage = {
+      question_id: latestQuestionId,
+      sender: 'User',
+      text: trimmedText,
+    }
+
+    const nextHistory = [...chatHistory, userMessage]
+    setChatHistory(nextHistory)
+    setChatError(null)
+
+    try {
+      const agentReply = await requestAgentMessage(nextHistory)
+      setChatHistory((prev) => [...prev, agentReply])
+
+      if (agentReply.question_id === 0) {
+        setViewMode('testFinished')
+      }
+    } catch (error) {
+      setChatError(
+        error instanceof Error ? error.message : 'Failed to send your answer. Please try again.',
+      )
+    }
+  }
+
   return {
+    viewMode,
+    chatHistory,
+    chatError,
     touchedTabs,
     tabValidation,
     tabErrors,
     activeTabErrors: tabErrors[activeTab],
     stepNavigationWarning,
     submissionError,
-    submissionSuccess,
     isSubmitting: submitMutation.isPending,
+    isChatSubmitting: chatMutation.isPending,
     isFirstTab,
     isLastTab,
     handleTabChange,
     handleNextStep,
     handleBackStep,
     handleSubmitApplication,
+    handleStartInternalTest,
+    handleSendChatMessage,
   }
 }

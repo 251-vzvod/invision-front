@@ -4,20 +4,18 @@ import { Checkbox } from '@/shared/ui/checkbox'
 import { Label } from '@/shared/ui/label'
 import { cn } from '@/shared/lib/utils'
 import type { Agreements } from '../types'
-import { AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 
 interface ApplicationAgreementsSectionProps {
   agreements: Agreements
   onChange: (agreements: Partial<Agreements>) => void
   submissionError: string | null
-  submissionSuccess: string | null
 }
 
 export function ApplicationAgreementsSection({
   agreements,
   onChange,
   submissionError,
-  submissionSuccess,
 }: ApplicationAgreementsSectionProps) {
   return (
     <div className="border-border border-t px-4 py-5 sm:px-6">
@@ -52,21 +50,15 @@ export function ApplicationAgreementsSection({
         </div>
       </div>
 
-      {(submissionError || submissionSuccess) && (
+      {submissionError && (
         <div
           className={cn(
             'mt-4 flex items-start gap-2 rounded-lg border px-3 py-2 text-sm',
-            submissionError
-              ? 'border-destructive/20 bg-destructive/5 text-destructive'
-              : 'border-success-4/50 bg-success-1 text-success-10',
+            'border-destructive/20 bg-destructive/5 text-destructive',
           )}
         >
-          {submissionError ? (
-            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-          ) : (
-            <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
-          )}
-          <span>{submissionError ?? submissionSuccess}</span>
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+          <span>{submissionError}</span>
         </div>
       )}
     </div>
