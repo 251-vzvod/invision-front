@@ -1,0 +1,5 @@
+export const AUTH_COOKIE_NAME = 'manager_session'
+export const AUTH_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 8
+
+export const MANAGER_LOGIN_ENV_KEY = 'CREDENTIALS_LOGIN'
+export const MANAGER_PASSWORD_ENV_KEY = 'CREDENTIALS_PASSWORD'
