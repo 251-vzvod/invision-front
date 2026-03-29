@@ -1,10 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
-import { useLogoutMutation } from '@/features/auth'
-import { useAuthStore } from '@/shared/stores/auth-store'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
@@ -65,10 +62,6 @@ const getApplicantMetricValue = (
 }
 
 export function ApplicantsDashboard() {
-  const router = useRouter()
-  const resetAuthStore = useAuthStore((state) => state.reset)
-  const logoutMutation = useLogoutMutation()
-
   const [sortField, setSortField] = useState<ApplicantsSortField>(DEFAULT_SORT_FIELD)
   const [sortDirection, setSortDirection] =
     useState<ApplicantsSortDirection>(DEFAULT_SORT_DIRECTION)
@@ -83,47 +76,24 @@ export function ApplicantsDashboard() {
 
   const { data: applicants = [], isLoading } = useApplicantsRankingQuery(queryParams)
 
-  const handleLogout = async () => {
-    await logoutMutation.mutateAsync()
-    resetAuthStore()
-    router.replace('/auth')
-  }
-
   const handleResetSorting = () => {
     setSortField(DEFAULT_SORT_FIELD)
     setSortDirection(DEFAULT_SORT_DIRECTION)
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50">
-      <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-900 text-xs font-semibold text-white">
-              LOGO
-            </div>
-            <div className="text-sm font-semibold text-zinc-900">Applicants Dashboard</div>
-          </div>
+    <div className="min-h-screen bg-[radial-gradient(circle_at_10%_10%,rgba(166,216,10,0.18)_0%,transparent_38%),radial-gradient(circle_at_90%_15%,rgba(193,241,29,0.15)_0%,transparent_42%),linear-gradient(180deg,#f8fafc_0%,#f3f8df_100%)]">
+      <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <section className="border-primary/25 bg-background/85 rounded-2xl border p-6 shadow-sm backdrop-blur">
+          <h1 className="text-foreground text-3xl font-semibold tracking-tight">
+            Applicants Ranking
+          </h1>
+          <p className="text-muted-foreground mt-2 text-base">
+            Sort candidates by score or any key merit dimension to compare strengths.
+          </p>
+        </section>
 
-          <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" size="sm">
-              Profile
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              disabled={logoutMutation.isPending}
-            >
-              {logoutMutation.isPending ? 'Signing out...' : 'Sign out'}
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-        <Card>
+        <Card className="border-primary/20 bg-background/90 shadow-sm backdrop-blur">
           <CardHeader>
             <CardTitle>Filters and sorting</CardTitle>
             <CardDescription>
@@ -132,13 +102,13 @@ export function ApplicantsDashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
-              <p className="text-sm font-medium text-zinc-700">Ranking metric</p>
-              <div data-slot="button-group" className="flex flex-wrap items-center gap-2">
+              <p className="text-foreground text-base font-medium">Ranking metric</p>
+              <div data-slot="button-group" className="flex flex-wrap items-center gap-2.5">
                 {SORT_FIELD_BUTTONS.map((option) => (
                   <Button
                     key={option.value}
                     type="button"
-                    size="sm"
+                    size="default"
                     variant={sortField === option.value ? 'default' : 'outline'}
                     onClick={() => setSortField(option.value)}
                   >
@@ -149,12 +119,12 @@ export function ApplicantsDashboard() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <p className="text-sm font-medium text-zinc-700">Sort direction</p>
+              <p className="text-foreground text-base font-medium">Sort direction</p>
               <Select
                 value={sortDirection}
                 onValueChange={(value: ApplicantsSortDirection) => setSortDirection(value)}
               >
-                <SelectTrigger size="sm" className="w-36">
+                <SelectTrigger size="default" className="w-48">
                   <SelectValue placeholder="Select order" />
                 </SelectTrigger>
                 <SelectContent>
@@ -162,14 +132,14 @@ export function ApplicantsDashboard() {
                   <SelectItem value="asc">Ascending</SelectItem>
                 </SelectContent>
               </Select>
-              <Button type="button" size="sm" variant="outline" onClick={handleResetSorting}>
+              <Button type="button" size="default" variant="outline" onClick={handleResetSorting}>
                 Reset
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-primary/20 bg-background/90 shadow-sm backdrop-blur">
           <CardHeader>
             <CardTitle>Applicants ranking</CardTitle>
             <CardDescription>
@@ -178,32 +148,36 @@ export function ApplicantsDashboard() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <p className="text-sm text-zinc-600">Loading applicants...</p>
+              <p className="text-muted-foreground text-base">Loading applicants...</p>
             ) : applicants.length === 0 ? (
-              <p className="text-sm text-zinc-600">
+              <p className="text-muted-foreground text-base">
                 No applicants found for current filter settings.
               </p>
             ) : (
-              <div className="space-y-3">
+              <div className="grid gap-4 md:grid-cols-2">
                 {applicants.map((applicant, index) => (
                   <Link
                     key={applicant.candidate_id}
                     href={`/applicants/${applicant.candidate_id}`}
                     className="block"
                   >
-                    <Card className="border border-zinc-200 bg-white py-0 transition hover:border-zinc-300 hover:bg-zinc-50">
-                      <CardContent className="space-y-4 py-4">
-                        <div className="flex items-start justify-between gap-3">
+                    <Card className="border-primary/20 from-background to-primary/5 hover:border-primary/35 h-full border bg-linear-to-b py-0 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                      <CardContent className="space-y-4 py-5">
+                        <div className="flex items-start justify-between gap-4">
                           <div className="space-y-1">
-                            <p className="text-base font-semibold text-zinc-900">
+                            <p className="text-foreground text-lg font-semibold">
                               {applicant.candidate_name}
                             </p>
-                            <p className="text-sm text-zinc-600">{applicant.program_name}</p>
+                            <p className="text-muted-foreground text-base">
+                              {applicant.program_name}
+                            </p>
                           </div>
-                          <Badge variant="secondary">Rank #{index + 1}</Badge>
+                          <Badge variant="secondary" className="px-3 py-1.5 text-sm">
+                            Rank #{index + 1}
+                          </Badge>
                         </div>
 
-                        <div className="grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-2 text-sm sm:grid-cols-2">
                           <Badge variant={sortField === 'score' ? 'secondary' : 'outline'}>
                             Score: {applicant.merit_score}
                           </Badge>
@@ -224,12 +198,12 @@ export function ApplicantsDashboard() {
                           </Badge>
                         </div>
 
-                        <div className="flex flex-wrap gap-2 text-xs text-zinc-500">
+                        <div className="text-muted-foreground flex flex-wrap gap-3 text-sm">
                           <span>Confidence: {applicant.confidence_score}</span>
                           <span>Authenticity Risk: {applicant.authenticity_risk}</span>
                         </div>
 
-                        <div className="text-xs text-zinc-500">
+                        <div className="text-muted-foreground text-sm">
                           Current metric value: {getApplicantMetricValue(applicant, sortField)}
                         </div>
                       </CardContent>

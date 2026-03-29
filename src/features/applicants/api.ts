@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { MOCK_APPLICANT_PROFILES } from './constants'
+import { MOCK_APPLICANT_PROFILES } from './mock-data'
 import type { ApplicantProfile, ApplicantsQueryParams } from './types'
 
 const applicantsQueryKeys = {
