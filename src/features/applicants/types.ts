@@ -47,13 +47,13 @@ export interface ApplicantProfile {
   scoring_run_id: string
   scoring_version: string
   prompt_version: string
-  eligibility_status: 'eligible' | 'ineligible' | 'manual_review'
-  eligibility_reasons: string[]
+  eligibility_status: 'invalid' | 'incomplete_application' | 'conditionally_eligible' | 'eligible'
+  eligibility_reasons: EligibilityReason[]
   merit_score: number
   confidence_score: number
   authenticity_risk: number
-  recommendation: 'admit' | 'manual_review_required' | 'reject'
-  review_flags: string[]
+  recommendation: Recommendation
+  review_flags: ReviewFlag[]
   merit_breakdown: MeritBreakdown
   feature_snapshot: FeatureSnapshot
   top_strengths: string[]
@@ -62,6 +62,36 @@ export interface ApplicantProfile {
   evidence_spans: EvidenceSpan[]
   explanation: ApplicantExplanation
 }
+
+export type EligibilityReason =
+  | 'missing_required_materials_documents'
+  | 'missing_required_materials_portfolio'
+  | 'missing_required_materials_video'
+  | string
+
+export type Recommendation =
+  | 'invalid'
+  | 'incomplete_application'
+  | 'insufficient_evidence'
+  | 'review_priority'
+  | 'manual_review_required'
+  | 'standard_review'
+
+export type ReviewFlag =
+  | 'eligibility_gate'
+  | 'low_confidence'
+  | 'insufficient_evidence'
+  | 'low_evidence_density'
+  | 'moderate_authenticity_risk'
+  | 'high_authenticity_risk'
+  | 'contradiction_risk'
+  | 'possible_contradiction'
+  | 'polished_but_empty_pattern'
+  | 'high_polished_but_empty'
+  | 'high_genericness'
+  | 'cross_section_mismatch'
+  | 'section_mismatch'
+  | 'missing_required_materials'
 
 export type ApplicantsSortField =
   | 'score'

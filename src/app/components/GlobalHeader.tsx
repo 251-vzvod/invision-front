@@ -5,11 +5,12 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useLogoutMutation } from '@/features/auth'
 import { useAuthStore } from '@/shared/stores/auth-store'
 import { Button } from '@/shared/ui/button'
+import Image from 'next/image'
 
 const isHeaderHiddenRoute = (pathname: string): boolean =>
   pathname === '/' || pathname.startsWith('/auth') || pathname.startsWith('/form')
 
-export function GlobalHeader() {
+export function Header() {
   const pathname = usePathname()
   const router = useRouter()
   const resetAuthStore = useAuthStore((state) => state.reset)
@@ -32,10 +33,15 @@ export function GlobalHeader() {
     >
       <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/applicants" className="flex items-center gap-3">
-          <div className="bg-primary text-primary-foreground flex h-11 w-11 items-center justify-center rounded-xl text-base font-semibold shadow-sm">
-            IV
-          </div>
-          <div>
+          <Image
+            src="/logo.svg"
+            alt="InVision Logo"
+            width={100}
+            height={50}
+            priority
+            className="h-auto"
+          />
+          <div className="hidden md:block">
             <p className="text-foreground text-lg font-semibold">InVision Dashboard</p>
             <p className="text-muted-foreground text-sm">Applicants and scoring overview</p>
           </div>

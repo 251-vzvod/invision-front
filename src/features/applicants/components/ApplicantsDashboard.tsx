@@ -84,7 +84,7 @@ export function ApplicantsDashboard() {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_10%_10%,rgba(166,216,10,0.18)_0%,transparent_38%),radial-gradient(circle_at_90%_15%,rgba(193,241,29,0.15)_0%,transparent_42%),linear-gradient(180deg,#f8fafc_0%,#f3f8df_100%)]">
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-        <section className="border-primary/25 bg-background/85 rounded-2xl border p-6 shadow-sm backdrop-blur">
+        <section className="hidden md:block border-primary/25 bg-background/85 rounded-2xl border p-6 shadow-sm backdrop-blur">
           <h1 className="text-foreground text-3xl font-semibold tracking-tight">
             Applicants Ranking
           </h1>
@@ -96,9 +96,6 @@ export function ApplicantsDashboard() {
         <Card className="border-primary/20 bg-background/90 shadow-sm backdrop-blur">
           <CardHeader>
             <CardTitle>Filters and sorting</CardTitle>
-            <CardDescription>
-              Select ranking metric using button group and set sorting direction using dropdown.
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">

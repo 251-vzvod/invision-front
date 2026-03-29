@@ -11,7 +11,7 @@ import { Label } from '@/shared/ui/label'
 import { loginSchema } from '../schemas'
 import { useAuthSessionQuery, useLoginMutation } from '../api'
 
-const FALLBACK_REDIRECT = '/'
+const FALLBACK_REDIRECT = '/applicants'
 
 const getSafeRedirectPath = (value: string | null): string => {
   if (!value) {
