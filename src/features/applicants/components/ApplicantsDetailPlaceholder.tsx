@@ -1,8 +1,10 @@
 'use client'
 
+import gsap from 'gsap'
 import Link from 'next/link'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from 'recharts'
+import { runPageIntroAnimation } from '@/shared/lib/gsap-animations'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
@@ -195,6 +197,7 @@ interface ApplicantsDetailProps {
 }
 
 export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
+  const rootRef = useRef<HTMLDivElement | null>(null)
   const defaultSort = useMemo(
     () => ({
       sortField: DEFAULT_SORT_FIELD,
@@ -205,6 +208,27 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
 
   const { data: profile, isLoading } = useApplicantProfileQuery(applicantId)
   const { data: rankedApplicants = [] } = useApplicantsRankingQuery(defaultSort)
+
+  useEffect(() => {
+    const root = rootRef.current
+
+    if (!root || !profile) {
+      return
+    }
+
+    const context = gsap.context(() => {
+      runPageIntroAnimation(root, {
+        sectionSelector: '[data-animate-detail-section]',
+        itemSelector: '[data-animate-detail-item]',
+        sectionDuration: 0.72,
+        itemDuration: 0.62,
+      })
+    }, root)
+
+    return () => {
+      context.revert()
+    }
+  }, [profile])
 
   const rank =
     rankedApplicants.findIndex((candidate) => candidate.candidate_id === applicantId) + 1 || null
@@ -235,7 +259,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             </CardHeader>
             <CardContent>
               <Button asChild variant="outline">
-                <Link href="/applicants">Back to applicants</Link>
+                <Link href="/applications">Back to applicants</Link>
               </Button>
             </CardContent>
           </Card>
@@ -312,16 +336,25 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
   const recommendationMeta = RECOMMENDATION_META[profile.recommendation]
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_10%_15%,rgba(166,216,10,0.2)_0%,transparent_36%),radial-gradient(circle_at_90%_5%,rgba(193,241,29,0.15)_0%,transparent_36%),linear-gradient(180deg,#f8fafc_0%,#f3f8df_100%)]">
+    <div
+      ref={rootRef}
+      className="min-h-screen bg-[radial-gradient(circle_at_10%_15%,rgba(166,216,10,0.2)_0%,transparent_36%),radial-gradient(circle_at_90%_5%,rgba(193,241,29,0.15)_0%,transparent_36%),linear-gradient(180deg,#f8fafc_0%,#f3f8df_100%)]"
+    >
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          data-animate-detail-section
+          className="flex flex-wrap items-center justify-between gap-3"
+        >
           <Button asChild variant="outline">
-            <Link href="/applicants">Back to applicants</Link>
+            <Link href="/applications">Back to applicants</Link>
           </Button>
           {rank ? <p className="text-muted-foreground text-base">Current rank: #{rank}</p> : null}
         </div>
 
-        <Card className="border-primary/20 bg-background/90 shadow-sm backdrop-blur">
+        <Card
+          data-animate-detail-section
+          className="border-primary/20 bg-background/90 shadow-sm backdrop-blur"
+        >
           <CardHeader>
             <CardTitle>Applicant profile</CardTitle>
             <CardDescription>
@@ -356,7 +389,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
           </CardContent>
         </Card>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div data-animate-detail-section className="grid gap-4 sm:grid-cols-3">
           {scoreCards.map((metric) => (
             <ScoreBubbleCard
               key={metric.label}
@@ -367,7 +400,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
           ))}
         </div>
 
-        <Card className="border-primary/20 bg-background/95 shadow-sm">
+        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
           <CardHeader>
             <CardTitle>Merit radar</CardTitle>
             <CardDescription>Visual comparison of the five key parameters</CardDescription>
@@ -390,7 +423,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-primary/20 bg-background/95 shadow-sm">
+        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
           <CardHeader>
             <CardTitle>Merit breakdown</CardTitle>
             <CardDescription>Potential, Motivation, Leadership, Experience, Trust</CardDescription>
@@ -407,7 +440,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-primary/20 bg-background/95 shadow-sm">
+        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
           <CardHeader>
             <CardTitle>Review flags and eligibility reasons</CardTitle>
           </CardHeader>
@@ -440,7 +473,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-primary/20 bg-background/95 shadow-sm">
+        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
           <CardHeader>
             <CardTitle>Top strengths</CardTitle>
           </CardHeader>
@@ -453,7 +486,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-primary/20 bg-background/95 shadow-sm">
+        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
           <CardHeader>
             <CardTitle>Main gaps</CardTitle>
           </CardHeader>
@@ -466,7 +499,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-primary/20 bg-background/95 shadow-sm">
+        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
           <CardHeader>
             <CardTitle>Uncertainties</CardTitle>
           </CardHeader>
@@ -479,7 +512,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-primary/20 bg-background/95 shadow-sm">
+        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
           <CardHeader>
             <CardTitle>Evidence spans</CardTitle>
           </CardHeader>
@@ -503,7 +536,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-primary/20 bg-background/95 shadow-sm">
+        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
           <CardHeader>
             <CardTitle>Feature snapshot</CardTitle>
             <CardDescription>
@@ -512,7 +545,12 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
           </CardHeader>
           <CardContent className="grid gap-3 text-base sm:grid-cols-2 lg:grid-cols-3">
             {featureSnapshotEntries.map(([key, value]) => (
-              <Card key={key} size="sm" className="border-primary/20 bg-primary/5 py-0">
+              <Card
+                key={key}
+                size="sm"
+                data-animate-detail-item
+                className="border-primary/20 bg-primary/5 py-0"
+              >
                 <CardContent className="space-y-2 py-4">
                   <div>
                     <p className="text-foreground text-sm font-semibold">
@@ -546,7 +584,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-primary/20 bg-background/95 shadow-sm">
+        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
           <CardHeader>
             <CardTitle>Explanation</CardTitle>
           </CardHeader>

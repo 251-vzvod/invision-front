@@ -1,6 +1,8 @@
 'use client'
 
+import gsap from 'gsap'
 import { useEffect, useRef, useState } from 'react'
+import { runPageIntroAnimation, prefersReducedMotion } from '@/shared/lib/gsap-animations'
 import { Tabs, TabsContent } from '@/shared/ui/tabs'
 import { useApplicationFormStore } from '../hooks/use-application-form'
 import { useApplicationFormFlow } from '../hooks/use-application-form-flow'
@@ -28,7 +30,9 @@ const TABS: { value: ApplicationTab; label: string; disabled?: boolean }[] = [
 export function ApplicationForm() {
   const { data, activeTab, setActiveTab, setProgram, setAgreements } = useApplicationFormStore()
   const [programDialogOpen, setProgramDialogOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement | null>(null)
   const tabNavigationRef = useRef<HTMLDivElement | null>(null)
+  const formContentRef = useRef<HTMLDivElement | null>(null)
   const isFirstRenderRef = useRef(true)
   const {
     viewMode,
@@ -68,9 +72,52 @@ export function ApplicationForm() {
     })
   }, [activeTab])
 
+  useEffect(() => {
+    const root = rootRef.current
+
+    if (!root) {
+      return
+    }
+
+    const context = gsap.context(() => {
+      runPageIntroAnimation(root, {
+        sectionSelector: '[data-animate-form-section]',
+        itemSelector: '[data-animate-form-item]',
+      })
+    }, root)
+
+    return () => {
+      context.revert()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (prefersReducedMotion()) {
+      return
+    }
+
+    const formContent = formContentRef.current
+
+    if (!formContent || viewMode !== 'form') {
+      return
+    }
+
+    gsap.fromTo(
+      formContent,
+      { autoAlpha: 0, y: 14 },
+      {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.45,
+        ease: 'power2.out',
+        clearProps: 'opacity,visibility,transform',
+      },
+    )
+  }, [activeTab, viewMode])
+
   return (
-    <div className="bg-accent-1 min-h-screen">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+    <div ref={rootRef} className="bg-accent-1 min-h-screen">
+      <div data-animate-form-section className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <ApplicationFormHeader
           viewMode={viewMode}
           program={data.program}
@@ -78,7 +125,10 @@ export function ApplicationForm() {
           onOpenProgramDialog={() => setProgramDialogOpen(true)}
         />
 
-        <div className="border-border bg-card rounded-2xl border shadow-sm">
+        <div
+          data-animate-form-section
+          className="border-border bg-card rounded-2xl border shadow-sm"
+        >
           {viewMode === 'form' ? (
             <>
               <Tabs
@@ -94,7 +144,7 @@ export function ApplicationForm() {
                   />
                 </div>
 
-                <div className="p-4 sm:p-6">
+                <div ref={formContentRef} data-animate-form-item className="p-4 sm:p-6">
                   {(stepNavigationWarning ||
                     (touchedTabs[activeTab] && activeTabErrors.length > 0)) && (
                     <div className="border-destructive/25 bg-destructive/10 mb-5 rounded-xl border px-4 py-3">

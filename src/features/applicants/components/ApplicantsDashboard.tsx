@@ -1,7 +1,9 @@
 'use client'
 
+import gsap from 'gsap'
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { runPageIntroAnimation, prefersReducedMotion } from '@/shared/lib/gsap-animations'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
@@ -62,6 +64,7 @@ const getApplicantMetricValue = (
 }
 
 export function ApplicantsDashboard() {
+  const rootRef = useRef<HTMLDivElement | null>(null)
   const [sortField, setSortField] = useState<ApplicantsSortField>(DEFAULT_SORT_FIELD)
   const [sortDirection, setSortDirection] =
     useState<ApplicantsSortDirection>(DEFAULT_SORT_DIRECTION)
@@ -76,15 +79,72 @@ export function ApplicantsDashboard() {
 
   const { data: applicants = [], isLoading } = useApplicantsRankingQuery(queryParams)
 
+  useEffect(() => {
+    const root = rootRef.current
+
+    if (!root) {
+      return
+    }
+
+    const context = gsap.context(() => {
+      runPageIntroAnimation(root, {
+        sectionSelector: '[data-animate-applicants-section]',
+        itemSelector: '[data-animate-applicants-item]',
+      })
+    }, root)
+
+    return () => {
+      context.revert()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (prefersReducedMotion()) {
+      return
+    }
+
+    const root = rootRef.current
+
+    if (!root || isLoading || applicants.length === 0) {
+      return
+    }
+
+    const cards = root.querySelectorAll('[data-animate-applicant-card]')
+
+    if (cards.length === 0) {
+      return
+    }
+
+    gsap.fromTo(
+      cards,
+      { autoAlpha: 0, y: 18, scale: 0.985 },
+      {
+        autoAlpha: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.55,
+        stagger: 0.06,
+        ease: 'power3.out',
+        clearProps: 'opacity,visibility,transform',
+      },
+    )
+  }, [applicants, isLoading, sortDirection, sortField])
+
   const handleResetSorting = () => {
     setSortField(DEFAULT_SORT_FIELD)
     setSortDirection(DEFAULT_SORT_DIRECTION)
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_10%_10%,rgba(166,216,10,0.18)_0%,transparent_38%),radial-gradient(circle_at_90%_15%,rgba(193,241,29,0.15)_0%,transparent_42%),linear-gradient(180deg,#f8fafc_0%,#f3f8df_100%)]">
+    <div
+      ref={rootRef}
+      className="min-h-screen bg-[radial-gradient(circle_at_10%_10%,rgba(166,216,10,0.18)_0%,transparent_38%),radial-gradient(circle_at_90%_15%,rgba(193,241,29,0.15)_0%,transparent_42%),linear-gradient(180deg,#f8fafc_0%,#f3f8df_100%)]"
+    >
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-        <section className="hidden md:block border-primary/25 bg-background/85 rounded-2xl border p-6 shadow-sm backdrop-blur">
+        <section
+          data-animate-applicants-section
+          className="border-primary/25 bg-background/85 hidden rounded-2xl border p-6 shadow-sm backdrop-blur md:block"
+        >
           <h1 className="text-foreground text-3xl font-semibold tracking-tight">
             Applicants Ranking
           </h1>
@@ -93,7 +153,10 @@ export function ApplicantsDashboard() {
           </p>
         </section>
 
-        <Card className="border-primary/20 bg-background/90 shadow-sm backdrop-blur">
+        <Card
+          data-animate-applicants-section
+          className="border-primary/20 bg-background/90 shadow-sm backdrop-blur"
+        >
           <CardHeader>
             <CardTitle>Filters and sorting</CardTitle>
           </CardHeader>
@@ -136,7 +199,10 @@ export function ApplicantsDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-primary/20 bg-background/90 shadow-sm backdrop-blur">
+        <Card
+          data-animate-applicants-section
+          className="border-primary/20 bg-background/90 shadow-sm backdrop-blur"
+        >
           <CardHeader>
             <CardTitle>Applicants ranking</CardTitle>
             <CardDescription>
@@ -155,8 +221,9 @@ export function ApplicantsDashboard() {
                 {applicants.map((applicant, index) => (
                   <Link
                     key={applicant.candidate_id}
-                    href={`/applicants/${applicant.candidate_id}`}
+                    href={`/application/${applicant.candidate_id}`}
                     className="block"
+                    data-animate-applicant-card
                   >
                     <Card className="border-primary/20 from-background to-primary/5 hover:border-primary/35 h-full border bg-linear-to-b py-0 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
                       <CardContent className="space-y-4 py-5">
