@@ -30,6 +30,8 @@ export function ApplicationForm() {
   const {
     touchedTabs,
     tabValidation,
+    activeTabErrors,
+    stepNavigationWarning,
     submissionError,
     submissionSuccess,
     isSubmitting,
@@ -73,7 +75,7 @@ export function ApplicationForm() {
             onValueChange={(value) => handleTabChange(value as ApplicationTab)}
             className="w-full gap-0"
           >
-            <div ref={tabNavigationRef}>
+            <div ref={tabNavigationRef} className="sticky top-0 z-40">
               <ApplicationTabsNavigation
                 tabs={TABS}
                 touchedTabs={touchedTabs}
@@ -82,6 +84,24 @@ export function ApplicationForm() {
             </div>
 
             <div className="p-4 sm:p-6">
+              {(stepNavigationWarning ||
+                (touchedTabs[activeTab] && activeTabErrors.length > 0)) && (
+                <div className="border-destructive/25 bg-destructive/10 mb-5 rounded-xl border px-4 py-3">
+                  <p className="text-destructive text-sm font-medium">
+                    {stepNavigationWarning ?? 'Please fix the highlighted fields in this section.'}
+                  </p>
+                  {activeTabErrors.length > 0 && (
+                    <ul className="text-destructive/90 mt-2 space-y-1 text-sm">
+                      {activeTabErrors.map((error) => (
+                        <li key={`${error.field}:${error.message}`}>
+                          • {error.field}: {error.message}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+
               <TabsContent value="personal" className="mt-0">
                 <PersonalInformationForm />
               </TabsContent>

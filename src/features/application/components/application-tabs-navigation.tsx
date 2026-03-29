@@ -29,7 +29,7 @@ export function ApplicationTabsNavigation({
   )
 
   return (
-    <div className="border-border bg-card sticky top-0 z-40 border-b px-4 shadow-[0_1px_0_0_var(--color-border)] sm:px-6">
+    <div className="border-border bg-card/95 border-b px-4 shadow-[0_1px_0_0_var(--color-border)] backdrop-blur-sm sm:px-6">
       <TabsList className="h-auto w-full flex-wrap justify-start gap-2 bg-transparent p-0 py-5">
         {tabs.map((tab) => (
           <TabsTrigger
