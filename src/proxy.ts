@@ -34,7 +34,7 @@ const getSafeNextPath = (value: string | null): string => {
   return value
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { nextUrl } = request
   const pathname = nextUrl.pathname
 

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Raleway, Geist_Mono } from 'next/font/google'
-import { Header } from './components/GlobalHeader'
+import { Header } from './components/Header'
 import { AppProviders } from './providers'
 import './globals.css'
 

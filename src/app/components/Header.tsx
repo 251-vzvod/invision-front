@@ -39,7 +39,7 @@ export function Header() {
             width={100}
             height={50}
             priority
-            className="h-auto"
+            className="h-auto w-[100px]"
           />
           <div className="hidden md:block">
             <p className="text-foreground text-lg font-semibold">InVision Dashboard</p>
