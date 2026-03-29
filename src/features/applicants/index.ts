@@ -1,0 +1,14 @@
+export { ApplicantsDashboard } from './components/ApplicantsDashboard'
+export { ApplicantsDetail } from './components/ApplicantsDetailPlaceholder'
+export { useApplicantsRankingQuery, useApplicantProfileQuery } from './api'
+export { DEFAULT_SORT_DIRECTION, DEFAULT_SORT_FIELD, SORT_FIELD_BUTTONS } from './constants'
+export type {
+  ApplicantProfile,
+  MeritBreakdown,
+  FeatureSnapshot,
+  EvidenceSpan,
+  ApplicantExplanation,
+  ApplicantsSortField,
+  ApplicantsSortDirection,
+  ApplicantsQueryParams,
+} from './types'

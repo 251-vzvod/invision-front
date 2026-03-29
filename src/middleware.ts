@@ -9,7 +9,8 @@ import { isValidSessionToken } from '@/shared/lib/auth-session'
 const AUTH_PATH = '/auth'
 const DEFAULT_AUTHENTICATED_REDIRECT = '/'
 
-const isProtectedPath = (pathname: string): boolean => pathname === '/'
+const isProtectedPath = (pathname: string): boolean =>
+  pathname === '/' || pathname.startsWith('/applicants')
 
 const getSessionSecret = (): string | null => {
   const login = process.env[MANAGER_LOGIN_ENV_KEY]
@@ -64,5 +65,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/auth'],
+  matcher: ['/', '/auth', '/applicants/:path*'],
 }
