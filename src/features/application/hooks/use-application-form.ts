@@ -35,9 +35,14 @@ interface ApplicationFormState {
   resetForm: () => void
 }
 
+type PersistedApplicationFormState = Pick<
+  ApplicationFormState,
+  'data' | 'activeTab' | 'hasGuardian'
+>
+
 export const useApplicationFormStore = create<ApplicationFormState>()(
-  persist(
-    (set) => ({
+  persist<ApplicationFormState, [], [], PersistedApplicationFormState>(
+    (set, get) => ({
       data: INITIAL_FORM_DATA,
       activeTab: 'personal',
       hasGuardian: false,
@@ -98,8 +103,8 @@ export const useApplicationFormStore = create<ApplicationFormState>()(
           },
         })),
 
-      getMotivationLetterFile: () => {
-        const storedLetter = useApplicationFormStore.getState().data.motivation.motivationLetter
+      getMotivationLetterFile: (): File | null => {
+        const storedLetter = get().data.motivation.motivationLetter
         if (!storedLetter) {
           return null
         }
@@ -107,7 +112,7 @@ export const useApplicationFormStore = create<ApplicationFormState>()(
         return serializedLetterToFile(storedLetter)
       },
 
-      setAgreements: (agreements) =>
+      setAgreements: (agreements: Partial<Agreements>) =>
         set((state) => ({
           data: {
             ...state.data,

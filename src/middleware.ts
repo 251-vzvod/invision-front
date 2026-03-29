@@ -46,7 +46,9 @@ export async function middleware(request: NextRequest) {
   const sessionSecret = getSessionSecret()
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value ?? ''
   const isAuthenticated =
-    Boolean(sessionSecret) && Boolean(token) && (await isValidSessionToken(token, sessionSecret))
+    sessionSecret !== null && Boolean(token)
+      ? await isValidSessionToken(token, sessionSecret)
+      : false
 
   if (isProtectedPath(pathname) && !isAuthenticated) {
     const redirectUrl = new URL(AUTH_PATH, request.url)
