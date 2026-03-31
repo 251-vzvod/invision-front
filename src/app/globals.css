@@ -220,6 +220,24 @@
   --sidebar-ring: #C1F11D;
 }
 
+/* ─── Dot grid background ─── */
+.bg-dot-grid {
+  background-image:
+    radial-gradient(circle, rgba(166, 216, 10, 0.12) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ─── Dashboard page background (light version of auth panel) ─── */
+.bg-dashboard {
+  background-color: #f9faf7;
+  background-image:
+    radial-gradient(circle at 10% 15%, rgba(166, 216, 10, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 85% 10%, rgba(193, 241, 29, 0.08) 0%, transparent 35%),
+    radial-gradient(circle at 50% 80%, rgba(166, 216, 10, 0.06) 0%, transparent 45%),
+    radial-gradient(circle, rgba(166, 216, 10, 0.07) 1px, transparent 1px);
+  background-size: 100%, 100%, 100%, 20px 20px;
+}
+
 /* ─── Base styles ─── */
 @layer base {
   * {

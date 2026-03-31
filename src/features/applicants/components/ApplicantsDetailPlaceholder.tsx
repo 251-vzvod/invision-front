@@ -34,6 +34,7 @@ import {
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent } from '@/shared/ui/card'
+import { Skeleton } from '@/shared/ui/skeleton'
 import {
   ChartContainer,
   ChartTooltip,
@@ -337,10 +338,133 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[linear-gradient(180deg,#f8faf5_0%,#f1f5f0_40%,#eef2ed_70%,#e8ece7_100%)]">
-        <main className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex h-64 items-center justify-center">
-            <p className="text-muted-foreground text-sm">Loading profile data...</p>
+      <div className="min-h-screen bg-dashboard">
+        <main className="mx-auto max-w-[1440px] space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+          {/* Back button */}
+          <Skeleton className="h-9 w-20 rounded-md" />
+
+          {/* Header: name + program + badges */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-48" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-6 w-24 rounded-full" />
+              <Skeleton className="h-6 w-24 rounded-full" />
+            </div>
+          </div>
+
+          {/* Score strip */}
+          <div className="grid grid-cols-3 gap-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex flex-col items-center gap-2 rounded-xl border border-border bg-white px-4 py-4"
+              >
+                <Skeleton className="h-9 w-16" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            ))}
+          </div>
+
+          {/* Committee Decision skeleton */}
+          <Card className="border-border bg-white shadow-sm">
+            <CardContent className="space-y-4 px-4 py-4">
+              <Skeleton className="h-5 w-44" />
+              <Skeleton className="h-6 w-32" />
+              <div className="flex gap-2">
+                <Skeleton className="h-10 w-28 rounded-md" />
+                <Skeleton className="h-10 w-28 rounded-md" />
+                <Skeleton className="h-10 w-28 rounded-md" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Two-column layout */}
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+            {/* Left column */}
+            <div className="space-y-4">
+              {/* Radar chart */}
+              <Card className="border-border bg-white shadow-sm">
+                <CardContent className="px-4 py-4">
+                  <Skeleton className="mx-auto aspect-square max-h-72 w-full rounded-xl" />
+                </CardContent>
+              </Card>
+
+              {/* Merit breakdown bars */}
+              <Card className="border-border bg-white shadow-sm">
+                <CardContent className="space-y-3 px-4 py-4">
+                  <Skeleton className="h-4 w-36" />
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="space-y-1">
+                      <Skeleton className="h-3 w-20" />
+                      <Skeleton className="h-3 w-full rounded-full" />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* AI Detection */}
+              <Card className="border-border bg-white shadow-sm">
+                <CardContent className="space-y-2 px-4 py-4">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-32" />
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right column */}
+            <div className="space-y-4">
+              {/* Assessment Summary */}
+              <Card className="border-border bg-white shadow-sm">
+                <CardContent className="space-y-4 px-4 py-4">
+                  <Skeleton className="h-4 w-44" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                  <Skeleton className="h-16 w-full rounded-lg" />
+                </CardContent>
+              </Card>
+
+              {/* Review Flags */}
+              <Card className="border-border bg-white shadow-sm">
+                <CardContent className="space-y-2 px-4 py-4">
+                  <Skeleton className="h-4 w-28" />
+                  <div className="flex flex-wrap gap-1.5">
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                    <Skeleton className="h-6 w-28 rounded-full" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Strengths & Gaps */}
+              <Card className="border-border bg-white shadow-sm">
+                <CardContent className="px-4 py-4">
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    {/* Strengths */}
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-28" />
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <Skeleton key={i} className="h-4 w-full" />
+                      ))}
+                    </div>
+                    {/* Gaps */}
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-24" />
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <Skeleton key={i} className="h-4 w-full" />
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </main>
       </div>
@@ -349,7 +473,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-[linear-gradient(180deg,#f8faf5_0%,#f1f5f0_40%,#eef2ed_70%,#e8ece7_100%)]">
+      <div className="min-h-screen bg-dashboard">
         <main className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
           <div className="space-y-4">
             <p className="text-foreground text-lg font-semibold">Applicant not found</p>
@@ -400,7 +524,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
   )
 
   return (
-    <div ref={rootRef} className="min-h-screen bg-[linear-gradient(180deg,#f8faf5_0%,#f1f5f0_40%,#eef2ed_70%,#e8ece7_100%)]">
+    <div ref={rootRef} className="min-h-screen bg-dashboard">
       <main className="mx-auto max-w-[1440px] space-y-6 px-4 py-8 sm:px-6 lg:px-8">
         {/* ---------------------------------------------------------------- */}
         {/*  Top bar: Back + Rank                                            */}

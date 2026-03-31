@@ -455,7 +455,7 @@ function EmeraldGradient({ id }: { id: string }) {
 
 function AnalyticsSkeleton() {
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f8faf5_0%,#f1f5f0_40%,#eef2ed_70%,#e8ece7_100%)]">
+    <div className="min-h-screen bg-dashboard">
       <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
         {/* Header skeleton */}
         <div className="mb-8">
@@ -540,7 +540,7 @@ export function AnalyticsDashboard() {
   )
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f8faf5_0%,#f1f5f0_40%,#eef2ed_70%,#e8ece7_100%)]">
+    <div className="min-h-screen bg-dashboard">
       <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
         {/* ---------------------------------------------------------------- */}
         {/* Header                                                          */}

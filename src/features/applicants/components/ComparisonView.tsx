@@ -13,6 +13,7 @@ import { ArrowLeft } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
+import { Skeleton } from '@/shared/ui/skeleton'
 import { useApplicantProfileQuery } from '../api'
 import type { ApplicantProfile, EligibilityStatus, Recommendation } from '../types'
 
@@ -496,10 +497,63 @@ export function ComparisonView() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[linear-gradient(180deg,#f8faf5_0%,#f1f5f0_40%,#eef2ed_70%,#e8ece7_100%)]">
-        <div className="border-border rounded-xl border bg-white p-12 text-center shadow-sm">
-          <p className="text-muted-foreground text-sm">Loading candidate profiles...</p>
-        </div>
+      <div className="min-h-screen bg-dashboard">
+        <main className="mx-auto max-w-[1440px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+          {/* Top bar */}
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-9 w-20 rounded-md" />
+            <Skeleton className="h-7 w-56" />
+          </div>
+
+          {/* Score overview table skeleton */}
+          <div className="border-border overflow-hidden rounded-xl border bg-white shadow-sm">
+            <Skeleton className="h-10 w-full rounded-none" />
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="border-border flex items-center border-b px-4 last:border-b-0">
+                <Skeleton className="my-2.5 h-6 w-full" />
+              </div>
+            ))}
+          </div>
+
+          {/* Two columns: radar + strengths */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="border-border rounded-xl border bg-white p-6 shadow-sm">
+              <Skeleton className="mb-4 h-5 w-28" />
+              <Skeleton className="mx-auto h-72 w-full max-w-[480px] rounded-xl" />
+            </div>
+            <div className="border-border rounded-xl border bg-white p-6 shadow-sm">
+              <Skeleton className="mb-4 h-5 w-36" />
+              <div className="grid gap-6 sm:grid-cols-2">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div key={i} className="space-y-3">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-3/4" />
+                    <Skeleton className="mt-3 h-4 w-20" />
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* AI Detection skeleton */}
+          <div className="border-border rounded-xl border bg-white p-6 shadow-sm">
+            <Skeleton className="mb-4 h-5 w-28" />
+            <div className="space-y-3">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className="h-4 w-24 shrink-0 sm:w-40" />
+                  <Skeleton className="h-2.5 flex-1 rounded-full" />
+                  <Skeleton className="h-4 w-12" />
+                  <Skeleton className="h-6 w-16 rounded-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </main>
       </div>
     )
   }
@@ -526,7 +580,7 @@ export function ComparisonView() {
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f8faf5_0%,#f1f5f0_40%,#eef2ed_70%,#e8ece7_100%)]">
+    <div className="min-h-screen bg-dashboard">
       <main className="mx-auto max-w-[1440px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         {/* Top bar */}
         <div className="flex items-center gap-4">

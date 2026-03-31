@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { prefersReducedMotion } from '@/shared/lib/gsap-animations'
 import { cn } from '@/shared/lib/utils'
+import { Skeleton } from '@/shared/ui/skeleton'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -654,7 +655,7 @@ export function ApplicantsDashboard() {
   }, [filteredApplicants, isLoading])
 
   return (
-    <div ref={rootRef} className="min-h-screen bg-[linear-gradient(180deg,#f8faf5_0%,#f1f5f0_40%,#eef2ed_70%,#e8ece7_100%)]">
+    <div ref={rootRef} className="min-h-screen bg-dashboard">
       <main className="mx-auto max-w-[1440px] space-y-5 px-4 py-6 sm:px-6 lg:px-8">
         {/* Header */}
         <div>
@@ -736,8 +737,17 @@ export function ApplicantsDashboard() {
 
         {/* Loading state */}
         {isLoading ? (
-          <div className="border-border rounded-xl border bg-white p-12 text-center shadow-sm">
-            <p className="text-muted-foreground text-sm">Loading applicants...</p>
+          <div className="space-y-0">
+            {/* Table header skeleton */}
+            <Skeleton className="h-10 w-full rounded-t-xl rounded-b-none" />
+            {/* Table body rows */}
+            <div className="border-border overflow-hidden rounded-b-xl border border-t-0 bg-white shadow-sm">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="border-border flex items-center gap-4 border-b px-4 last:border-b-0">
+                  <Skeleton className="my-3 h-8 w-full" />
+                </div>
+              ))}
+            </div>
           </div>
         ) : filteredApplicants.length === 0 ? (
           <div className="border-border rounded-xl border bg-white p-12 text-center shadow-sm">
