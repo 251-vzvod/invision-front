@@ -246,9 +246,11 @@
   body {
     @apply bg-background text-foreground;
     line-height: 1.2;
+    overscroll-behavior: none;
   }
   html {
     @apply font-sans;
+    overscroll-behavior: none;
   }
 }
 

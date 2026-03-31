@@ -295,7 +295,10 @@ export function HomeLanding() {
   }, [])
 
   return (
-    <main ref={rootRef} className="bg-dashboard overflow-x-hidden">
+    <main ref={rootRef} className="relative bg-gray-950 bg-dot-grid overflow-x-hidden">
+      {/* Radial gradient overlays */}
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(166,216,10,0.15)_0%,transparent_50%)]" />
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(166,216,10,0.08)_0%,transparent_50%)]" />
       {/* ═══════ Section 1: Hero ═══════ */}
       <section
         ref={heroRef}
@@ -304,7 +307,7 @@ export function HomeLanding() {
         <div className="relative z-10 text-center">
           <p
             data-hero-badge
-            className="invisible mb-6 inline-flex items-center gap-2 rounded-full border border-accent-6/30 bg-accent-1 px-4 py-1.5 text-sm font-medium text-accent-8"
+            className="invisible mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-white/80"
           >
             <Sparkles className="size-4" />
             AI-Powered Admissions Platform
@@ -312,9 +315,9 @@ export function HomeLanding() {
 
           <h1
             data-hero-heading
-            className="invisible mx-auto max-w-4xl text-5xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl"
+            className="invisible mx-auto max-w-4xl text-5xl font-bold leading-tight tracking-tight text-white sm:text-6xl lg:text-7xl"
           >
-            <span className="bg-gradient-to-r from-accent-8 via-accent-6 to-accent-9 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
               AI-Powered
             </span>{' '}
             Admissions
@@ -322,7 +325,7 @@ export function HomeLanding() {
 
           <p
             data-hero-subtitle
-            className="invisible mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl"
+            className="invisible mx-auto mt-6 max-w-2xl text-lg text-white/60 sm:text-xl"
           >
             Intelligent candidate screening for inVision U. Evaluate talent,
             not just applications.
@@ -344,7 +347,7 @@ export function HomeLanding() {
               asChild
               size="lg"
               variant="outline"
-              className="invisible h-12 gap-2 px-6 text-base font-semibold"
+              className="invisible h-12 gap-2 bg-transparent border-white/20 px-6 text-base font-semibold text-white hover:bg-white/10"
               data-hero-btn
             >
               <Link href="/applicants">Manager Dashboard</Link>
@@ -356,25 +359,25 @@ export function HomeLanding() {
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div
             data-float-card
-            className="invisible absolute left-[5%] top-[18%] rounded-2xl border border-white/40 bg-white/60 px-5 py-3.5 shadow-lg backdrop-blur-md sm:left-[8%]"
+            className="invisible absolute left-[5%] top-[18%] rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 shadow-lg backdrop-blur-md sm:left-[8%]"
           >
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-sm font-semibold text-white/70">
               8+ Merit Dimensions
             </p>
           </div>
           <div
             data-float-card
-            className="invisible absolute right-[5%] top-[25%] rounded-2xl border border-white/40 bg-white/60 px-5 py-3.5 shadow-lg backdrop-blur-md sm:right-[10%]"
+            className="invisible absolute right-[5%] top-[25%] rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 shadow-lg backdrop-blur-md sm:right-[10%]"
           >
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-sm font-semibold text-white/70">
               AI Scoring Engine
             </p>
           </div>
           <div
             data-float-card
-            className="invisible absolute bottom-[22%] left-[12%] rounded-2xl border border-white/40 bg-white/60 px-5 py-3.5 shadow-lg backdrop-blur-md sm:left-[15%]"
+            className="invisible absolute bottom-[22%] left-[12%] rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 shadow-lg backdrop-blur-md sm:left-[15%]"
           >
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-sm font-semibold text-white/70">
               Real-time Analysis
             </p>
           </div>
@@ -388,7 +391,7 @@ export function HomeLanding() {
       >
         <h2
           data-features-title
-          className="invisible mb-14 text-center text-3xl font-bold tracking-tight sm:text-4xl"
+          className="invisible mb-14 text-center text-3xl font-bold tracking-tight text-white sm:text-4xl"
         >
           What InVision Offers
         </h2>
@@ -398,13 +401,13 @@ export function HomeLanding() {
             <div
               key={feature.title}
               data-feature-card
-              className="invisible rounded-2xl border border-border/60 bg-white/70 p-8 shadow-sm backdrop-blur-sm transition-shadow hover:shadow-md"
+              className="invisible rounded-2xl border border-white/10 bg-white/5 p-8 shadow-sm backdrop-blur-sm transition-shadow hover:shadow-md"
             >
-              <div className="mb-5 inline-flex size-12 items-center justify-center rounded-xl bg-accent-2 text-accent-7">
+              <div className="mb-5 inline-flex size-12 items-center justify-center rounded-xl bg-white/10 text-primary">
                 <feature.icon className="size-6" />
               </div>
-              <h3 className="mb-2 text-xl font-semibold">{feature.title}</h3>
-              <p className="leading-relaxed text-muted-foreground">
+              <h3 className="mb-2 text-xl font-semibold text-white">{feature.title}</h3>
+              <p className="leading-relaxed text-white/60">
                 {feature.description}
               </p>
             </div>
@@ -419,7 +422,7 @@ export function HomeLanding() {
       >
         <h2
           data-steps-title
-          className="invisible mb-16 text-center text-3xl font-bold tracking-tight sm:text-4xl"
+          className="invisible mb-16 text-center text-3xl font-bold tracking-tight text-white sm:text-4xl"
         >
           How It Works
         </h2>
@@ -434,7 +437,7 @@ export function HomeLanding() {
               {i < STEPS.length - 1 && (
                 <div
                   data-step-line
-                  className="absolute left-[calc(50%+2rem)] top-6 hidden h-0.5 origin-left bg-accent-5 md:block"
+                  className="absolute left-[calc(50%+2rem)] top-6 hidden h-0.5 origin-left bg-white/10 md:block"
                   style={{ width: 'calc(100% - 4rem)' }}
                 />
               )}
@@ -442,12 +445,12 @@ export function HomeLanding() {
               <div data-step-item className="invisible relative z-10">
                 <div
                   data-step-number
-                  className="mx-auto mb-5 flex size-12 items-center justify-center rounded-full bg-accent-6 text-lg font-bold text-white"
+                  className="mx-auto mb-5 flex size-12 items-center justify-center rounded-full bg-primary text-lg font-bold text-gray-950"
                 >
                   {step.number}
                 </div>
-                <h3 className="mb-2 text-xl font-semibold">{step.title}</h3>
-                <p className="max-w-xs text-muted-foreground">
+                <h3 className="mb-2 text-xl font-semibold text-white">{step.title}</h3>
+                <p className="max-w-xs text-white/50">
                   {step.description}
                 </p>
               </div>
@@ -459,7 +462,7 @@ export function HomeLanding() {
       {/* ═══════ Section 4: Stats ═══════ */}
       <section
         ref={statsRef}
-        className="bg-accent-1/60 py-24 backdrop-blur-sm"
+        className="bg-white/[0.02] py-24 backdrop-blur-sm"
       >
         <div className="mx-auto grid w-full max-w-5xl grid-cols-2 gap-10 px-4 sm:px-6 md:grid-cols-4 lg:px-8">
           {STATS.map((stat) => (
@@ -471,11 +474,11 @@ export function HomeLanding() {
               <span
                 data-stat-value={stat.value}
                 data-stat-suffix={stat.suffix}
-                className="text-4xl font-bold text-accent-8 sm:text-5xl"
+                className="text-4xl font-bold text-primary sm:text-5xl"
               >
                 0
               </span>
-              <span className="mt-2 text-sm font-medium text-muted-foreground">
+              <span className="mt-2 text-sm font-medium text-white/50">
                 {stat.label}
               </span>
             </div>
@@ -492,11 +495,11 @@ export function HomeLanding() {
           data-cta-content
           className="invisible flex flex-col items-center text-center"
         >
-          <Shield className="mb-4 size-10 text-accent-6" />
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <Shield className="mb-4 size-10 text-primary" />
+          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Ready to Transform Admissions?
           </h2>
-          <p className="mt-4 max-w-xl text-muted-foreground">
+          <p className="mt-4 max-w-xl text-white/60">
             Join inVision U in building a fairer, faster, and fully
             transparent admissions process.
           </p>
@@ -515,14 +518,14 @@ export function HomeLanding() {
               asChild
               size="lg"
               variant="outline"
-              className="h-12 px-6 text-base font-semibold"
+              className="h-12 bg-transparent border-white/20 px-6 text-base font-semibold text-white hover:bg-white/10"
             >
               <Link href="/applicants">Manager Dashboard</Link>
             </Button>
           </div>
         </div>
 
-        <footer className="mt-20 border-t border-border/40 pt-8 text-center text-sm text-muted-foreground">
+        <footer className="mt-20 border-t border-white/10 pt-8 text-center text-sm text-white/30">
           Built for inVision U &mdash; Decentrathon 5.0
         </footer>
       </section>
