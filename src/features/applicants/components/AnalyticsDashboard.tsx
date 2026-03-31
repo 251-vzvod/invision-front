@@ -29,6 +29,12 @@ import {
   PolarRadiusAxis,
 } from 'recharts'
 import { cn } from '@/shared/lib/utils'
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/shared/ui/chart'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { useApplicantsRankingQuery } from '../api'
 import type {
@@ -90,6 +96,14 @@ const FLAG_LABELS: Record<string, string> = {
   section_mismatch: 'Section Mismatch',
   missing_required_materials: 'Missing Materials',
   auxiliary_ai_generation_signal: 'AI Generation Signal',
+}
+
+const radarConfig: ChartConfig = {
+  value: { label: 'Average', color: '#a6d80a' },
+}
+
+const funnelConfig: ChartConfig = {
+  count: { label: 'Candidates', color: '#10b981' },
 }
 
 // ---------------------------------------------------------------------------
@@ -951,166 +965,59 @@ export function AnalyticsDashboard() {
         </div>
 
         {/* ---------------------------------------------------------------- */}
-        {/* Merit Radar (centered)                                          */}
+        {/* Merit Radar + Candidate Funnel                                  */}
         {/* ---------------------------------------------------------------- */}
-        <div className="mb-6 flex justify-center">
-          <SectionCard
-            title="Average Merit Breakdown"
-            icon={TrendingUp}
-            className="w-full max-w-[540px]"
-          >
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart
-                  data={stats.avgMeritBreakdown}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius="70%"
-                >
-                  <PolarGrid stroke="#e5e7eb" />
-                  <PolarAngleAxis
-                    dataKey="subject"
-                    tick={(props: Record<string, unknown>) => {
-                      const x = Number(props.x ?? 0)
-                      const y = Number(props.y ?? 0)
-                      const payload = props.payload as { value: string } | undefined
-                      const index = Number(props.index ?? 0)
-                      const item = stats.avgMeritBreakdown[index]
-                      return (
-                        <g>
-                          <text
-                            x={x}
-                            y={y}
-                            textAnchor="middle"
-                            fill="#6b7280"
-                            fontSize={12}
-                            fontWeight={500}
-                          >
-                            {payload?.value ?? ''}
-                          </text>
-                          <text
-                            x={x}
-                            y={y + 14}
-                            textAnchor="middle"
-                            fill="#10b981"
-                            fontSize={11}
-                            fontWeight={700}
-                          >
-                            {item?.value ?? ''}
-                          </text>
-                        </g>
-                      )
-                    }}
-                  />
-                  <PolarRadiusAxis
-                    angle={90}
-                    domain={[0, 100]}
-                    tick={false}
-                    axisLine={false}
-                  />
-                  <Radar
-                    name="Average"
-                    dataKey="value"
-                    stroke="#10b981"
-                    fill="#10b981"
-                    fillOpacity={0.15}
-                    strokeWidth={2}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
+        <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <SectionCard title="Average Merit Breakdown" icon={TrendingUp}>
+            <ChartContainer config={radarConfig} className="mx-auto aspect-square max-h-72 w-full">
+              <RadarChart data={stats.avgMeritBreakdown} outerRadius="72%">
+                <PolarGrid stroke="rgba(166,216,10,0.35)" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b7280', fontSize: 12 }} />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                <Radar
+                  dataKey="value"
+                  fill="var(--color-value)"
+                  fillOpacity={0.24}
+                  stroke="var(--color-value)"
+                  strokeWidth={2}
+                />
+              </RadarChart>
+            </ChartContainer>
+          </SectionCard>
+
+          <SectionCard title="Candidate Funnel" icon={Activity}>
+            <ChartContainer config={funnelConfig} className="h-72 w-full">
+              <BarChart
+                data={stats.funnel}
+                layout="vertical"
+                margin={{ left: 8, right: 24 }}
+              >
+                <CartesianGrid horizontal={false} stroke="#e5e7eb" strokeDasharray="3 3" />
+                <XAxis type="number" hide />
+                <YAxis
+                  type="category"
+                  dataKey="label"
+                  tick={{ fill: '#6b7280', fontSize: 12 }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={110}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent />}
+                />
+                <Bar
+                  dataKey="count"
+                  fill="var(--color-count)"
+                  radius={[0, 6, 6, 0]}
+                  barSize={28}
+                />
+              </BarChart>
+            </ChartContainer>
           </SectionCard>
         </div>
 
-        {/* ---------------------------------------------------------------- */}
-        {/* Candidate Funnel (full width)                                   */}
-        {/* ---------------------------------------------------------------- */}
-        <SectionCard title="Candidate Funnel" icon={Activity}>
-          {/* Desktop: horizontal funnel */}
-          <div className="hidden items-center justify-center gap-0 lg:flex">
-            {stats.funnel.map((stage, index) => {
-              const maxCount = stats.funnel[0]?.count ?? 1
-              const pct =
-                maxCount > 0
-                  ? Math.round((stage.count / maxCount) * 100)
-                  : 0
-              // Decreasing opacity for visual funnel effect
-              const opacity = 1 - index * 0.15
-
-              return (
-                <div key={stage.label} className="flex items-center">
-                  <div
-                    className="flex flex-col items-center justify-center rounded-xl px-5 py-4 text-center transition-all duration-300"
-                    style={{
-                      backgroundColor: `rgba(167, 216, 10, ${opacity * 0.15})`,
-                      borderWidth: 1,
-                      borderColor: `rgba(167, 216, 10, ${opacity * 0.4})`,
-                      minWidth: `${Math.max(pct * 1.6, 100)}px`,
-                    }}
-                  >
-                    <span className="text-2xl font-bold text-gray-900">
-                      {stage.count}
-                    </span>
-                    <span className="mt-0.5 text-[11px] font-medium text-gray-500">
-                      {stage.label}
-                    </span>
-                    <span className="mt-0.5 text-[10px] text-gray-400">
-                      {pct}%
-                    </span>
-                  </div>
-                  {index < stats.funnel.length - 1 && (
-                    <ChevronRight className="mx-1 h-5 w-5 shrink-0 text-gray-300" />
-                  )}
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Mobile: vertical funnel */}
-          <div className="flex flex-col items-center gap-2 lg:hidden">
-            {stats.funnel.map((stage, index) => {
-              const maxCount = stats.funnel[0]?.count ?? 1
-              const pct =
-                maxCount > 0
-                  ? Math.round((stage.count / maxCount) * 100)
-                  : 0
-              const widthPct = Math.max(pct, 30)
-              const opacity = 1 - index * 0.15
-
-              return (
-                <div
-                  key={stage.label}
-                  className="flex w-full flex-col items-center"
-                >
-                  <div
-                    className="flex items-center justify-center rounded-xl px-4 py-3 text-center transition-all"
-                    style={{
-                      width: `${widthPct}%`,
-                      minWidth: '120px',
-                      backgroundColor: `rgba(167, 216, 10, ${opacity * 0.15})`,
-                      borderWidth: 1,
-                      borderColor: `rgba(167, 216, 10, ${opacity * 0.4})`,
-                    }}
-                  >
-                    <span className="text-lg font-bold text-gray-900">
-                      {stage.count}
-                    </span>
-                    <span className="ml-2 text-xs font-medium text-gray-500">
-                      {stage.label}
-                    </span>
-                    <span className="ml-1.5 text-[10px] text-gray-400">
-                      ({pct}%)
-                    </span>
-                  </div>
-                  {index < stats.funnel.length - 1 && (
-                    <ChevronRight className="my-0.5 h-4 w-4 rotate-90 text-gray-300" />
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </SectionCard>
+        {/* Old funnel removed — now in the grid with radar above */}
       </div>
     </div>
   )

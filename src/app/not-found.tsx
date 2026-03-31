@@ -6,8 +6,6 @@ import { Card, CardContent } from '@/shared/ui/card'
 export default function NotFound() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(166,216,10,0.2)_0%,rgba(15,23,42,0.1)_35%,#0f172a_100%)] px-6 py-10">
-      <style>{`[data-slot="sidebar-wrapper"] { display: contents !important; } [data-slot="sidebar"], [data-slot="sidebar-gap"] { display: none !important; } [data-slot="sidebar-inset"] > header { display: none !important; }`}</style>
-
       <div className="relative mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-5xl items-center justify-center">
         <Card className="border-border/70 w-full rounded-2xl border bg-[#ececec] shadow-2xl">
           <CardContent className="space-y-8 p-8 text-center sm:p-10">

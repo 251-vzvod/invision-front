@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Raleway, Geist_Mono } from 'next/font/google'
-import { AppShell } from './components/AppShell'
+import { Header } from './components/Header'
 import { AppProviders } from './providers'
 import './globals.css'
 
@@ -29,7 +29,8 @@ export default function RootLayout({
     <html lang="en" className={`${raleway.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <AppProviders>
-          <AppShell>{children}</AppShell>
+          <Header />
+          {children}
         </AppProviders>
       </body>
     </html>
