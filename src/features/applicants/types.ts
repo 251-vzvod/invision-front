@@ -144,8 +144,12 @@ export type ApplicantsSortField =
   | 'leadership'
   | 'experience'
   | 'trust'
+  | 'authenticity_risk'
+  | 'confidence'
 
 export type ApplicantsSortDirection = 'asc' | 'desc'
+
+export type EligibilityStatus = ApplicantProfile['eligibility_status']
 
 export interface ApplicantsQueryParams {
   sortField: ApplicantsSortField

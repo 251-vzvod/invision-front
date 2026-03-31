@@ -2,282 +2,627 @@
 
 import gsap from 'gsap'
 import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { runPageIntroAnimation, prefersReducedMotion } from '@/shared/lib/gsap-animations'
+import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronDown,
+  Filter,
+  RotateCcw,
+  Search,
+} from 'lucide-react'
+import { prefersReducedMotion } from '@/shared/lib/gsap-animations'
+import { cn } from '@/shared/lib/utils'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
+import { Checkbox } from '@/shared/ui/checkbox'
+import { Input } from '@/shared/ui/input'
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { useApplicantsRankingQuery } from '../api'
-import { DEFAULT_SORT_DIRECTION, DEFAULT_SORT_FIELD, SORT_FIELD_BUTTONS } from '../constants'
-import type { ApplicantProfile, ApplicantsSortDirection, ApplicantsSortField } from '../types'
+import { ELIGIBILITY_OPTIONS, RECOMMENDATION_OPTIONS } from '../constants'
+import type {
+  ApplicantProfile,
+  ApplicantsSortDirection,
+  ApplicantsSortField,
+  EligibilityStatus,
+  Recommendation,
+} from '../types'
 
-const getSortFieldLabel = (sortField: ApplicantsSortField): string => {
-  if (sortField === 'score') {
-    return 'Score'
+// ---------------------------------------------------------------------------
+// Sort cycle: desc -> asc -> reset (back to score desc)
+// ---------------------------------------------------------------------------
+type SortState = {
+  field: ApplicantsSortField
+  direction: ApplicantsSortDirection
+} | null
+
+function nextSortState(
+  current: SortState,
+  clickedField: ApplicantsSortField,
+): SortState {
+  if (current?.field !== clickedField) {
+    return { field: clickedField, direction: 'desc' }
   }
-
-  if (sortField === 'potential') {
-    return 'Potential'
+  if (current.direction === 'desc') {
+    return { field: clickedField, direction: 'asc' }
   }
-
-  if (sortField === 'motivation') {
-    return 'Motivation'
-  }
-
-  if (sortField === 'leadership') {
-    return 'Leadership'
-  }
-
-  if (sortField === 'experience') {
-    return 'Experience'
-  }
-
-  return 'Trust'
+  return null // reset
 }
 
-const getApplicantMetricValue = (
+// ---------------------------------------------------------------------------
+// Badge color helpers
+// ---------------------------------------------------------------------------
+const RECOMMENDATION_STYLES: Record<Recommendation, string> = {
+  standard_review: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  manual_review_required: 'bg-violet-50 text-violet-700 border-violet-200',
+  review_priority: 'bg-sky-50 text-sky-700 border-sky-200',
+  insufficient_evidence: 'bg-orange-50 text-orange-700 border-orange-200',
+  incomplete_application: 'bg-amber-50 text-amber-700 border-amber-200',
+  invalid: 'bg-red-50 text-red-700 border-red-200',
+}
+
+const RECOMMENDATION_LABELS: Record<Recommendation, string> = {
+  standard_review: 'Standard',
+  manual_review_required: 'Manual Review',
+  review_priority: 'Priority',
+  insufficient_evidence: 'Insufficient',
+  incomplete_application: 'Incomplete',
+  invalid: 'Invalid',
+}
+
+const ELIGIBILITY_STYLES: Record<EligibilityStatus, string> = {
+  eligible: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  conditionally_eligible: 'bg-sky-50 text-sky-700 border-sky-200',
+  incomplete_application: 'bg-amber-50 text-amber-700 border-amber-200',
+  invalid: 'bg-red-50 text-red-700 border-red-200',
+}
+
+// ---------------------------------------------------------------------------
+// Table column definitions
+// ---------------------------------------------------------------------------
+interface ColumnDef {
+  key: string
+  label: string
+  sortField?: ApplicantsSortField
+  className?: string
+  headerClassName?: string
+}
+
+const TABLE_COLUMNS: ColumnDef[] = [
+  { key: 'rank', label: '#', className: 'w-12 text-center', headerClassName: 'text-center' },
+  { key: 'name', label: 'Name', className: 'min-w-[160px]' },
+  { key: 'program', label: 'Program', className: 'min-w-[120px]' },
+  { key: 'score', label: 'Score', sortField: 'score', className: 'w-20 text-right', headerClassName: 'justify-end' },
+  { key: 'potential', label: 'Potential', sortField: 'potential', className: 'w-20 text-right', headerClassName: 'justify-end' },
+  { key: 'motivation', label: 'Motivation', sortField: 'motivation', className: 'w-24 text-right', headerClassName: 'justify-end' },
+  { key: 'leadership', label: 'Leadership', sortField: 'leadership', className: 'w-24 text-right', headerClassName: 'justify-end' },
+  { key: 'experience', label: 'Experience', sortField: 'experience', className: 'w-24 text-right', headerClassName: 'justify-end' },
+  { key: 'trust', label: 'Trust', sortField: 'trust', className: 'w-16 text-right', headerClassName: 'justify-end' },
+  { key: 'auth_risk', label: 'Auth. Risk', sortField: 'authenticity_risk', className: 'w-24 text-right', headerClassName: 'justify-end' },
+  { key: 'confidence', label: 'Confidence', sortField: 'confidence', className: 'w-24 text-right', headerClassName: 'justify-end' },
+  { key: 'status', label: 'Status', className: 'w-28' },
+]
+
+// ---------------------------------------------------------------------------
+// MultiFilterPopover — reusable multi-select filter with popover + checkboxes
+// ---------------------------------------------------------------------------
+function MultiFilterPopover<T extends string>({
+  label,
+  options,
+  selected,
+  onToggle,
+}: {
+  label: string
+  options: Array<{ value: T; label: string; dotClassName?: string }>
+  selected: Set<T>
+  onToggle: (value: T) => void
+}) {
+  const allSelected = selected.size === options.length
+  const count = allSelected ? 0 : selected.size
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5">
+          <Filter className="size-3.5" />
+          {label}
+          {count > 0 && (
+            <span className="bg-primary text-primary-foreground flex size-5 items-center justify-center rounded-full text-xs font-semibold">
+              {count}
+            </span>
+          )}
+          <ChevronDown className="size-3.5 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-56 p-2">
+        <div className="flex flex-col gap-0.5">
+          {options.map((option) => (
+            <label
+              key={option.value}
+              className="hover:bg-muted flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+            >
+              <Checkbox
+                checked={selected.has(option.value)}
+                onCheckedChange={() => onToggle(option.value)}
+              />
+              {option.dotClassName && (
+                <span className={cn('size-2 shrink-0 rounded-full', option.dotClassName)} />
+              )}
+              <span>{option.label}</span>
+            </label>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// SortIcon for column headers
+// ---------------------------------------------------------------------------
+function SortIcon({ field, sortState }: { field: ApplicantsSortField; sortState: SortState }) {
+  if (sortState?.field !== field) {
+    return <ArrowUpDown className="size-3.5 opacity-30" />
+  }
+  if (sortState.direction === 'desc') {
+    return <ArrowDown className="text-primary size-3.5" />
+  }
+  return <ArrowUp className="text-primary size-3.5" />
+}
+
+// ---------------------------------------------------------------------------
+// Cell value renderer
+// ---------------------------------------------------------------------------
+function getCellValue(
   applicant: ApplicantProfile,
-  sortField: ApplicantsSortField,
-): string => {
-  if (sortField === 'score') {
-    return applicant.merit_score.toString()
+  columnKey: string,
+  rank: number,
+): React.ReactNode {
+  switch (columnKey) {
+    case 'rank':
+      return <span className="text-muted-foreground text-sm">{rank}</span>
+    case 'name':
+      return (
+        <span className="text-foreground font-medium">
+          {applicant.candidate_name ?? applicant.candidate_id}
+        </span>
+      )
+    case 'program':
+      return (
+        <span className="text-muted-foreground text-sm">
+          {applicant.program_name ?? '-'}
+        </span>
+      )
+    case 'score':
+      return (
+        <span className="bg-primary/10 text-primary inline-flex min-w-[2.5rem] items-center justify-center rounded-md px-2 py-0.5 text-sm font-bold tabular-nums">
+          {applicant.merit_score}
+        </span>
+      )
+    case 'potential':
+      return <span className="tabular-nums">{applicant.merit_breakdown.potential}</span>
+    case 'motivation':
+      return <span className="tabular-nums">{applicant.merit_breakdown.motivation}</span>
+    case 'leadership':
+      return <span className="tabular-nums">{applicant.merit_breakdown.leadership_agency}</span>
+    case 'experience':
+      return <span className="tabular-nums">{applicant.merit_breakdown.experience_skills}</span>
+    case 'trust':
+      return <span className="tabular-nums">{applicant.merit_breakdown.trust_completeness}</span>
+    case 'auth_risk':
+      return (
+        <span className="tabular-nums">
+          {Math.round(applicant.authenticity_risk)}%
+        </span>
+      )
+    case 'confidence':
+      return <span className="tabular-nums">{applicant.confidence_score}</span>
+    case 'status':
+      return (
+        <Badge
+          variant="outline"
+          className={cn(
+            'text-xs font-medium',
+            RECOMMENDATION_STYLES[applicant.recommendation],
+          )}
+        >
+          {RECOMMENDATION_LABELS[applicant.recommendation]}
+        </Badge>
+      )
+    default:
+      return null
   }
-
-  if (sortField === 'potential') {
-    return applicant.merit_breakdown.potential.toString()
-  }
-
-  if (sortField === 'motivation') {
-    return applicant.merit_breakdown.motivation.toString()
-  }
-
-  if (sortField === 'leadership') {
-    return applicant.merit_breakdown.leadership_agency.toString()
-  }
-
-  if (sortField === 'experience') {
-    return applicant.merit_breakdown.experience_skills.toString()
-  }
-
-  return applicant.merit_breakdown.trust_completeness.toString()
 }
 
+// ---------------------------------------------------------------------------
+// Mobile card component
+// ---------------------------------------------------------------------------
+function ApplicantMobileCard({
+  applicant,
+  rank,
+}: {
+  applicant: ApplicantProfile
+  rank: number
+}) {
+  return (
+    <Link
+      href={`/application/${applicant.candidate_id}`}
+      className="block"
+      data-animate-applicant-card
+    >
+      <div className="border-border hover:border-primary/30 rounded-xl border bg-white p-4 transition-all hover:shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-100 text-xs font-medium">
+                {rank}
+              </span>
+              <p className="text-foreground truncate text-sm font-semibold">
+                {applicant.candidate_name ?? applicant.candidate_id}
+              </p>
+            </div>
+            <p className="text-muted-foreground mt-1 truncate pl-8 text-xs">
+              {applicant.program_name ?? 'No program'}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-foreground text-lg font-bold tabular-nums leading-tight">
+              {applicant.merit_score}
+            </p>
+            <p className="text-muted-foreground text-[10px] uppercase tracking-wider">Score</p>
+          </div>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          <Badge
+            variant="outline"
+            className={cn('text-xs', RECOMMENDATION_STYLES[applicant.recommendation])}
+          >
+            {RECOMMENDATION_LABELS[applicant.recommendation]}
+          </Badge>
+          <Badge
+            variant="outline"
+            className={cn('text-xs', ELIGIBILITY_STYLES[applicant.eligibility_status])}
+          >
+            {applicant.eligibility_status.replace(/_/g, ' ')}
+          </Badge>
+          <span className="text-muted-foreground ml-auto text-xs tabular-nums">
+            Risk {Math.round(applicant.authenticity_risk)}%
+          </span>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Main dashboard component
+// ---------------------------------------------------------------------------
 export function ApplicantsDashboard() {
   const rootRef = useRef<HTMLDivElement | null>(null)
-  const [sortField, setSortField] = useState<ApplicantsSortField>(DEFAULT_SORT_FIELD)
-  const [sortDirection, setSortDirection] =
-    useState<ApplicantsSortDirection>(DEFAULT_SORT_DIRECTION)
+  const router = useRouter()
+
+  // Sort state: null means default (score desc)
+  const [sortState, setSortState] = useState<SortState>({
+    field: 'score',
+    direction: 'desc',
+  })
+
+  // Filter state
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedEligibility, setSelectedEligibility] = useState<Set<EligibilityStatus>>(
+    () => new Set(ELIGIBILITY_OPTIONS.map((o) => o.value)),
+  )
+  const [selectedRecommendation, setSelectedRecommendation] = useState<Set<Recommendation>>(
+    () => new Set(RECOMMENDATION_OPTIONS.map((o) => o.value)),
+  )
+
+  // Mobile sort dropdown
+  const [mobileSortField, setMobileSortField] = useState<ApplicantsSortField>('score')
 
   const queryParams = useMemo(
     () => ({
-      sortField,
-      sortDirection,
+      sortField: sortState?.field ?? 'score',
+      sortDirection: sortState?.direction ?? 'desc',
     }),
-    [sortField, sortDirection],
+    [sortState],
   )
 
   const { data: applicants = [], isLoading } = useApplicantsRankingQuery(queryParams)
 
-  useEffect(() => {
-    const root = rootRef.current
+  // Filter applicants client-side
+  const filteredApplicants = useMemo(() => {
+    let result = applicants
 
-    if (!root) {
-      return
-    }
-
-    const context = gsap.context(() => {
-      runPageIntroAnimation(root, {
-        sectionSelector: '[data-animate-applicants-section]',
-        itemSelector: '[data-animate-applicants-item]',
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.trim().toLowerCase()
+      result = result.filter((a) => {
+        const name = (a.candidate_name ?? a.candidate_id).toLowerCase()
+        return name.includes(query)
       })
-    }, root)
-
-    return () => {
-      context.revert()
     }
+
+    // Eligibility filter
+    if (selectedEligibility.size < ELIGIBILITY_OPTIONS.length) {
+      result = result.filter((a) => selectedEligibility.has(a.eligibility_status))
+    }
+
+    // Recommendation filter
+    if (selectedRecommendation.size < RECOMMENDATION_OPTIONS.length) {
+      result = result.filter((a) => selectedRecommendation.has(a.recommendation))
+    }
+
+    return result
+  }, [applicants, searchQuery, selectedEligibility, selectedRecommendation])
+
+  // Toggle helpers
+  const toggleEligibility = useCallback((value: EligibilityStatus) => {
+    setSelectedEligibility((prev) => {
+      const next = new Set(prev)
+      if (next.has(value)) {
+        if (next.size > 1) next.delete(value)
+      } else {
+        next.add(value)
+      }
+      return next
+    })
   }, [])
 
+  const toggleRecommendation = useCallback((value: Recommendation) => {
+    setSelectedRecommendation((prev) => {
+      const next = new Set(prev)
+      if (next.has(value)) {
+        if (next.size > 1) next.delete(value)
+      } else {
+        next.add(value)
+      }
+      return next
+    })
+  }, [])
+
+  const handleResetFilters = useCallback(() => {
+    setSearchQuery('')
+    setSelectedEligibility(new Set(ELIGIBILITY_OPTIONS.map((o) => o.value)))
+    setSelectedRecommendation(new Set(RECOMMENDATION_OPTIONS.map((o) => o.value)))
+    setSortState({ field: 'score', direction: 'desc' })
+    setMobileSortField('score')
+  }, [])
+
+  const handleColumnSort = useCallback(
+    (field: ApplicantsSortField) => {
+      setSortState((prev) => nextSortState(prev, field))
+    },
+    [],
+  )
+
+  const handleMobileSortChange = useCallback((value: string) => {
+    const field = value as ApplicantsSortField
+    setMobileSortField(field)
+    setSortState({ field, direction: 'desc' })
+  }, [])
+
+  const hasActiveFilters =
+    searchQuery.trim().length > 0 ||
+    selectedEligibility.size < ELIGIBILITY_OPTIONS.length ||
+    selectedRecommendation.size < RECOMMENDATION_OPTIONS.length
+
+  // Subtle page-level fade-in animation
   useEffect(() => {
-    if (prefersReducedMotion()) {
-      return
-    }
-
+    if (prefersReducedMotion()) return
     const root = rootRef.current
+    if (!root) return
 
-    if (!root || isLoading || applicants.length === 0) {
-      return
-    }
+    gsap.fromTo(
+      root,
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out', clearProps: 'opacity,transform' },
+    )
+  }, [])
+
+  // Animate cards on mobile when data changes
+  useEffect(() => {
+    if (prefersReducedMotion()) return
+    const root = rootRef.current
+    if (!root || isLoading || filteredApplicants.length === 0) return
 
     const cards = root.querySelectorAll('[data-animate-applicant-card]')
-
-    if (cards.length === 0) {
-      return
-    }
+    if (cards.length === 0) return
 
     gsap.fromTo(
       cards,
-      { autoAlpha: 0, y: 18, scale: 0.985 },
+      { autoAlpha: 0, y: 12 },
       {
         autoAlpha: 1,
         y: 0,
-        scale: 1,
-        duration: 0.55,
-        stagger: 0.06,
-        ease: 'power3.out',
+        duration: 0.4,
+        stagger: 0.04,
+        ease: 'power2.out',
         clearProps: 'opacity,visibility,transform',
       },
     )
-  }, [applicants, isLoading, sortDirection, sortField])
-
-  const handleResetSorting = () => {
-    setSortField(DEFAULT_SORT_FIELD)
-    setSortDirection(DEFAULT_SORT_DIRECTION)
-  }
+  }, [filteredApplicants, isLoading])
 
   return (
-    <div
-      ref={rootRef}
-      className="min-h-screen bg-[radial-gradient(circle_at_10%_10%,rgba(166,216,10,0.18)_0%,transparent_38%),radial-gradient(circle_at_90%_15%,rgba(193,241,29,0.15)_0%,transparent_42%),linear-gradient(180deg,#f8fafc_0%,#f3f8df_100%)]"
-    >
-      <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-        <section
-          data-animate-applicants-section
-          className="border-primary/25 bg-background/85 hidden rounded-2xl border p-6 shadow-sm backdrop-blur md:block"
-        >
-          <h1 className="text-foreground text-3xl font-semibold tracking-tight">
+    <div ref={rootRef} className="min-h-screen bg-[linear-gradient(180deg,#f8faf5_0%,#f1f5f0_40%,#eef2ed_70%,#e8ece7_100%)]">
+      <main className="mx-auto max-w-[1440px] space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-foreground text-2xl font-semibold tracking-tight">
             Applicants Ranking
           </h1>
-          <p className="text-muted-foreground mt-2 text-base">
-            Sort candidates by score or any key merit dimension to compare strengths.
+          <p className="text-muted-foreground mt-1 text-sm">
+            {filteredApplicants.length} candidate{filteredApplicants.length !== 1 ? 's' : ''}{' '}
+            {hasActiveFilters ? '(filtered)' : 'total'}
           </p>
-        </section>
+        </div>
 
-        <Card
-          data-animate-applicants-section
-          className="border-primary/20 bg-background/90 shadow-sm backdrop-blur"
-        >
-          <CardHeader>
-            <CardTitle>Filters and sorting</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <p className="text-foreground text-base font-medium">Ranking metric</p>
-              <div data-slot="button-group" className="flex flex-wrap items-center gap-2.5">
-                {SORT_FIELD_BUTTONS.map((option) => (
-                  <Button
-                    key={option.value}
-                    type="button"
-                    size="default"
-                    variant={sortField === option.value ? 'default' : 'outline'}
-                    onClick={() => setSortField(option.value)}
-                  >
-                    {option.label}
-                  </Button>
-                ))}
-              </div>
+        {/* Toolbar: search + filters */}
+        <div className="border-border flex flex-col gap-3 rounded-xl border bg-white p-4 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search candidates..."
+                className="h-9 pl-9 text-sm"
+              />
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="text-foreground text-base font-medium">Sort direction</p>
-              <Select
-                value={sortDirection}
-                onValueChange={(value: ApplicantsSortDirection) => setSortDirection(value)}
+            {/* Filter buttons */}
+            <div className="flex flex-wrap items-center gap-2">
+              <MultiFilterPopover
+                label="Eligibility"
+                options={ELIGIBILITY_OPTIONS}
+                selected={selectedEligibility}
+                onToggle={toggleEligibility}
+              />
+              <MultiFilterPopover
+                label="Recommendation"
+                options={RECOMMENDATION_OPTIONS}
+                selected={selectedRecommendation}
+                onToggle={toggleRecommendation}
+              />
+
+              {/* Mobile sort dropdown */}
+              <div className="md:hidden">
+                <Select value={mobileSortField} onValueChange={handleMobileSortChange}>
+                  <SelectTrigger size="sm" className="h-9 w-32 gap-1 text-sm">
+                    <ArrowUpDown className="size-3.5 opacity-50" />
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="score">Score</SelectItem>
+                    <SelectItem value="potential">Potential</SelectItem>
+                    <SelectItem value="motivation">Motivation</SelectItem>
+                    <SelectItem value="leadership">Leadership</SelectItem>
+                    <SelectItem value="experience">Experience</SelectItem>
+                    <SelectItem value="trust">Trust</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetFilters}
+                disabled={!hasActiveFilters}
+                className="gap-1.5"
               >
-                <SelectTrigger size="default" className="w-48">
-                  <SelectValue placeholder="Select order" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="desc">Descending</SelectItem>
-                  <SelectItem value="asc">Ascending</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button type="button" size="default" variant="outline" onClick={handleResetSorting}>
+                <RotateCcw className="size-3.5" />
                 Reset
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card
-          data-animate-applicants-section
-          className="border-primary/20 bg-background/90 shadow-sm backdrop-blur"
-        >
-          <CardHeader>
-            <CardTitle>Applicants ranking</CardTitle>
-            <CardDescription>
-              Sorted by {getSortFieldLabel(sortField)} in {sortDirection} order.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <p className="text-muted-foreground text-base">Loading applicants...</p>
-            ) : applicants.length === 0 ? (
-              <p className="text-muted-foreground text-base">
-                No applicants found for current filter settings.
-              </p>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2">
-                {applicants.map((applicant, index) => (
-                  <Link
-                    key={applicant.candidate_id}
-                    href={`/application/${applicant.candidate_id}`}
-                    className="block"
-                    data-animate-applicant-card
-                  >
-                    <Card className="border-primary/20 from-background to-primary/5 hover:border-primary/35 h-full border bg-linear-to-b py-0 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                      <CardContent className="space-y-4 py-5">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="space-y-1">
-                            <p className="text-foreground text-lg font-semibold">
-                              {applicant.candidate_name ?? applicant.candidate_id}
-                            </p>
-                            <p className="text-muted-foreground text-base">
-                              {applicant.program_name ?? 'No program specified'}
-                            </p>
-                          </div>
-                          <Badge variant="secondary" className="px-3 py-1.5 text-sm">
-                            Rank #{index + 1}
-                          </Badge>
-                        </div>
-
-                        <div className="grid gap-2 text-sm sm:grid-cols-2">
-                          <Badge variant={sortField === 'score' ? 'secondary' : 'outline'}>
-                            Score: {applicant.merit_score}
-                          </Badge>
-                          <Badge variant={sortField === 'potential' ? 'secondary' : 'outline'}>
-                            Potential: {applicant.merit_breakdown.potential}
-                          </Badge>
-                          <Badge variant={sortField === 'motivation' ? 'secondary' : 'outline'}>
-                            Motivation: {applicant.merit_breakdown.motivation}
-                          </Badge>
-                          <Badge variant={sortField === 'leadership' ? 'secondary' : 'outline'}>
-                            Leadership: {applicant.merit_breakdown.leadership_agency}
-                          </Badge>
-                          <Badge variant={sortField === 'experience' ? 'secondary' : 'outline'}>
-                            Experience: {applicant.merit_breakdown.experience_skills}
-                          </Badge>
-                          <Badge variant={sortField === 'trust' ? 'secondary' : 'outline'}>
-                            Trust: {applicant.merit_breakdown.trust_completeness}
-                          </Badge>
-                        </div>
-
-                        <div className="text-muted-foreground flex flex-wrap gap-3 text-sm">
-                          <span>Confidence: {applicant.confidence_score}</span>
-                          <span>Authenticity Risk: {applicant.authenticity_risk}</span>
-                        </div>
-
-                        <div className="text-muted-foreground text-sm">
-                          Current metric value: {getApplicantMetricValue(applicant, sortField)}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
+        {/* Loading state */}
+        {isLoading ? (
+          <div className="border-border rounded-xl border bg-white p-12 text-center shadow-sm">
+            <p className="text-muted-foreground text-sm">Loading applicants...</p>
+          </div>
+        ) : filteredApplicants.length === 0 ? (
+          <div className="border-border rounded-xl border bg-white p-12 text-center shadow-sm">
+            <p className="text-muted-foreground text-sm">
+              No applicants match the current filters.
+            </p>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetFilters}
+                className="mt-3 gap-1.5"
+              >
+                <RotateCcw className="size-3.5" />
+                Reset filters
+              </Button>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        ) : (
+          <>
+            {/* Desktop table */}
+            <div className="border-border hidden overflow-hidden rounded-xl border bg-white shadow-sm md:block">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-border border-b bg-gray-50/80">
+                      {TABLE_COLUMNS.map((col) => (
+                        <th
+                          key={col.key}
+                          className={cn(
+                            'px-3 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase',
+                            col.className,
+                            col.sortField && sortState?.field === col.sortField && 'text-foreground',
+                          )}
+                        >
+                          {col.sortField ? (
+                            <button
+                              type="button"
+                              onClick={() => handleColumnSort(col.sortField!)}
+                              className={cn(
+                                'inline-flex items-center gap-1 transition-colors hover:text-foreground',
+                                col.headerClassName,
+                              )}
+                            >
+                              {col.label}
+                              <SortIcon field={col.sortField} sortState={sortState} />
+                            </button>
+                          ) : (
+                            <span className={cn('inline-flex items-center', col.headerClassName)}>
+                              {col.label}
+                            </span>
+                          )}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-border divide-y">
+                    {filteredApplicants.map((applicant, index) => (
+                      <tr
+                        key={applicant.candidate_id}
+                        className="hover:bg-muted/50 group cursor-pointer transition-colors"
+                        onClick={() => {
+                          router.push(`/application/${applicant.candidate_id}`)
+                        }}
+                      >
+                        {TABLE_COLUMNS.map((col) => (
+                          <td
+                            key={col.key}
+                            className={cn(
+                              'px-3 py-3 text-sm',
+                              col.className,
+                              col.sortField &&
+                                sortState?.field === col.sortField &&
+                                'bg-primary/[0.03]',
+                            )}
+                          >
+                            {getCellValue(applicant, col.key, index + 1)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="flex flex-col gap-2.5 md:hidden">
+              {filteredApplicants.map((applicant, index) => (
+                <ApplicantMobileCard
+                  key={applicant.candidate_id}
+                  applicant={applicant}
+                  rank={index + 1}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </main>
     </div>
   )

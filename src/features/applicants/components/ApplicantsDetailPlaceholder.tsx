@@ -1,13 +1,28 @@
 'use client'
 
 import gsap from 'gsap'
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowLeft,
+  Bot,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  ClipboardCheck,
+  HelpCircle,
+  MessageSquare,
+  Users,
+  XCircle,
+} from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from 'recharts'
+import { cn } from '@/shared/lib/utils'
 import { runPageIntroAnimation } from '@/shared/lib/gsap-animations'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
+import { Card, CardContent } from '@/shared/ui/card'
 import {
   ChartContainer,
   ChartTooltip,
@@ -18,70 +33,58 @@ import { useApplicantProfileQuery, useApplicantsRankingQuery } from '../api'
 import { DEFAULT_SORT_DIRECTION, DEFAULT_SORT_FIELD } from '../constants'
 import type { ApplicantProfile, FeatureSnapshot, Recommendation, ReviewFlag } from '../types'
 
+/* -------------------------------------------------------------------------- */
+/*  Meta constants                                                            */
+/* -------------------------------------------------------------------------- */
+
 const ELIGIBILITY_STATUS_META: Record<
   ApplicantProfile['eligibility_status'],
-  { label: string; description: string; badgeClassName: string }
+  { label: string; badgeClassName: string }
 > = {
   invalid: {
     label: 'Invalid',
-    description: 'Missing candidate id, no usable content, or consent is false.',
     badgeClassName: 'border-destructive/40 bg-destructive/10 text-destructive',
   },
   incomplete_application: {
-    label: 'Incomplete Application',
-    description: 'Not enough text content for meaningful scoring.',
+    label: 'Incomplete',
     badgeClassName: 'border-amber-500/40 bg-amber-500/10 text-amber-700',
   },
   conditionally_eligible: {
     label: 'Conditionally Eligible',
-    description: 'Scoreable, but requires extra checks or missingness follow-up.',
     badgeClassName: 'border-sky-600/35 bg-sky-600/10 text-sky-800',
   },
   eligible: {
     label: 'Eligible',
-    description: 'All key sections are present for standard evaluation.',
     badgeClassName: 'border-emerald-600/35 bg-emerald-600/10 text-emerald-800',
   },
 }
 
-const ELIGIBILITY_REASON_LABELS: Record<string, string> = {
-  missing_required_materials_documents: 'Missing required documents',
-  missing_required_materials_portfolio: 'Missing required portfolio',
-  missing_required_materials_video: 'Missing required video',
-}
-
 const RECOMMENDATION_META: Record<
   Recommendation,
-  { label: string; description: string; badgeClassName: string }
+  { label: string; badgeClassName: string }
 > = {
   invalid: {
     label: 'Invalid',
-    description: 'Application cannot proceed to normal review.',
     badgeClassName: 'border-destructive/40 bg-destructive/10 text-destructive',
   },
   incomplete_application: {
     label: 'Incomplete Application',
-    description: 'There is not enough structured content for full review.',
     badgeClassName: 'border-amber-500/40 bg-amber-500/10 text-amber-700',
   },
   insufficient_evidence: {
     label: 'Insufficient Evidence',
-    description: 'Claims need stronger supporting evidence before confident decisioning.',
     badgeClassName: 'border-orange-500/40 bg-orange-500/10 text-orange-700',
   },
   review_priority: {
     label: 'Review Priority',
-    description: 'Escalated candidate for prioritized manager attention.',
     badgeClassName: 'border-sky-600/35 bg-sky-600/10 text-sky-800',
   },
   manual_review_required: {
     label: 'Manual Review Required',
-    description: 'Decision should be made by manager after manual verification.',
     badgeClassName: 'border-violet-600/35 bg-violet-600/10 text-violet-800',
   },
   standard_review: {
     label: 'Standard Review',
-    description: 'Candidate can be processed in standard admission flow.',
     badgeClassName: 'border-emerald-600/35 bg-emerald-600/10 text-emerald-800',
   },
 }
@@ -204,38 +207,71 @@ const FEATURE_SNAPSHOT_META: Record<keyof FeatureSnapshot, { label: string; desc
     },
   }
 
+/* -------------------------------------------------------------------------- */
+/*  Helpers                                                                   */
+/* -------------------------------------------------------------------------- */
+
+const clampPercent = (value: number): number => Math.max(0, Math.min(100, value * 100))
+
 const formatMachineLabel = (value: string): string =>
   value
     .split('_')
     .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1))
     .join(' ')
 
-const formatEligibilityReason = (reason: string): string =>
-  ELIGIBILITY_REASON_LABELS[reason] ?? formatMachineLabel(reason)
+/* -------------------------------------------------------------------------- */
+/*  Sub-components                                                            */
+/* -------------------------------------------------------------------------- */
 
-const formatScoreValue = (value: number): string => value.toFixed(0)
-
-const clampPercent = (value: number): number => Math.max(0, Math.min(100, value * 100))
-
-interface ScoreBubbleCardProps {
-  label: string
-  value: number
-  hint: string
-}
-
-function ScoreBubbleCard({ label, value, hint }: ScoreBubbleCardProps) {
+function MeritProgressBar({ label, value }: { label: string; value: number }) {
   return (
-    <Card size="sm" className="border-primary/20 bg-background/95 shadow-sm">
-      <CardContent className="flex flex-col items-center gap-2 px-4 py-4 text-center">
-        <p className="text-muted-foreground text-sm font-medium">{label}</p>
-        <div className="border-primary/30 bg-primary/10 text-foreground flex h-24 w-24 items-center justify-center rounded-full border-2 text-2xl font-semibold">
-          {formatScoreValue(value)}
-        </div>
-        <p className="text-foreground/80 text-sm">{hint}</p>
-      </CardContent>
-    </Card>
+    <div className="flex items-center gap-3">
+      <span className="text-muted-foreground w-24 shrink-0 text-sm">{label}</span>
+      <div className="h-1.5 flex-1 rounded-full bg-gray-100">
+        <div
+          className="bg-primary h-1.5 rounded-full transition-all"
+          style={{ width: `${Math.min(100, value)}%` }}
+        />
+      </div>
+      <span className="text-foreground w-8 shrink-0 text-right text-sm font-medium">{value}</span>
+    </div>
   )
 }
+
+function CollapsibleSection({
+  title,
+  count,
+  defaultOpen = false,
+  children,
+}: {
+  title: string
+  count?: number
+  defaultOpen?: boolean
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 py-2 text-sm transition-colors"
+      >
+        {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        <span>{title}</span>
+        {count !== undefined && (
+          <span className="text-muted-foreground/60 text-xs">({count})</span>
+        )}
+      </button>
+      {open && <div className="pt-2">{children}</div>}
+    </div>
+  )
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Main component                                                            */
+/* -------------------------------------------------------------------------- */
 
 interface ApplicantsDetailProps {
   applicantId: string
@@ -280,14 +316,11 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-50">
-        <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Applicant profile</CardTitle>
-              <CardDescription>Loading profile data...</CardDescription>
-            </CardHeader>
-          </Card>
+      <div className="min-h-screen bg-[linear-gradient(180deg,#f8faf5_0%,#f1f5f0_40%,#eef2ed_70%,#e8ece7_100%)]">
+        <main className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
+          <div className="flex h-64 items-center justify-center">
+            <p className="text-muted-foreground text-sm">Loading profile data...</p>
+          </div>
         </main>
       </div>
     )
@@ -295,69 +328,25 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-zinc-50">
-        <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Applicant not found</CardTitle>
-              <CardDescription>No profile exists for id: {applicantId}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild variant="outline">
-                <Link href="/applications">Back to applicants</Link>
-              </Button>
-            </CardContent>
-          </Card>
+      <div className="min-h-screen bg-[linear-gradient(180deg,#f8faf5_0%,#f1f5f0_40%,#eef2ed_70%,#e8ece7_100%)]">
+        <main className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
+          <div className="space-y-4">
+            <p className="text-foreground text-lg font-semibold">Applicant not found</p>
+            <p className="text-muted-foreground text-sm">No profile exists for id: {applicantId}</p>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/applicants">
+                <ArrowLeft className="mr-1.5 h-4 w-4" />
+                Back to applicants
+              </Link>
+            </Button>
+          </div>
         </main>
       </div>
     )
   }
 
-  const scoreCards = [
-    {
-      label: 'Merit Score',
-      value: profile.merit_score,
-      hint: 'Overall candidate merit based on all evaluated signals.',
-    },
-    {
-      label: 'Confidence Score',
-      value: profile.confidence_score,
-      hint: 'How reliable and evidence-backed the generated assessment is.',
-    },
-    {
-      label: 'Authenticity Risk',
-      value: profile.authenticity_risk,
-      hint: 'Lower is better. High values suggest stronger authenticity concerns.',
-    },
-  ]
-
-  const meritCards = [
-    {
-      label: 'Potential',
-      value: profile.merit_breakdown.potential,
-      hint: 'Future growth capacity and learning acceleration.',
-    },
-    {
-      label: 'Motivation',
-      value: profile.merit_breakdown.motivation,
-      hint: 'Strength and clarity of personal academic intent.',
-    },
-    {
-      label: 'Leadership',
-      value: profile.merit_breakdown.leadership_agency,
-      hint: 'Ownership, initiative, and impact on others.',
-    },
-    {
-      label: 'Experience',
-      value: profile.merit_breakdown.experience_skills,
-      hint: 'Practical skill depth and relevant execution history.',
-    },
-    {
-      label: 'Trust',
-      value: profile.merit_breakdown.trust_completeness,
-      hint: 'Submission consistency, completeness, and credibility.',
-    },
-  ]
+  const eligibilityMeta = ELIGIBILITY_STATUS_META[profile.eligibility_status]
+  const recommendationMeta = RECOMMENDATION_META[profile.recommendation]
 
   const radarData = [
     { metric: 'Potential', value: profile.merit_breakdown.potential },
@@ -368,293 +357,466 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
   ]
 
   const radarConfig: ChartConfig = {
-    value: {
-      label: 'Score',
-      color: '#a6d80a',
-    },
+    value: { label: 'Score', color: '#a6d80a' },
   }
 
   const featureSnapshotEntries = Object.entries(profile.feature_snapshot) as Array<
     [keyof FeatureSnapshot, FeatureSnapshot[keyof FeatureSnapshot]]
   >
-  const eligibilityMeta = ELIGIBILITY_STATUS_META[profile.eligibility_status]
-  const recommendationMeta = RECOMMENDATION_META[profile.recommendation]
+
+  const numericFeatureEntries = featureSnapshotEntries.filter(
+    ([key, value]) =>
+      typeof value === 'number' &&
+      key !== 'logical_source_groups_present' &&
+      key !== 'excluded_sensitive_fields_count',
+  ) as Array<[keyof FeatureSnapshot, number]>
+
+  const nonNumericFeatureEntries = featureSnapshotEntries.filter(
+    ([key, value]) =>
+      typeof value === 'boolean' ||
+      key === 'logical_source_groups_present' ||
+      key === 'excluded_sensitive_fields_count',
+  )
 
   return (
-    <div
-      ref={rootRef}
-      className="min-h-screen bg-[radial-gradient(circle_at_10%_15%,rgba(166,216,10,0.2)_0%,transparent_36%),radial-gradient(circle_at_90%_5%,rgba(193,241,29,0.15)_0%,transparent_36%),linear-gradient(180deg,#f8fafc_0%,#f3f8df_100%)]"
-    >
-      <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+    <div ref={rootRef} className="min-h-screen bg-[linear-gradient(180deg,#f8faf5_0%,#f1f5f0_40%,#eef2ed_70%,#e8ece7_100%)]">
+      <main className="mx-auto max-w-[1440px] space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        {/* ---------------------------------------------------------------- */}
+        {/*  Top bar: Back + Rank                                            */}
+        {/* ---------------------------------------------------------------- */}
         <div
           data-animate-detail-section
-          className="flex flex-wrap items-center justify-between gap-3"
+          className="flex items-center gap-3"
         >
-          <Button asChild variant="outline">
-            <Link href="/applications">Back to applicants</Link>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/applicants">
+              <ArrowLeft className="mr-1.5 h-4 w-4" />
+              Back
+            </Link>
           </Button>
-          {rank ? <p className="text-muted-foreground text-base">Current rank: #{rank}</p> : null}
+          {rank && (
+            <Badge variant="outline" className="text-muted-foreground border-border text-xs">
+              Rank #{rank}
+            </Badge>
+          )}
         </div>
 
-        <Card
+        {/* ---------------------------------------------------------------- */}
+        {/*  Header: Name + Program + Badges                                 */}
+        {/* ---------------------------------------------------------------- */}
+        <div
           data-animate-detail-section
-          className="border-primary/20 bg-background/90 shadow-sm backdrop-blur"
+          className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
         >
-          <CardHeader>
-            <CardTitle>Applicant profile</CardTitle>
-            <CardDescription>
-              Candidate id: {profile.candidate_id} • Scoring run: {profile.scoring_run_id}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-foreground/85 space-y-2 text-base">
-            {profile.candidate_name ? (
-              <p>
-                <span className="text-foreground font-semibold">Name:</span>{' '}
-                {profile.candidate_name}
-              </p>
-            ) : null}
-            {profile.program_name ? (
-              <p>
-                <span className="text-foreground font-semibold">Program:</span>{' '}
-                {profile.program_name}
-              </p>
-            ) : null}
-            <p>
-              <span className="text-foreground font-semibold">Eligibility:</span>
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge className={eligibilityMeta.badgeClassName}>{eligibilityMeta.label}</Badge>
-              <span className="text-muted-foreground text-sm">{eligibilityMeta.description}</span>
-            </div>
-            <p>
-              <span className="text-foreground font-semibold">Recommendation:</span>{' '}
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge className={recommendationMeta.badgeClassName}>
-                {recommendationMeta.label}
-              </Badge>
-              <span className="text-muted-foreground text-sm">
-                {recommendationMeta.description}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div data-animate-detail-section className="grid gap-4 sm:grid-cols-3">
-          {scoreCards.map((metric) => (
-            <ScoreBubbleCard
-              key={metric.label}
-              label={metric.label}
-              value={metric.value}
-              hint={metric.hint}
-            />
-          ))}
+          <div className="space-y-1">
+            <h1 className="text-foreground text-2xl font-bold tracking-tight">
+              {profile.candidate_name ?? 'Unnamed Candidate'}
+            </h1>
+            {profile.program_name && (
+              <p className="text-muted-foreground text-sm">{profile.program_name}</p>
+            )}
+            <p className="text-muted-foreground/60 text-xs">{profile.candidate_id}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className={eligibilityMeta.badgeClassName}>{eligibilityMeta.label}</Badge>
+            <Badge className={recommendationMeta.badgeClassName}>
+              {recommendationMeta.label}
+            </Badge>
+          </div>
         </div>
 
-        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
-          <CardHeader>
-            <CardTitle>Merit radar</CardTitle>
-            <CardDescription>Visual comparison of the five key parameters</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={radarConfig} className="mx-auto aspect-square max-h-90 w-full">
-              <RadarChart data={radarData} outerRadius="72%">
-                <PolarGrid stroke="rgba(166,216,10,0.35)" />
-                <PolarAngleAxis dataKey="metric" tick={{ fill: '#415710', fontSize: 14 }} />
-                <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                <Radar
-                  dataKey="value"
-                  fill="var(--color-value)"
-                  fillOpacity={0.24}
-                  stroke="var(--color-value)"
-                  strokeWidth={2}
-                />
-              </RadarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+        {/* ---------------------------------------------------------------- */}
+        {/*  Score strip                                                     */}
+        {/* ---------------------------------------------------------------- */}
+        <div
+          data-animate-detail-section
+          className="grid grid-cols-3 gap-3"
+        >
+          <div className="bg-primary/10 border-primary/20 flex flex-col items-center gap-1 rounded-xl border px-4 py-4">
+            <span className="text-primary text-3xl font-bold">{profile.merit_score}</span>
+            <span className="text-primary/80 text-xs font-medium">Merit Score</span>
+          </div>
+          <div className="flex flex-col items-center gap-1 rounded-xl border border-border bg-white px-4 py-4">
+            <span className="text-foreground text-3xl font-bold">{profile.confidence_score}</span>
+            <span className="text-muted-foreground text-xs font-medium">Confidence</span>
+          </div>
+          <div className="flex flex-col items-center gap-1 rounded-xl border border-border bg-white px-4 py-4">
+            <span className="text-foreground text-3xl font-bold">{profile.authenticity_risk}</span>
+            <span className="text-muted-foreground text-xs font-medium">Authenticity Risk</span>
+          </div>
+        </div>
 
-        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
-          <CardHeader>
-            <CardTitle>Merit breakdown</CardTitle>
-            <CardDescription>Potential, Motivation, Leadership, Experience, Trust</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {meritCards.map((metric) => (
-              <ScoreBubbleCard
-                key={metric.label}
-                label={metric.label}
-                value={metric.value}
-                hint={metric.hint}
-              />
-            ))}
-          </CardContent>
-        </Card>
+        {/* ---------------------------------------------------------------- */}
+        {/*  Two-column layout                                               */}
+        {/* ---------------------------------------------------------------- */}
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+          {/* ============================================================== */}
+          {/*  LEFT COLUMN (sticky)                                          */}
+          {/* ============================================================== */}
+          <div className="space-y-4 lg:sticky lg:top-8 lg:self-start">
+            {/* Radar chart */}
+            <Card
+              data-animate-detail-section
+              className="border-border bg-white shadow-sm"
+            >
+              <CardContent className="px-4 py-4">
+                <ChartContainer
+                  config={radarConfig}
+                  className="mx-auto aspect-square max-h-72 w-full"
+                >
+                  <RadarChart data={radarData} outerRadius="72%">
+                    <PolarGrid stroke="rgba(166,216,10,0.35)" />
+                    <PolarAngleAxis dataKey="metric" tick={{ fill: '#6b7280', fontSize: 12 }} />
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                    <Radar
+                      dataKey="value"
+                      fill="var(--color-value)"
+                      fillOpacity={0.24}
+                      stroke="var(--color-value)"
+                      strokeWidth={2}
+                    />
+                  </RadarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
 
-        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
-          <CardHeader>
-            <CardTitle>Review flags and eligibility reasons</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-foreground mb-2 text-base font-medium">Review flags</p>
-              {profile.review_flags.length === 0 ? (
-                <p className="text-muted-foreground text-base">No flags</p>
-              ) : (
-                <ul className="text-foreground/85 list-inside list-disc space-y-1 text-base">
-                  {profile.review_flags.map((flag) => (
-                    <li key={flag}>{REVIEW_FLAG_LABELS[flag]}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            {/* Merit breakdown progress bars */}
+            <Card
+              data-animate-detail-section
+              className="border-border bg-white shadow-sm"
+            >
+              <CardContent className="space-y-3 px-4 py-4">
+                <p className="text-sm font-semibold uppercase tracking-wide">Merit Breakdown</p>
+                <MeritProgressBar label="Potential" value={profile.merit_breakdown.potential} />
+                <MeritProgressBar label="Motivation" value={profile.merit_breakdown.motivation} />
+                <MeritProgressBar label="Leadership" value={profile.merit_breakdown.leadership_agency} />
+                <MeritProgressBar label="Experience" value={profile.merit_breakdown.experience_skills} />
+                <MeritProgressBar label="Trust" value={profile.merit_breakdown.trust_completeness} />
+              </CardContent>
+            </Card>
 
-            <div>
-              <p className="text-foreground mb-2 text-base font-medium">Eligibility reasons</p>
-              {profile.eligibility_reasons.length === 0 ? (
-                <p className="text-muted-foreground text-base">No eligibility blockers</p>
-              ) : (
-                <ul className="text-foreground/85 list-inside list-disc space-y-1 text-base">
-                  {profile.eligibility_reasons.map((reason) => (
-                    <li key={reason}>{formatEligibilityReason(reason)}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
-          <CardHeader>
-            <CardTitle>Top strengths</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="text-foreground/85 list-inside list-disc space-y-1 text-base">
-              {profile.top_strengths.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
-        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
-          <CardHeader>
-            <CardTitle>Main gaps</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="text-foreground/85 list-inside list-disc space-y-1 text-base">
-              {profile.main_gaps.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
-        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
-          <CardHeader>
-            <CardTitle>Uncertainties</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="text-foreground/85 list-inside list-disc space-y-1 text-base">
-              {profile.uncertainties.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
-        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
-          <CardHeader>
-            <CardTitle>Evidence spans</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {profile.evidence_spans.map((span) => (
+            {/* AI Detection */}
+            {profile.ai_detector.enabled && (
               <Card
-                key={`${span.source}-${span.snippet.slice(0, 20)}`}
-                size="sm"
-                className="border-primary/20 bg-primary/5"
+                data-animate-detail-section
+                className="border-border bg-white shadow-sm"
               >
-                <CardHeader>
-                  <CardDescription>{span.source}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-foreground/85 text-base">{span.snippet}</p>
+                <CardContent className="space-y-2 px-4 py-4">
+                  <div className="flex items-center gap-2">
+                    <Bot className="text-muted-foreground h-4 w-4" />
+                    <p className="text-sm font-semibold uppercase tracking-wide">AI Detection</p>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-foreground text-2xl font-bold">
+                      {(profile.ai_detector.probability_ai_generated * 100).toFixed(0)}%
+                    </span>
+                    <span className="text-muted-foreground text-xs">AI probability</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-muted-foreground text-xs">
+                      {profile.ai_detector.model}
+                    </span>
+                    {profile.ai_detector.applicable && (
+                      <Badge variant="outline" className="text-xs">
+                        Applicable
+                      </Badge>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
-            ))}
-          </CardContent>
-        </Card>
+            )}
 
-        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
-          <CardHeader>
-            <CardTitle>Feature snapshot</CardTitle>
-            <CardDescription>
-              Human-readable quality signals derived from application content
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 text-base sm:grid-cols-2 lg:grid-cols-3">
-            {featureSnapshotEntries.map(([key, value]) => (
+            {/* Committee Cohorts */}
+            {profile.committee_cohorts.length > 0 && (
               <Card
-                key={key}
-                size="sm"
-                data-animate-detail-item
-                className="border-primary/20 bg-primary/5 py-0"
+                data-animate-detail-section
+                className="border-border bg-white shadow-sm"
               >
-                <CardContent className="space-y-2 py-4">
-                  <div>
-                    <p className="text-foreground text-sm font-semibold">
-                      {FEATURE_SNAPSHOT_META[key].label}
-                    </p>
-                    <p className="text-muted-foreground text-xs leading-relaxed">
-                      {FEATURE_SNAPSHOT_META[key].description}
+                <CardContent className="space-y-2 px-4 py-4">
+                  <div className="flex items-center gap-2">
+                    <Users className="text-muted-foreground h-4 w-4" />
+                    <p className="text-sm font-semibold uppercase tracking-wide">
+                      Committee Cohorts
                     </p>
                   </div>
-
-                  {typeof value === 'boolean' ? (
-                    <Badge variant={value ? 'secondary' : 'outline'}>
-                      {value ? 'Detected' : 'Not detected'}
-                    </Badge>
-                  ) : typeof value === 'number' &&
-                    (key === 'logical_source_groups_present' ||
-                      key === 'excluded_sensitive_fields_count') ? (
-                    <p className="text-foreground/85 text-sm font-medium">{value}</p>
-                  ) : (
-                    <div className="space-y-1">
-                      <p className="text-foreground/85 text-sm font-medium">
-                        {clampPercent(value as number).toFixed(0)}%
-                      </p>
-                      <div className="bg-primary/20 h-2 rounded-full">
-                        <div
-                          className="bg-primary h-2 rounded-full"
-                          style={{ width: `${clampPercent(value as number)}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.committee_cohorts.map((cohort) => (
+                      <Badge
+                        key={cohort}
+                        variant="secondary"
+                        className="text-xs"
+                      >
+                        {cohort}
+                      </Badge>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
-            ))}
-          </CardContent>
-        </Card>
+            )}
+          </div>
 
-        <Card data-animate-detail-section className="border-primary/20 bg-background/95 shadow-sm">
-          <CardHeader>
-            <CardTitle>Explanation</CardTitle>
-          </CardHeader>
-          <CardContent className="text-foreground/85 space-y-3 text-base">
-            <p>{profile.explanation.summary}</p>
-            <div>
-              <p className="text-foreground mb-2 font-medium">Scoring notes</p>
-              <ul className="list-inside list-disc space-y-1">
-                {Object.entries(profile.explanation.scoring_notes).map(([key, note]) => (
-                  <li key={key}>
-                    <span className="font-medium">{key}:</span> {note}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+          {/* ============================================================== */}
+          {/*  RIGHT COLUMN                                                  */}
+          {/* ============================================================== */}
+          <div className="space-y-4">
+            {/* Assessment Summary */}
+            <Card
+              data-animate-detail-section
+              className="border-border bg-white shadow-sm"
+            >
+              <CardContent className="space-y-4 px-4 py-4">
+                <p className="text-sm font-semibold uppercase tracking-wide">Assessment Summary</p>
+                <p className="text-foreground/85 text-sm leading-relaxed">
+                  {profile.explanation.summary}
+                </p>
+                {profile.suggested_follow_up_question && (
+                  <div className="bg-primary/5 border-primary/20 flex gap-3 rounded-lg border p-3">
+                    <MessageSquare className="text-primary mt-0.5 h-4 w-4 shrink-0" />
+                    <div>
+                      <p className="text-xs font-medium text-primary/80 mb-1">Suggested Follow-up</p>
+                      <p className="text-foreground text-sm">
+                        {profile.suggested_follow_up_question}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Review Flags */}
+            <Card
+              data-animate-detail-section
+              className="border-border bg-white shadow-sm"
+            >
+              <CardContent className="space-y-2 px-4 py-4">
+                <p className="text-sm font-semibold uppercase tracking-wide">Review Flags</p>
+                {profile.review_flags.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">No flags</p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.review_flags.map((flag) => (
+                      <Badge
+                        key={flag}
+                        variant="outline"
+                        className="border-amber-500/30 bg-amber-500/5 text-amber-700 text-xs"
+                      >
+                        {REVIEW_FLAG_LABELS[flag]}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Strengths & Gaps */}
+            <Card
+              data-animate-detail-section
+              className="border-border bg-white shadow-sm"
+            >
+              <CardContent className="px-4 py-4">
+                <div className="grid gap-6 sm:grid-cols-2">
+                  {/* Strengths */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold uppercase tracking-wide">Top Strengths</p>
+                    <ul className="space-y-1.5">
+                      {profile.top_strengths.map((item) => (
+                        <li key={item} className="flex items-start gap-2 text-sm">
+                          <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                          <span className="text-foreground/85">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  {/* Gaps */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold uppercase tracking-wide">Main Gaps</p>
+                    <ul className="space-y-1.5">
+                      {profile.main_gaps.map((item) => (
+                        <li key={item} className="flex items-start gap-2 text-sm">
+                          <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-orange-500" />
+                          <span className="text-foreground/85">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Uncertainties */}
+                {profile.uncertainties.length > 0 && (
+                  <div className="mt-4 space-y-2 border-t border-border pt-4">
+                    <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                      Uncertainties
+                    </p>
+                    <ul className="space-y-1.5">
+                      {profile.uncertainties.map((item) => (
+                        <li key={item} className="flex items-start gap-2 text-sm">
+                          <HelpCircle className="text-muted-foreground mt-0.5 h-3.5 w-3.5 shrink-0" />
+                          <span className="text-muted-foreground">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* What to Verify Manually */}
+            {profile.what_to_verify_manually.length > 0 && (
+              <Card
+                data-animate-detail-section
+                className="border-border bg-white shadow-sm"
+              >
+                <CardContent className="space-y-2 px-4 py-4">
+                  <div className="flex items-center gap-2">
+                    <ClipboardCheck className="text-muted-foreground h-4 w-4" />
+                    <p className="text-sm font-semibold uppercase tracking-wide">
+                      What to Verify Manually
+                    </p>
+                  </div>
+                  <ul className="space-y-2">
+                    {profile.what_to_verify_manually.map((item) => (
+                      <li key={item} className="flex items-start gap-2.5 text-sm">
+                        <div className="border-border bg-muted mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border">
+                          <CheckCircle2 className="text-muted-foreground/40 h-3 w-3" />
+                        </div>
+                        <span className="text-foreground/85">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Evidence Spans */}
+            {profile.evidence_spans.length > 0 && (
+              <Card
+                data-animate-detail-section
+                className="border-border bg-white shadow-sm"
+              >
+                <CardContent className="space-y-3 px-4 py-4">
+                  <p className="text-sm font-semibold uppercase tracking-wide">Evidence Spans</p>
+                  {profile.evidence_spans.map((span) => (
+                    <div
+                      key={`${span.source}-${span.snippet.slice(0, 20)}`}
+                      className="flex items-start gap-3"
+                    >
+                      <Badge
+                        variant="outline"
+                        className="mt-0.5 shrink-0 text-xs"
+                      >
+                        {formatMachineLabel(span.source)}
+                      </Badge>
+                      <blockquote className="text-foreground/75 border-l-2 border-gray-200 pl-3 text-sm italic">
+                        {span.snippet}
+                      </blockquote>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Feature Snapshot — collapsible */}
+            <Card
+              data-animate-detail-section
+              className="border-border bg-white shadow-sm"
+            >
+              <CardContent className="px-4 py-4">
+                <CollapsibleSection
+                  title={`Show detailed signals (${featureSnapshotEntries.length})`}
+                >
+                  <div className="space-y-4">
+                    {/* Numeric features as 2-col progress bars */}
+                    <div className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                      {numericFeatureEntries.map(([key, value]) => (
+                        <div key={key} className="flex items-center gap-2">
+                          <span className="text-muted-foreground w-36 shrink-0 truncate text-xs">
+                            {FEATURE_SNAPSHOT_META[key].label}
+                          </span>
+                          <div className="h-1.5 flex-1 rounded-full bg-gray-100">
+                            <div
+                              className="bg-primary h-1.5 rounded-full"
+                              style={{ width: `${clampPercent(value)}%` }}
+                            />
+                          </div>
+                          <span className="text-foreground w-10 shrink-0 text-right text-xs font-medium">
+                            {clampPercent(value).toFixed(0)}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Boolean / count features */}
+                    {nonNumericFeatureEntries.length > 0 && (
+                      <div className="flex flex-wrap gap-2 border-t border-border pt-3">
+                        {nonNumericFeatureEntries.map(([key, value]) => (
+                          <div key={key} className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground text-xs">
+                              {FEATURE_SNAPSHOT_META[key].label}:
+                            </span>
+                            {typeof value === 'boolean' ? (
+                              <Badge variant={value ? 'secondary' : 'outline'} className="text-xs">
+                                {value ? 'Yes' : 'No'}
+                              </Badge>
+                            ) : (
+                              <span className="text-foreground text-xs font-medium">
+                                {String(value)}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CollapsibleSection>
+              </CardContent>
+            </Card>
+
+            {/* Scoring Notes — collapsible */}
+            {Object.keys(profile.explanation.scoring_notes).length > 0 && (
+              <Card
+                data-animate-detail-section
+                className="border-border bg-white shadow-sm"
+              >
+                <CardContent className="px-4 py-4">
+                  <CollapsibleSection title="Scoring Notes">
+                    <dl className="space-y-2">
+                      {Object.entries(profile.explanation.scoring_notes).map(([key, note]) => (
+                        <div key={key}>
+                          <dt className="text-foreground text-sm font-medium capitalize">{key}</dt>
+                          <dd className="text-muted-foreground text-sm">{note}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </CollapsibleSection>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Authenticity Review Reasons */}
+            {profile.authenticity_review_reasons.length > 0 && (
+              <Card
+                data-animate-detail-section
+                className="border-amber-500/30 bg-amber-50/50 shadow-sm"
+              >
+                <CardContent className="space-y-2 px-4 py-4">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    <p className="text-sm font-semibold uppercase tracking-wide text-amber-800">
+                      Authenticity Review
+                    </p>
+                  </div>
+                  <ul className="space-y-1.5">
+                    {profile.authenticity_review_reasons.map((reason) => (
+                      <li key={reason} className="flex items-start gap-2 text-sm">
+                        <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
+                        <span className="text-amber-900/80">{reason}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
       </main>
     </div>
   )

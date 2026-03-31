@@ -1,7 +1,13 @@
 export { ApplicantsDashboard } from './components/ApplicantsDashboard'
 export { ApplicantsDetail } from './components/ApplicantsDetailPlaceholder'
 export { useApplicantsRankingQuery, useApplicantProfileQuery } from './api'
-export { DEFAULT_SORT_DIRECTION, DEFAULT_SORT_FIELD, SORT_FIELD_BUTTONS } from './constants'
+export {
+  DEFAULT_SORT_DIRECTION,
+  DEFAULT_SORT_FIELD,
+  SORT_FIELD_BUTTONS,
+  ELIGIBILITY_OPTIONS,
+  RECOMMENDATION_OPTIONS,
+} from './constants'
 export type {
   ApplicantProfile,
   MeritBreakdown,
@@ -11,7 +17,9 @@ export type {
   ApplicantsSortField,
   ApplicantsSortDirection,
   ApplicantsQueryParams,
+  EligibilityStatus,
   LlmMetadata,
   SemanticRubricScores,
   AiDetector,
+  Recommendation,
 } from './types'

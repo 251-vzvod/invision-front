@@ -33,6 +33,14 @@ const getSortValue = (
     return applicant.merit_breakdown.experience_skills
   }
 
+  if (field === 'authenticity_risk') {
+    return applicant.authenticity_risk
+  }
+
+  if (field === 'confidence') {
+    return applicant.confidence_score
+  }
+
   return applicant.merit_breakdown.trust_completeness
 }
 
