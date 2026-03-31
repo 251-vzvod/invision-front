@@ -20,14 +20,14 @@ export function ApplicationFooterActions({
   onSubmit,
 }: ApplicationFooterActionsProps) {
   return (
-    <div className="border-border bg-card sticky bottom-0 z-30 border-t px-4 py-4 sm:px-6">
+    <div className="sticky bottom-0 z-30 border-t border-border bg-white px-4 py-4 sm:px-6">
       <div className="flex justify-between">
         <Button
           size="lg"
-          variant="default"
+          variant="outline"
           onClick={onBack}
           disabled={isFirstTab || isSubmitting}
-          className="bg-primary text-foreground hover:bg-primary/90 hover:text-foreground min-w-28 rounded-xl"
+          className="h-12 min-w-28 rounded-xl text-base"
         >
           Back
         </Button>
@@ -36,7 +36,7 @@ export function ApplicationFooterActions({
           size="lg"
           onClick={isLastTab ? onSubmit : onNext}
           disabled={isSubmitting}
-          className="bg-primary text-foreground hover:bg-primary/90 hover:text-foreground min-w-35 rounded-xl font-semibold"
+          className="bg-primary text-foreground hover:bg-primary/90 hover:text-foreground h-12 min-w-35 rounded-xl text-base font-semibold shadow-md"
         >
           {isLastTab ? (isSubmitting ? 'Sending...' : 'Send Application') : 'Next Step'}
         </Button>

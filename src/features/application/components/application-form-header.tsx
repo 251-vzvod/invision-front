@@ -35,10 +35,10 @@ export function ApplicationFormHeader({
           type="button"
           onClick={onOpenProgramDialog}
           className={cn(
-            'hover:border-primary/50 inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-all hover:shadow-sm',
+            'inline-flex items-center gap-1.5 rounded-xl border bg-white px-3 py-1.5 text-sm font-medium transition-all hover:border-primary/30 hover:shadow-sm',
             program
-              ? 'border-primary/30 bg-accent-1 text-foreground'
-              : 'border-border bg-background text-muted-foreground border-dashed',
+              ? 'border-border text-foreground'
+              : 'border-border text-muted-foreground border-dashed',
           )}
         >
           {program ? program.displayLabel : 'Select program...'}

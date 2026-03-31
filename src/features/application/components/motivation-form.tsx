@@ -194,25 +194,32 @@ export function MotivationForm() {
             <label
               htmlFor="motivation-letter-upload"
               className={cn(
-                'border-border hover:border-primary/50 hover:bg-accent-1 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-8 text-sm transition-colors',
+                'flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-8 text-center transition-all hover:border-primary/40 hover:bg-primary/5',
                 isBusy && 'pointer-events-none opacity-60',
               )}
             >
-              <Upload className="size-4" />
-              {uploadMutation.isPending ? 'Uploading file...' : 'Upload motivation letter'}
+              <Upload className="text-muted-foreground size-8" />
+              <span className="text-sm font-medium">
+                {uploadMutation.isPending ? 'Uploading file...' : 'Click or drag to upload motivation letter'}
+              </span>
+              <span className="text-muted-foreground text-xs">
+                DOC, DOCX, PDF, TXT up to 5 MB
+              </span>
             </label>
           )}
 
           {selectedFile && (
-            <div className="border-border bg-accent-1 flex items-center justify-between gap-3 rounded-xl border px-3 py-2">
-              <div className="min-w-0">
-                <p className="flex items-center gap-2 text-sm font-medium">
-                  <FileText className="size-4 shrink-0" />
-                  <span className="truncate">{selectedFile.fileName}</span>
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  {selectedFile.mimeType} | {prettyFileSize}
-                </p>
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-white p-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                  <FileText className="text-muted-foreground size-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{selectedFile.fileName}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {selectedFile.mimeType} | {prettyFileSize}
+                  </p>
+                </div>
               </div>
 
               <Button

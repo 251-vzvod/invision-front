@@ -27,6 +27,25 @@ const TABS: { value: ApplicationTab; label: string; disabled?: boolean }[] = [
   { value: 'motivation', label: 'Motivation' },
 ]
 
+function ProgressBar({ activeTab }: { activeTab: ApplicationTab }) {
+  const progressMap: Record<ApplicationTab, number> = {
+    personal: 25,
+    contact: 50,
+    education: 75,
+    motivation: 100,
+  }
+  const percent = progressMap[activeTab] ?? 0
+
+  return (
+    <div className="h-1 w-full rounded-full bg-gray-100">
+      <div
+        className="bg-primary h-full rounded-full transition-all duration-500 ease-out"
+        style={{ width: `${percent}%` }}
+      />
+    </div>
+  )
+}
+
 export function ApplicationForm() {
   const { data, activeTab, setActiveTab, setProgram, setAgreements } = useApplicationFormStore()
   const [programDialogOpen, setProgramDialogOpen] = useState(false)
@@ -116,8 +135,8 @@ export function ApplicationForm() {
   }, [activeTab, viewMode])
 
   return (
-    <div ref={rootRef} className="bg-accent-1 min-h-screen">
-      <div data-animate-form-section className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+    <div ref={rootRef} className="bg-dashboard min-h-screen">
+      <div data-animate-form-section className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
         <ApplicationFormHeader
           viewMode={viewMode}
           program={data.program}
@@ -127,7 +146,7 @@ export function ApplicationForm() {
 
         <div
           data-animate-form-section
-          className="border-border bg-card rounded-2xl border shadow-sm"
+          className="rounded-2xl border border-border bg-white shadow-sm"
         >
           {viewMode === 'form' ? (
             <>
@@ -137,6 +156,9 @@ export function ApplicationForm() {
                 className="w-full gap-0"
               >
                 <div ref={tabNavigationRef} className="sticky top-0 z-40">
+                  <div className="px-4 pt-4 sm:px-6 sm:pt-6">
+                    <ProgressBar activeTab={activeTab} />
+                  </div>
                   <ApplicationTabsNavigation
                     tabs={TABS}
                     touchedTabs={touchedTabs}

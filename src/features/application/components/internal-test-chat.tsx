@@ -47,7 +47,7 @@ export function InternalTestChat({ history, isLoading, error, onSend }: Internal
     <section className="flex h-[70vh] min-h-130 flex-col p-4 sm:p-6">
       <div
         ref={messagesContainerRef}
-        className="border-border bg-background flex-1 space-y-3 overflow-y-auto rounded-xl border p-3 sm:p-4"
+        className="flex-1 space-y-4 overflow-y-auto rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-5"
       >
         {history.map((entry, index) => {
           const isAgent = entry.sender === 'Agent'
@@ -59,14 +59,14 @@ export function InternalTestChat({ history, isLoading, error, onSend }: Internal
             >
               <div
                 className={cn(
-                  'max-w-[90%] rounded-2xl px-4 py-3 text-sm leading-6 sm:max-w-[80%]',
+                  'max-w-[90%] rounded-2xl px-4 py-3 text-sm leading-6 sm:max-w-[75%]',
                   isAgent
-                    ? 'bg-secondary text-foreground rounded-bl-md'
+                    ? 'rounded-bl-md bg-gray-100 text-foreground'
                     : 'bg-primary text-primary-foreground rounded-br-md',
                 )}
               >
-                <p className="mb-1 text-xs font-semibold tracking-wide opacity-70">
-                  {isAgent ? 'Agent' : 'User'}
+                <p className="mb-1 text-xs font-semibold tracking-wide opacity-60">
+                  {isAgent ? 'Agent' : 'You'}
                 </p>
                 <p className="wrap-break-word whitespace-pre-wrap">{entry.text}</p>
               </div>
@@ -76,8 +76,8 @@ export function InternalTestChat({ history, isLoading, error, onSend }: Internal
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-secondary text-foreground rounded-2xl rounded-bl-md px-4 py-3 text-sm">
-              <p className="mb-1 text-xs font-semibold tracking-wide opacity-70">Agent</p>
+            <div className="rounded-2xl rounded-bl-md bg-gray-100 px-4 py-3 text-sm text-foreground">
+              <p className="mb-1 text-xs font-semibold tracking-wide opacity-60">Agent</p>
               <p className="animate-pulse">Typing...</p>
             </div>
           </div>
@@ -85,21 +85,21 @@ export function InternalTestChat({ history, isLoading, error, onSend }: Internal
       </div>
 
       {error && (
-        <div className="border-destructive/25 bg-destructive/10 mt-4 rounded-xl border px-4 py-3">
+        <div className="mt-4 rounded-xl border border-destructive/25 bg-destructive/10 px-4 py-3">
           <p className="text-destructive text-sm font-medium">{error}</p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-4 flex gap-2 sm:gap-3">
+      <form onSubmit={handleSubmit} className="mt-4 flex gap-3">
         <Input
           value={message}
           disabled={isLoading}
           onChange={(event) => setMessage(event.target.value)}
           placeholder="Type your answer..."
-          className="h-11"
+          className="h-12"
         />
 
-        <Button type="submit" disabled={!canSend} className="h-11 min-w-24 rounded-xl">
+        <Button type="submit" disabled={!canSend} className="h-12 min-w-24 rounded-xl">
           Send
         </Button>
       </form>
