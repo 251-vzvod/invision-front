@@ -244,14 +244,14 @@ const formatMachineLabel = (value: string): string =>
 function MeritProgressBar({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="text-white/50 w-24 shrink-0 text-sm">{label}</span>
-      <div className="h-1.5 flex-1 rounded-full bg-white/10">
+      <span className="w-24 shrink-0 text-sm text-muted-foreground">{label}</span>
+      <div className="h-1.5 flex-1 rounded-full bg-muted">
         <div
           className="bg-primary h-1.5 rounded-full transition-all"
           style={{ width: `${Math.min(100, value)}%` }}
         />
       </div>
-      <span className="text-white w-8 shrink-0 text-right text-sm font-medium">{value}</span>
+      <span className="w-8 shrink-0 text-right text-sm font-medium text-foreground">{value}</span>
     </div>
   )
 }
@@ -274,12 +274,12 @@ function CollapsibleSection({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="text-white/50 hover:text-white flex w-full items-center gap-2 py-2 text-sm transition-colors"
+        className="flex w-full items-center gap-2 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         <span>{title}</span>
         {count !== undefined && (
-          <span className="text-white/30 text-xs">({count})</span>
+          <span className="text-xs text-muted-foreground/50">({count})</span>
         )}
       </button>
       {open && <div className="pt-2">{children}</div>}
@@ -361,7 +361,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={i}
-                className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-4"
+                className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-4 py-4"
               >
                 <Skeleton className="h-9 w-16" />
                 <Skeleton className="h-3 w-20" />
@@ -370,7 +370,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
           </div>
 
           {/* Committee Decision skeleton */}
-          <Card className="border-white/10 bg-white/5 shadow-none">
+          <Card className="border-border bg-card shadow-none">
             <CardContent className="space-y-4 px-4 py-4">
               <Skeleton className="h-5 w-44" />
               <Skeleton className="h-6 w-32" />
@@ -387,14 +387,14 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {/* Left column */}
             <div className="space-y-4">
               {/* Radar chart */}
-              <Card className="border-white/10 bg-white/5 shadow-none">
+              <Card className="border-border bg-card shadow-none">
                 <CardContent className="px-4 py-4">
                   <Skeleton className="mx-auto aspect-square max-h-72 w-full rounded-xl" />
                 </CardContent>
               </Card>
 
               {/* Merit breakdown bars */}
-              <Card className="border-white/10 bg-white/5 shadow-none">
+              <Card className="border-border bg-card shadow-none">
                 <CardContent className="space-y-3 px-4 py-4">
                   <Skeleton className="h-4 w-36" />
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -407,7 +407,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
               </Card>
 
               {/* AI Detection */}
-              <Card className="border-white/10 bg-white/5 shadow-none">
+              <Card className="border-border bg-card shadow-none">
                 <CardContent className="space-y-2 px-4 py-4">
                   <Skeleton className="h-4 w-28" />
                   <Skeleton className="h-8 w-16" />
@@ -419,7 +419,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {/* Right column */}
             <div className="space-y-4">
               {/* Assessment Summary */}
-              <Card className="border-white/10 bg-white/5 shadow-none">
+              <Card className="border-border bg-card shadow-none">
                 <CardContent className="space-y-4 px-4 py-4">
                   <Skeleton className="h-4 w-44" />
                   <div className="space-y-2">
@@ -432,7 +432,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
               </Card>
 
               {/* Review Flags */}
-              <Card className="border-white/10 bg-white/5 shadow-none">
+              <Card className="border-border bg-card shadow-none">
                 <CardContent className="space-y-2 px-4 py-4">
                   <Skeleton className="h-4 w-28" />
                   <div className="flex flex-wrap gap-1.5">
@@ -444,7 +444,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
               </Card>
 
               {/* Strengths & Gaps */}
-              <Card className="border-white/10 bg-white/5 shadow-none">
+              <Card className="border-border bg-card shadow-none">
                 <CardContent className="px-4 py-4">
                   <div className="grid gap-6 sm:grid-cols-2">
                     {/* Strengths */}
@@ -476,8 +476,8 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
       <div className="min-h-screen bg-dashboard">
         <main className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
           <div className="space-y-4">
-            <p className="text-white text-lg font-semibold">Applicant not found</p>
-            <p className="text-white/50 text-sm">No profile exists for id: {applicantId}</p>
+            <p className="text-lg font-semibold text-foreground">Applicant not found</p>
+            <p className="text-sm text-muted-foreground">No profile exists for id: {applicantId}</p>
             <Button asChild variant="outline" size="sm">
               <Link href="/applicants">
                 <ArrowLeft className="mr-1.5 h-4 w-4" />
@@ -540,7 +540,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             </Link>
           </Button>
           {rank && (
-            <Badge variant="outline" className="text-white/50 border-white/10 text-xs">
+            <Badge variant="outline" className="border-border text-xs text-muted-foreground">
               Rank #{rank}
             </Badge>
           )}
@@ -554,13 +554,13 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
           className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
         >
           <div className="space-y-1">
-            <h1 className="text-white text-2xl font-bold tracking-tight">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
               {profile.candidate_name ?? 'Unnamed Candidate'}
             </h1>
             {profile.program_name && (
-              <p className="text-white/50 text-sm">{profile.program_name}</p>
+              <p className="text-sm text-muted-foreground">{profile.program_name}</p>
             )}
-            <p className="text-white/30 text-xs">{profile.candidate_id}</p>
+            <p className="text-xs text-muted-foreground/50">{profile.candidate_id}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge className={eligibilityMeta.badgeClassName}>{eligibilityMeta.label}</Badge>
@@ -581,13 +581,13 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             <span className="text-primary text-3xl font-bold">{profile.merit_score}</span>
             <span className="text-primary/80 text-xs font-medium">Merit Score</span>
           </div>
-          <div className="flex flex-col items-center gap-1 rounded-xl border border-white/10 bg-white/5 px-4 py-4">
-            <span className="text-white text-3xl font-bold">{profile.confidence_score}</span>
-            <span className="text-white/50 text-xs font-medium">Confidence</span>
+          <div className="flex flex-col items-center gap-1 rounded-xl border border-border bg-card px-4 py-4">
+            <span className="text-3xl font-bold text-foreground">{profile.confidence_score}</span>
+            <span className="text-xs font-medium text-muted-foreground">Confidence</span>
           </div>
-          <div className="flex flex-col items-center gap-1 rounded-xl border border-white/10 bg-white/5 px-4 py-4">
-            <span className="text-white text-3xl font-bold">{profile.authenticity_risk}</span>
-            <span className="text-white/50 text-xs font-medium">Authenticity Risk</span>
+          <div className="flex flex-col items-center gap-1 rounded-xl border border-border bg-card px-4 py-4">
+            <span className="text-3xl font-bold text-foreground">{profile.authenticity_risk}</span>
+            <span className="text-xs font-medium text-muted-foreground">Authenticity Risk</span>
           </div>
         </div>
 
@@ -596,15 +596,15 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
         {/* ---------------------------------------------------------------- */}
         <Card
           data-animate-detail-section
-          className="border-white/10 bg-white/5 shadow-none"
+          className="border-border bg-card shadow-none"
         >
           <CardContent className="space-y-4 px-4 py-4">
-            <p className="text-white text-lg font-semibold tracking-tight">Committee Decision</p>
+            <p className="text-lg font-semibold tracking-tight text-foreground">Committee Decision</p>
 
             {/* Current decision display */}
             <div>
               {committeeDecision === null && (
-                <p className="text-white/50 text-sm">No decision yet</p>
+                <p className="text-sm text-muted-foreground">No decision yet</p>
               )}
               {committeeDecision === 'approved' && (
                 <div className="flex items-center gap-2 text-emerald-600">
@@ -734,7 +734,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {/* Radar chart */}
             <Card
               data-animate-detail-section
-              className="border-white/10 bg-white/5 shadow-none"
+              className="border-border bg-card shadow-none"
             >
               <CardContent className="px-4 py-4">
                 <ChartContainer
@@ -760,10 +760,10 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {/* Merit breakdown progress bars */}
             <Card
               data-animate-detail-section
-              className="border-white/10 bg-white/5 shadow-none"
+              className="border-border bg-card shadow-none"
             >
               <CardContent className="space-y-3 px-4 py-4">
-                <p className="text-white text-sm font-semibold uppercase tracking-wide">Merit Breakdown</p>
+                <p className="text-sm font-semibold uppercase tracking-wide text-foreground">Merit Breakdown</p>
                 <MeritProgressBar label="Potential" value={profile.merit_breakdown.potential} />
                 <MeritProgressBar label="Motivation" value={profile.merit_breakdown.motivation} />
                 <MeritProgressBar label="Leadership" value={profile.merit_breakdown.leadership_agency} />
@@ -776,21 +776,21 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {profile.ai_detector.enabled && (
               <Card
                 data-animate-detail-section
-                className="border-white/10 bg-white/5 shadow-none"
+                className="border-border bg-card shadow-none"
               >
                 <CardContent className="space-y-2 px-4 py-4">
                   <div className="flex items-center gap-2">
-                    <Bot className="text-white/50 h-4 w-4" />
-                    <p className="text-white text-sm font-semibold uppercase tracking-wide">AI Detection</p>
+                    <Bot className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm font-semibold uppercase tracking-wide text-foreground">AI Detection</p>
                   </div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-white text-2xl font-bold">
+                    <span className="text-2xl font-bold text-foreground">
                       {(profile.ai_detector.probability_ai_generated * 100).toFixed(0)}%
                     </span>
-                    <span className="text-white/50 text-xs">AI probability</span>
+                    <span className="text-xs text-muted-foreground">AI probability</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-white/50 text-xs">
+                    <span className="text-xs text-muted-foreground">
                       {profile.ai_detector.model}
                     </span>
                     {profile.ai_detector.applicable && (
@@ -807,12 +807,12 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {profile.committee_cohorts.length > 0 && (
               <Card
                 data-animate-detail-section
-                className="border-white/10 bg-white/5 shadow-none"
+                className="border-border bg-card shadow-none"
               >
                 <CardContent className="space-y-2 px-4 py-4">
                   <div className="flex items-center gap-2">
-                    <Users className="text-white/50 h-4 w-4" />
-                    <p className="text-white text-sm font-semibold uppercase tracking-wide">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm font-semibold uppercase tracking-wide text-foreground">
                       Committee Cohorts
                     </p>
                   </div>
@@ -839,11 +839,11 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {/* Assessment Summary */}
             <Card
               data-animate-detail-section
-              className="border-white/10 bg-white/5 shadow-none"
+              className="border-border bg-card shadow-none"
             >
               <CardContent className="space-y-4 px-4 py-4">
-                <p className="text-white text-sm font-semibold uppercase tracking-wide">Assessment Summary</p>
-                <p className="text-white/70 text-sm leading-relaxed">
+                <p className="text-sm font-semibold uppercase tracking-wide text-foreground">Assessment Summary</p>
+                <p className="text-sm leading-relaxed text-foreground/80">
                   {profile.explanation.summary}
                 </p>
                 {profile.suggested_follow_up_question && (
@@ -851,7 +851,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
                     <MessageSquare className="text-primary mt-0.5 h-4 w-4 shrink-0" />
                     <div>
                       <p className="text-xs font-medium text-primary/80 mb-1">Suggested Follow-up</p>
-                      <p className="text-white text-sm">
+                      <p className="text-sm text-foreground">
                         {profile.suggested_follow_up_question}
                       </p>
                     </div>
@@ -863,19 +863,19 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {/* Review Flags */}
             <Card
               data-animate-detail-section
-              className="border-white/10 bg-white/5 shadow-none"
+              className="border-border bg-card shadow-none"
             >
               <CardContent className="space-y-2 px-4 py-4">
-                <p className="text-white text-sm font-semibold uppercase tracking-wide">Review Flags</p>
+                <p className="text-sm font-semibold uppercase tracking-wide text-foreground">Review Flags</p>
                 {profile.review_flags.length === 0 ? (
-                  <p className="text-white/50 text-sm">No flags</p>
+                  <p className="text-sm text-muted-foreground">No flags</p>
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
                     {profile.review_flags.map((flag) => (
                       <Badge
                         key={flag}
                         variant="outline"
-                        className="border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs"
+                        className="border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400 text-xs"
                       >
                         {REVIEW_FLAG_LABELS[flag]}
                       </Badge>
@@ -888,30 +888,30 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {/* Strengths & Gaps */}
             <Card
               data-animate-detail-section
-              className="border-white/10 bg-white/5 shadow-none"
+              className="border-border bg-card shadow-none"
             >
               <CardContent className="px-4 py-4">
                 <div className="grid gap-6 sm:grid-cols-2">
                   {/* Strengths */}
                   <div className="space-y-2">
-                    <p className="text-white text-sm font-semibold uppercase tracking-wide">Top Strengths</p>
+                    <p className="text-sm font-semibold uppercase tracking-wide text-foreground">Top Strengths</p>
                     <ul className="space-y-1.5">
                       {profile.top_strengths.map((item) => (
                         <li key={item} className="flex items-start gap-2 text-sm">
                           <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                          <span className="text-white/70">{item}</span>
+                          <span className="text-foreground/80">{item}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                   {/* Gaps */}
                   <div className="space-y-2">
-                    <p className="text-white text-sm font-semibold uppercase tracking-wide">Main Gaps</p>
+                    <p className="text-sm font-semibold uppercase tracking-wide text-foreground">Main Gaps</p>
                     <ul className="space-y-1.5">
                       {profile.main_gaps.map((item) => (
                         <li key={item} className="flex items-start gap-2 text-sm">
                           <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-orange-500" />
-                          <span className="text-white/70">{item}</span>
+                          <span className="text-foreground/80">{item}</span>
                         </li>
                       ))}
                     </ul>
@@ -920,15 +920,15 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
 
                 {/* Uncertainties */}
                 {profile.uncertainties.length > 0 && (
-                  <div className="mt-4 space-y-2 border-t border-white/10 pt-4">
-                    <p className="text-white/40 text-xs font-medium uppercase tracking-wide">
+                  <div className="mt-4 space-y-2 border-t border-border pt-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       Uncertainties
                     </p>
                     <ul className="space-y-1.5">
                       {profile.uncertainties.map((item) => (
                         <li key={item} className="flex items-start gap-2 text-sm">
-                          <HelpCircle className="text-white/40 mt-0.5 h-3.5 w-3.5 shrink-0" />
-                          <span className="text-white/50">{item}</span>
+                          <HelpCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                          <span className="text-muted-foreground">{item}</span>
                         </li>
                       ))}
                     </ul>
@@ -941,22 +941,22 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {profile.what_to_verify_manually.length > 0 && (
               <Card
                 data-animate-detail-section
-                className="border-white/10 bg-white/5 shadow-none"
+                className="border-border bg-card shadow-none"
               >
                 <CardContent className="space-y-2 px-4 py-4">
                   <div className="flex items-center gap-2">
-                    <ClipboardCheck className="text-white/50 h-4 w-4" />
-                    <p className="text-white text-sm font-semibold uppercase tracking-wide">
+                    <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm font-semibold uppercase tracking-wide text-foreground">
                       What to Verify Manually
                     </p>
                   </div>
                   <ul className="space-y-2">
                     {profile.what_to_verify_manually.map((item) => (
                       <li key={item} className="flex items-start gap-2.5 text-sm">
-                        <div className="border-white/10 bg-white/5 mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border">
-                          <CheckCircle2 className="text-white/30 h-3 w-3" />
+                        <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border border-border bg-card">
+                          <CheckCircle2 className="h-3 w-3 text-muted-foreground/50" />
                         </div>
-                        <span className="text-white/70">{item}</span>
+                        <span className="text-foreground/80">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -968,10 +968,10 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {profile.evidence_spans.length > 0 && (
               <Card
                 data-animate-detail-section
-                className="border-white/10 bg-white/5 shadow-none"
+                className="border-border bg-card shadow-none"
               >
                 <CardContent className="space-y-3 px-4 py-4">
-                  <p className="text-white text-sm font-semibold uppercase tracking-wide">Evidence Spans</p>
+                  <p className="text-sm font-semibold uppercase tracking-wide text-foreground">Evidence Spans</p>
                   {profile.evidence_spans.map((span) => (
                     <div
                       key={`${span.source}-${span.snippet.slice(0, 20)}`}
@@ -983,7 +983,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
                       >
                         {formatMachineLabel(span.source)}
                       </Badge>
-                      <blockquote className="text-white/60 border-l-2 border-white/10 pl-3 text-sm italic">
+                      <blockquote className="border-l-2 border-border pl-3 text-sm italic text-muted-foreground">
                         {span.snippet}
                       </blockquote>
                     </div>
@@ -995,7 +995,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {/* Feature Snapshot — collapsible */}
             <Card
               data-animate-detail-section
-              className="border-white/10 bg-white/5 shadow-none"
+              className="border-border bg-card shadow-none"
             >
               <CardContent className="px-4 py-4">
                 <CollapsibleSection
@@ -1006,16 +1006,16 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
                     <div className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
                       {numericFeatureEntries.map(([key, value]) => (
                         <div key={key} className="flex items-center gap-2">
-                          <span className="text-white/50 w-36 shrink-0 truncate text-xs">
+                          <span className="w-36 shrink-0 truncate text-xs text-muted-foreground">
                             {FEATURE_SNAPSHOT_META[key].label}
                           </span>
-                          <div className="h-1.5 flex-1 rounded-full bg-white/10">
+                          <div className="h-1.5 flex-1 rounded-full bg-muted">
                             <div
                               className="bg-primary h-1.5 rounded-full"
                               style={{ width: `${clampPercent(value)}%` }}
                             />
                           </div>
-                          <span className="text-white w-10 shrink-0 text-right text-xs font-medium">
+                          <span className="w-10 shrink-0 text-right text-xs font-medium text-foreground">
                             {clampPercent(value).toFixed(0)}%
                           </span>
                         </div>
@@ -1023,10 +1023,10 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
                     </div>
                     {/* Boolean / count features */}
                     {nonNumericFeatureEntries.length > 0 && (
-                      <div className="flex flex-wrap gap-2 border-t border-white/10 pt-3">
+                      <div className="flex flex-wrap gap-2 border-t border-border pt-3">
                         {nonNumericFeatureEntries.map(([key, value]) => (
                           <div key={key} className="flex items-center gap-1.5">
-                            <span className="text-white/50 text-xs">
+                            <span className="text-xs text-muted-foreground">
                               {FEATURE_SNAPSHOT_META[key].label}:
                             </span>
                             {typeof value === 'boolean' ? (
@@ -1034,7 +1034,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
                                 {value ? 'Yes' : 'No'}
                               </Badge>
                             ) : (
-                              <span className="text-white text-xs font-medium">
+                              <span className="text-xs font-medium text-foreground">
                                 {String(value)}
                               </span>
                             )}
@@ -1051,15 +1051,15 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {Object.keys(profile.explanation.scoring_notes).length > 0 && (
               <Card
                 data-animate-detail-section
-                className="border-white/10 bg-white/5 shadow-none"
+                className="border-border bg-card shadow-none"
               >
                 <CardContent className="px-4 py-4">
                   <CollapsibleSection title="Scoring Notes">
                     <dl className="space-y-2">
                       {Object.entries(profile.explanation.scoring_notes).map(([key, note]) => (
                         <div key={key}>
-                          <dt className="text-white text-sm font-medium capitalize">{key}</dt>
-                          <dd className="text-white/50 text-sm">{note}</dd>
+                          <dt className="text-sm font-medium capitalize text-foreground">{key}</dt>
+                          <dd className="text-sm text-muted-foreground">{note}</dd>
                         </div>
                       ))}
                     </dl>
@@ -1072,12 +1072,12 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {profile.authenticity_review_reasons.length > 0 && (
               <Card
                 data-animate-detail-section
-                className="border-amber-500/30 bg-amber-500/10 shadow-none"
+                className="border-amber-200 bg-amber-50 shadow-none dark:border-amber-500/30 dark:bg-amber-500/10"
               >
                 <CardContent className="space-y-2 px-4 py-4">
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4 text-amber-600" />
-                    <p className="text-sm font-semibold uppercase tracking-wide text-amber-400">
+                    <p className="text-sm font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
                       Authenticity Review
                     </p>
                   </div>
@@ -1085,7 +1085,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
                     {profile.authenticity_review_reasons.map((reason) => (
                       <li key={reason} className="flex items-start gap-2 text-sm">
                         <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
-                        <span className="text-amber-300/80">{reason}</span>
+                        <span className="text-amber-700 dark:text-amber-300/80">{reason}</span>
                       </li>
                     ))}
                   </ul>

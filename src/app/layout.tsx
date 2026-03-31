@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${raleway.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" className={`dark ${raleway.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <AppProviders>
           <Header />

@@ -75,12 +75,12 @@ function nextSortState(
 // Badge color helpers
 // ---------------------------------------------------------------------------
 const RECOMMENDATION_STYLES: Record<Recommendation, string> = {
-  standard_review: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-  manual_review_required: 'bg-violet-500/15 text-violet-400 border-violet-500/30',
-  review_priority: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
-  insufficient_evidence: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
-  incomplete_application: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-  invalid: 'bg-red-500/15 text-red-400 border-red-500/30',
+  standard_review: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30',
+  manual_review_required: 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/15 dark:text-violet-400 dark:border-violet-500/30',
+  review_priority: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/15 dark:text-sky-400 dark:border-sky-500/30',
+  insufficient_evidence: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/15 dark:text-orange-400 dark:border-orange-500/30',
+  incomplete_application: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30',
+  invalid: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-400 dark:border-red-500/30',
 }
 
 const RECOMMENDATION_LABELS: Record<Recommendation, string> = {
@@ -93,10 +93,10 @@ const RECOMMENDATION_LABELS: Record<Recommendation, string> = {
 }
 
 const ELIGIBILITY_STYLES: Record<EligibilityStatus, string> = {
-  eligible: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-  conditionally_eligible: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
-  incomplete_application: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-  invalid: 'bg-red-500/15 text-red-400 border-red-500/30',
+  eligible: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30',
+  conditionally_eligible: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/15 dark:text-sky-400 dark:border-sky-500/30',
+  incomplete_application: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30',
+  invalid: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-400 dark:border-red-500/30',
 }
 
 // ---------------------------------------------------------------------------
@@ -108,15 +108,15 @@ function DecisionBadge({ decision }: { decision: CandidateDecision }) {
   const config: Record<NonNullable<CandidateDecision>, { icon: React.ReactNode; className: string }> = {
     approved: {
       icon: <CheckCircle2 className="size-3" />,
-      className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+      className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30',
     },
     shortlisted: {
       icon: <Star className="size-3" />,
-      className: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+      className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30',
     },
     rejected: {
       icon: <XCircle className="size-3" />,
-      className: 'bg-red-500/15 text-red-400 border-red-500/30',
+      className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-400 dark:border-red-500/30',
     },
   }
 
@@ -192,12 +192,12 @@ function MultiFilterPopover<T extends string>({
           <ChevronDown className="size-3.5 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-56 border-white/10 bg-gray-900 p-2">
+      <PopoverContent align="start" className="w-56 border-border bg-popover p-2">
         <div className="flex flex-col gap-0.5">
           {options.map((option) => (
             <label
               key={option.value}
-              className="hover:bg-white/5 flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-white/70"
+              className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground/80 hover:bg-accent"
             >
               <Checkbox
                 checked={selected.has(option.value)}
@@ -239,11 +239,11 @@ function getCellValue(
 ): React.ReactNode {
   switch (columnKey) {
     case 'rank':
-      return <span className="text-white/50 text-sm">{rank}</span>
+      return <span className="text-sm text-muted-foreground">{rank}</span>
     case 'name':
       return (
         <div className="flex items-center justify-between gap-2">
-          <span className="text-white truncate font-medium">
+          <span className="truncate font-medium text-foreground">
             {applicant.candidate_name ?? applicant.candidate_id}
           </span>
           <DecisionBadge decision={decision ?? null} />
@@ -251,7 +251,7 @@ function getCellValue(
       )
     case 'program':
       return (
-        <span className="text-white/50 text-sm">
+        <span className="text-sm text-muted-foreground">
           {applicant.program_name ?? '-'}
         </span>
       )
@@ -262,23 +262,23 @@ function getCellValue(
         </span>
       )
     case 'potential':
-      return <span className="tabular-nums text-white/70">{applicant.merit_breakdown.potential}</span>
+      return <span className="tabular-nums text-foreground/80">{applicant.merit_breakdown.potential}</span>
     case 'motivation':
-      return <span className="tabular-nums text-white/70">{applicant.merit_breakdown.motivation}</span>
+      return <span className="tabular-nums text-foreground/80">{applicant.merit_breakdown.motivation}</span>
     case 'leadership':
-      return <span className="tabular-nums text-white/70">{applicant.merit_breakdown.leadership_agency}</span>
+      return <span className="tabular-nums text-foreground/80">{applicant.merit_breakdown.leadership_agency}</span>
     case 'experience':
-      return <span className="tabular-nums text-white/70">{applicant.merit_breakdown.experience_skills}</span>
+      return <span className="tabular-nums text-foreground/80">{applicant.merit_breakdown.experience_skills}</span>
     case 'trust':
-      return <span className="tabular-nums text-white/70">{applicant.merit_breakdown.trust_completeness}</span>
+      return <span className="tabular-nums text-foreground/80">{applicant.merit_breakdown.trust_completeness}</span>
     case 'auth_risk':
       return (
-        <span className="tabular-nums text-white/70">
+        <span className="tabular-nums text-foreground/80">
           {Math.round(applicant.authenticity_risk)}%
         </span>
       )
     case 'confidence':
-      return <span className="tabular-nums text-white/70">{applicant.confidence_score}</span>
+      return <span className="tabular-nums text-foreground/80">{applicant.confidence_score}</span>
     case 'status':
       return (
         <Badge
@@ -319,7 +319,7 @@ function ApplicantMobileCard({
       data-animate-applicant-card
     >
       <div className={cn(
-        'border-white/10 hover:border-primary/30 relative rounded-xl border bg-white/5 p-4 transition-all hover:bg-white/[0.07]',
+        'relative rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:bg-accent',
         isSelected && 'border-primary/40 ring-primary/20 ring-1',
       )}>
         {/* Checkbox top-left */}
@@ -338,23 +338,23 @@ function ApplicantMobileCard({
         <div className="flex items-start justify-between gap-3 pl-8">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-white/50 flex size-6 shrink-0 items-center justify-center rounded-md bg-white/10 text-xs font-medium">
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-medium text-muted-foreground">
                 {rank}
               </span>
-              <p className="text-white truncate text-sm font-semibold">
+              <p className="truncate text-sm font-semibold text-foreground">
                 {applicant.candidate_name ?? applicant.candidate_id}
               </p>
               <DecisionBadge decision={decision} />
             </div>
-            <p className="text-white/50 mt-1 truncate pl-8 text-xs">
+            <p className="mt-1 truncate pl-8 text-xs text-muted-foreground">
               {applicant.program_name ?? 'No program'}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-white text-lg font-bold tabular-nums leading-tight">
+            <p className="text-lg font-bold tabular-nums leading-tight text-foreground">
               {applicant.merit_score}
             </p>
-            <p className="text-white/50 text-[10px] uppercase tracking-wider">Score</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Score</p>
           </div>
         </div>
 
@@ -371,7 +371,7 @@ function ApplicantMobileCard({
           >
             {applicant.eligibility_status.replace(/_/g, ' ')}
           </Badge>
-          <span className="text-white/40 ml-auto text-xs tabular-nums">
+          <span className="ml-auto text-xs tabular-nums text-muted-foreground/50">
             Risk {Math.round(applicant.authenticity_risk)}%
           </span>
         </div>
@@ -705,26 +705,26 @@ export function ApplicantsDashboard() {
       <main className="mx-auto max-w-[1440px] space-y-5 px-4 py-6 sm:px-6 lg:px-8">
         {/* Header */}
         <div>
-          <h1 className="text-white text-2xl font-semibold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Applicants Ranking
           </h1>
-          <p className="text-white/50 mt-1 text-sm">
+          <p className="mt-1 text-sm text-muted-foreground">
             {filteredApplicants.length} candidate{filteredApplicants.length !== 1 ? 's' : ''}{' '}
             {hasActiveFilters ? '(filtered)' : 'total'}
           </p>
         </div>
 
         {/* Toolbar: search + filters */}
-        <div data-animate-toolbar className="border-white/10 flex flex-col gap-3 rounded-xl border bg-white/5 p-4">
+        <div data-animate-toolbar className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             {/* Search */}
             <div className="relative flex-1">
-              <Search className="text-white/30 pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search candidates..."
-                className="h-9 pl-9 text-sm bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                className="h-9 pl-9 text-sm"
               />
             </div>
 
@@ -787,17 +787,17 @@ export function ApplicantsDashboard() {
             {/* Table header skeleton */}
             <Skeleton className="h-10 w-full rounded-t-xl rounded-b-none" />
             {/* Table body rows */}
-            <div className="border-white/10 overflow-hidden rounded-b-xl border border-t-0 bg-white/5">
+            <div className="overflow-hidden rounded-b-xl border border-t-0 border-border bg-card">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="border-white/10 flex items-center gap-4 border-b px-4 last:border-b-0">
+                <div key={i} className="flex items-center gap-4 border-b border-border px-4 last:border-b-0">
                   <Skeleton className="my-3 h-8 w-full" />
                 </div>
               ))}
             </div>
           </div>
         ) : filteredApplicants.length === 0 ? (
-          <div className="border-white/10 rounded-xl border bg-white/5 p-12 text-center">
-            <p className="text-white/50 text-sm">
+          <div className="rounded-xl border border-border bg-card p-12 text-center">
+            <p className="text-sm text-muted-foreground">
               No applicants match the current filters.
             </p>
             {hasActiveFilters && (
@@ -815,11 +815,11 @@ export function ApplicantsDashboard() {
         ) : (
           <>
             {/* Desktop table */}
-            <div data-animate-table className="border-white/10 hidden overflow-hidden rounded-xl border bg-white/5 md:block">
+            <div data-animate-table className="hidden overflow-hidden rounded-xl border border-border bg-card md:block">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-white/10 border-b bg-white/5">
+                    <tr className="border-b border-border bg-muted">
                       <th className="w-10 px-3 py-3">
                         <Checkbox
                           checked={
@@ -843,9 +843,9 @@ export function ApplicantsDashboard() {
                         <th
                           key={col.key}
                           className={cn(
-                            'px-3 py-3 text-left text-sm font-semibold tracking-wide text-white/50',
+                            'px-3 py-3 text-left text-sm font-semibold tracking-wide text-muted-foreground',
                             col.className,
-                            col.sortField && sortState?.field === col.sortField && 'text-white',
+                            col.sortField && sortState?.field === col.sortField && 'text-foreground',
                           )}
                         >
                           {col.sortField ? (
@@ -853,7 +853,7 @@ export function ApplicantsDashboard() {
                               type="button"
                               onClick={() => handleColumnSort(col.sortField!)}
                               className={cn(
-                                'inline-flex items-center gap-1 transition-colors hover:text-white',
+                                'inline-flex items-center gap-1 transition-colors hover:text-foreground',
                                 col.headerClassName,
                               )}
                             >
@@ -869,11 +869,11 @@ export function ApplicantsDashboard() {
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-white/10 divide-y">
+                  <tbody className="divide-y divide-border">
                     {filteredApplicants.map((applicant, index) => (
                       <tr
                         key={applicant.candidate_id}
-                        className="hover:bg-white/5 group cursor-pointer transition-colors"
+                        className="group cursor-pointer transition-colors hover:bg-accent"
                         onClick={() => {
                           router.push(`/application/${applicant.candidate_id}`)
                         }}
@@ -928,13 +928,13 @@ export function ApplicantsDashboard() {
 
       {/* ---- Mobile: full-width bottom bar ---- */}
       {selectedIds.size >= 1 && (
-        <div className="border-white/10 fixed bottom-0 right-0 left-0 z-40 border-t bg-gray-950/90 shadow-lg backdrop-blur-sm md:hidden">
+        <div className="fixed bottom-0 right-0 left-0 z-40 border-t border-border bg-background/90 shadow-lg backdrop-blur-sm md:hidden">
           <div className="flex flex-col gap-2.5 px-4 py-3">
             <div className="flex items-center justify-between">
-              <p className="text-white text-sm font-semibold">
+              <p className="text-sm font-semibold text-foreground">
                 {selectedIds.size} selected
               </p>
-              <Button variant="ghost" size="sm" onClick={clearSelection} className="text-white/50 hover:text-white">
+              <Button variant="ghost" size="sm" onClick={clearSelection} className="text-muted-foreground hover:text-foreground">
                 Clear
               </Button>
             </div>
@@ -981,13 +981,13 @@ export function ApplicantsDashboard() {
       {/* ---- Desktop: floating centered bar ---- */}
       {selectedIds.size >= 1 && (
         <div className="pointer-events-none fixed inset-x-0 bottom-6 z-40 hidden justify-center md:flex">
-          <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-white/10 bg-gray-950/90 px-6 py-4 shadow-2xl shadow-black/30 backdrop-blur-sm">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-border bg-background/90 px-6 py-4 shadow-2xl backdrop-blur-sm">
             {/* Count */}
-            <div className="border-white/10 border-r pr-4">
-              <p className="text-white text-lg font-bold tabular-nums">
+            <div className="border-r border-border pr-4">
+              <p className="text-lg font-bold tabular-nums text-foreground">
                 {selectedIds.size}
               </p>
-              <p className="text-white/50 text-xs">selected</p>
+              <p className="text-xs text-muted-foreground">selected</p>
             </div>
 
             {/* Action buttons — large */}
@@ -1019,7 +1019,7 @@ export function ApplicantsDashboard() {
             </div>
 
             {/* Divider */}
-            <div className="bg-white/10 mx-1 h-8 w-px" />
+            <div className="mx-1 h-8 w-px bg-border" />
 
             {/* Compare + Clear */}
             <Button
@@ -1037,7 +1037,7 @@ export function ApplicantsDashboard() {
               <ArrowLeftRight className="size-4" />
               Compare
             </Button>
-            <Button variant="ghost" size="sm" onClick={clearSelection} className="text-white/50 hover:text-white ml-1">
+            <Button variant="ghost" size="sm" onClick={clearSelection} className="ml-1 text-muted-foreground hover:text-foreground">
               <XCircle className="size-4" />
             </Button>
           </div>

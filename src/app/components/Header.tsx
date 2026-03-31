@@ -4,9 +4,10 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { BarChart3, LogOut, Menu, User, Users, X } from 'lucide-react'
+import { BarChart3, LogOut, Menu, Moon, Sun, User, Users, X } from 'lucide-react'
 import { useLogoutMutation } from '@/features/auth'
 import { useAuthStore } from '@/shared/stores/auth-store'
+import { useThemeStore } from '@/shared/stores/theme-store'
 import { Button } from '@/shared/ui/button'
 import {
   Sheet,
@@ -50,6 +51,7 @@ export function Header() {
   const resetAuthStore = useAuthStore((state) => state.reset)
   const logoutMutation = useLogoutMutation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { theme, toggleTheme } = useThemeStore()
 
   if (isHeaderHiddenRoute(pathname)) {
     return null
@@ -62,7 +64,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-gray-950/60 backdrop-blur-xl backdrop-saturate-150 shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
+    <header className="sticky top-0 z-50 bg-background/60 backdrop-blur-xl backdrop-saturate-150 shadow-sm">
       <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between px-4 sm:h-16 sm:px-6 lg:px-8">
         {/* Left: Logo + divider + app name */}
         <div className="flex items-center gap-3">
@@ -91,7 +93,7 @@ export function Header() {
                   'flex items-center gap-2 rounded-full px-5 py-2 text-base font-medium transition-all',
                   active
                     ? 'bg-primary/10 font-semibold text-primary'
-                    : 'text-white/50 hover:bg-white/10 hover:text-white',
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                 )}
               >
                 <Icon className="size-[18px]" />
@@ -101,8 +103,18 @@ export function Header() {
           })}
         </nav>
 
-        {/* Right: Avatar / sign out (desktop) */}
+        {/* Right: Theme toggle + Avatar / sign out (desktop) */}
         <div className="hidden items-center gap-2 sm:flex">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={toggleTheme}
+            className="h-9 w-9 rounded-full p-0 text-muted-foreground hover:text-foreground"
+            title="Toggle theme"
+          >
+            {theme === 'dark' ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
+          </Button>
           <Button
             type="button"
             variant="ghost"
@@ -127,13 +139,13 @@ export function Header() {
               <Button
                 variant="outline"
                 size="sm"
-                className="size-9 rounded-lg border-white/20 p-0 text-white/70 hover:text-white"
+                className="size-9 rounded-lg border-border p-0 text-muted-foreground hover:text-foreground"
               >
                 <Menu className="size-5" />
                 <span className="sr-only">Open menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80 border-white/10 bg-gray-950">
+            <SheetContent side="right" className="w-80 border-border bg-background">
               <SheetHeader className="text-left">
                 <SheetTitle>
                   <Image
@@ -159,7 +171,7 @@ export function Header() {
                           'flex items-center gap-2.5 rounded-xl px-4 py-3.5 text-lg font-medium transition-colors',
                           active
                             ? 'bg-primary/10 font-semibold text-primary'
-                            : 'text-white/50 hover:bg-white/10 hover:text-white',
+                            : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                         )}
                       >
                         <Icon className="size-5" />
@@ -170,14 +182,28 @@ export function Header() {
                 })}
               </nav>
 
-              <div className="mt-auto border-t border-white/10 px-2 pt-4">
+              {/* Theme toggle in mobile menu */}
+              <div className="mt-4 border-t border-border px-2 pt-4">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="default"
+                  onClick={toggleTheme}
+                  className="w-full justify-start gap-2.5 py-3.5 text-lg text-muted-foreground hover:text-foreground"
+                >
+                  {theme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
+                  {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                </Button>
+              </div>
+
+              <div className="mt-auto border-t border-border px-2 pt-4">
                 <Button
                   type="button"
                   variant="ghost"
                   size="default"
                   onClick={handleLogout}
                   disabled={logoutMutation.isPending}
-                  className="text-white/50 hover:text-white w-full justify-start gap-2.5 py-3.5 text-lg"
+                  className="w-full justify-start gap-2.5 py-3.5 text-lg text-muted-foreground hover:text-foreground"
                 >
                   <LogOut className="size-5" />
                   {logoutMutation.isPending ? 'Signing out...' : 'Sign out'}

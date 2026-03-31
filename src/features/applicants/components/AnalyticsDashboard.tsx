@@ -346,7 +346,7 @@ function ProgressRing({
         fill="none"
         stroke="currentColor"
         strokeWidth={strokeWidth}
-        className="text-white/10"
+        className="text-border"
       />
       <circle
         cx={size / 2}
@@ -386,14 +386,14 @@ function CustomTooltip({
 }) {
   if (!active || !payload || payload.length === 0) return null
   return (
-    <div className="rounded-lg border border-white/10 bg-gray-900 px-3.5 py-2.5 shadow-lg">
+    <div className="rounded-lg border border-border bg-popover px-3.5 py-2.5 shadow-lg">
       {label && (
-        <p className="mb-1 text-xs font-semibold text-white">{label}</p>
+        <p className="mb-1 text-xs font-semibold text-foreground">{label}</p>
       )}
       {payload.map((entry, i) => (
-        <p key={i} className="text-xs text-white/50">
+        <p key={i} className="text-xs text-muted-foreground">
           {entry.name}:{' '}
-          <span className="font-semibold text-white">{entry.value}</span>
+          <span className="font-semibold text-foreground">{entry.value}</span>
         </p>
       ))}
     </div>
@@ -417,20 +417,20 @@ function SectionCard({
   return (
     <div
       className={cn(
-        'rounded-2xl border border-white/10 bg-white/5 p-6',
+        'rounded-2xl border border-border bg-card p-6',
         className,
       )}
     >
       <div className="mb-5 flex items-center gap-2.5">
         {Icon && (
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
-            <Icon className="h-4 w-4 text-white/60" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+            <Icon className="h-4 w-4 text-muted-foreground" />
           </div>
         )}
         <div>
-          <h3 className="text-sm font-semibold text-white">{title}</h3>
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
           {subtitle && (
-            <p className="text-xs text-white/50">{subtitle}</p>
+            <p className="text-xs text-muted-foreground">{subtitle}</p>
           )}
         </div>
       </div>
@@ -470,7 +470,7 @@ function AnalyticsSkeleton() {
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="rounded-2xl border border-white/10 bg-white/5 p-6"
+              className="rounded-2xl border border-border bg-card p-6"
             >
               <Skeleton className="mb-3 h-4 w-24" />
               <Skeleton className="mb-2 h-9 w-20" />
@@ -480,7 +480,7 @@ function AnalyticsSkeleton() {
         </div>
 
         {/* Score distribution skeleton */}
-        <div className="mb-6 rounded-2xl border border-gray-200/80 bg-white/80 p-6">
+        <div className="mb-6 rounded-2xl border border-border bg-card p-6">
           <Skeleton className="mb-4 h-5 w-48" />
           <Skeleton className="h-[280px] w-full rounded-xl" />
         </div>
@@ -490,7 +490,7 @@ function AnalyticsSkeleton() {
           {Array.from({ length: 2 }).map((_, i) => (
             <div
               key={i}
-              className="rounded-2xl border border-white/10 bg-white/5 p-6"
+              className="rounded-2xl border border-border bg-card p-6"
             >
               <Skeleton className="mb-4 h-5 w-40" />
               <div className="space-y-3">
@@ -507,7 +507,7 @@ function AnalyticsSkeleton() {
           {Array.from({ length: 2 }).map((_, i) => (
             <div
               key={i}
-              className="rounded-2xl border border-white/10 bg-white/5 p-6"
+              className="rounded-2xl border border-border bg-card p-6"
             >
               <Skeleton className="mb-4 h-5 w-36" />
               <Skeleton className="h-48 w-full rounded-xl" />
@@ -559,16 +559,16 @@ export function AnalyticsDashboard() {
         {/* Header                                                          */}
         {/* ---------------------------------------------------------------- */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-white">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Analytics
           </h1>
-          <p className="mt-1 text-sm text-white/50">
+          <p className="mt-1 text-sm text-muted-foreground">
             Aggregated insights across{' '}
-            <span className="font-medium text-white/70">
+            <span className="font-medium text-foreground/80">
               {stats.totalApplicants}
             </span>{' '}
             candidates
-            <span className="ml-2 text-white/30">
+            <span className="ml-2 text-muted-foreground/50">
               &middot; Last updated: just now
             </span>
           </p>
@@ -579,33 +579,33 @@ export function AnalyticsDashboard() {
         {/* ---------------------------------------------------------------- */}
         <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
           {/* Total Applicants */}
-          <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/[0.07]">
+          <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent">
             <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-emerald-400 to-emerald-600" />
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-white/50">
+              <p className="text-sm font-medium text-muted-foreground">
                 Total Applicants
               </p>
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/15">
-                <Users className="h-4 w-4 text-emerald-400" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-500/15">
+                <Users className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               </div>
             </div>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-white">
+            <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">
               {stats.totalApplicants}
             </p>
-            <p className="mt-1 text-xs text-white/30">All submissions</p>
+            <p className="mt-1 text-xs text-muted-foreground/50">All submissions</p>
           </div>
 
           {/* Avg Merit Score */}
-          <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/[0.07]">
+          <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-white/50">
+                <p className="text-sm font-medium text-muted-foreground">
                   Avg Merit Score
                 </p>
-                <p className="mt-2 text-3xl font-bold tracking-tight text-white">
+                <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                   {stats.avgMeritScore}
                 </p>
-                <p className="mt-1 text-xs text-white/30">out of 100</p>
+                <p className="mt-1 text-xs text-muted-foreground/50">out of 100</p>
               </div>
               <div className="relative">
                 <ProgressRing
@@ -623,16 +623,16 @@ export function AnalyticsDashboard() {
           </div>
 
           {/* Avg Confidence */}
-          <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/[0.07]">
+          <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-white/50">
+                <p className="text-sm font-medium text-muted-foreground">
                   Avg Confidence
                 </p>
-                <p className="mt-2 text-3xl font-bold tracking-tight text-white">
+                <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                   {stats.avgConfidence}
                 </p>
-                <p className="mt-1 text-xs text-white/30">out of 100</p>
+                <p className="mt-1 text-xs text-muted-foreground/50">out of 100</p>
               </div>
               <div className="relative">
                 <ProgressRing
@@ -652,24 +652,24 @@ export function AnalyticsDashboard() {
           {/* High Risk */}
           <div
             className={cn(
-              'group relative overflow-hidden rounded-2xl border p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/[0.07]',
+              'group relative overflow-hidden rounded-2xl border p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent',
               stats.highRiskCount > 0
                 ? 'border-red-500/30 bg-red-500/10'
-                : 'border-white/10 bg-white/5',
+                : 'border-border bg-card',
             )}
           >
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-white/50">High Risk</p>
+              <p className="text-sm font-medium text-muted-foreground">High Risk</p>
               <div
                 className={cn(
                   'flex h-9 w-9 items-center justify-center rounded-lg',
-                  stats.highRiskCount > 0 ? 'bg-red-500/15' : 'bg-emerald-500/15',
+                  stats.highRiskCount > 0 ? 'bg-red-100 dark:bg-red-500/15' : 'bg-emerald-100 dark:bg-emerald-500/15',
                 )}
               >
                 {stats.highRiskCount > 0 ? (
-                  <AlertTriangle className="h-4 w-4 text-red-400" />
+                  <AlertTriangle className="h-4 w-4 text-red-500 dark:text-red-400" />
                 ) : (
-                  <CheckCircle className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 )}
               </div>
             </div>
@@ -712,7 +712,7 @@ export function AnalyticsDashboard() {
                 <EmeraldGradient id="barGradient" />
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="rgba(255,255,255,0.07)"
+                  stroke="var(--border)"
                   vertical={false}
                 />
                 <XAxis
@@ -729,7 +729,7 @@ export function AnalyticsDashboard() {
                 />
                 <Tooltip
                   content={<CustomTooltip />}
-                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                  cursor={{ fill: 'var(--accent)' }}
                 />
                 <Bar
                   dataKey="count"
@@ -742,9 +742,9 @@ export function AnalyticsDashboard() {
             </ResponsiveContainer>
           </div>
           {peakBucket.count > 0 && (
-            <p className="mt-3 text-center text-xs text-white/30">
+            <p className="mt-3 text-center text-xs text-muted-foreground/50">
               Most candidates scored between{' '}
-              <span className="font-medium text-white/60">
+              <span className="font-medium text-muted-foreground">
                 {peakBucket.range}
               </span>
             </p>
@@ -781,10 +781,10 @@ export function AnalyticsDashboard() {
                 </ResponsiveContainer>
                 {/* Center label */}
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-bold text-white">
+                  <span className="text-2xl font-bold text-foreground">
                     {stats.totalApplicants}
                   </span>
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-white/40">
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                     Total
                   </span>
                 </div>
@@ -800,10 +800,10 @@ export function AnalyticsDashboard() {
                       className="h-2.5 w-2.5 rounded-full"
                       style={{ backgroundColor: entry.color }}
                     />
-                    <span className="text-xs text-white/50">
+                    <span className="text-xs text-muted-foreground">
                       {entry.name}
                     </span>
-                    <span className="text-xs font-semibold text-white">
+                    <span className="text-xs font-semibold text-foreground">
                       {entry.value}
                     </span>
                   </div>
@@ -823,17 +823,17 @@ export function AnalyticsDashboard() {
                 return (
                   <div key={rec.name}>
                     <div className="mb-1 flex items-center justify-between">
-                      <span className="text-xs font-medium text-white/60">
+                      <span className="text-xs font-medium text-muted-foreground">
                         {rec.name}
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-white/30">{pct}%</span>
-                        <span className="inline-flex min-w-[28px] items-center justify-center rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold text-white/70">
+                        <span className="text-xs text-muted-foreground/50">{pct}%</span>
+                        <span className="inline-flex min-w-[28px] items-center justify-center rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-foreground/80">
                           {rec.count}
                         </span>
                       </div>
                     </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
@@ -858,10 +858,10 @@ export function AnalyticsDashboard() {
             {stats.topFlags.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <CheckCircle className="mb-2 h-8 w-8 text-emerald-400" />
-                <p className="text-sm font-medium text-white/60">
+                <p className="text-sm font-medium text-muted-foreground">
                   No review flags
                 </p>
-                <p className="text-xs text-white/30">
+                <p className="text-xs text-muted-foreground/50">
                   All applicants passed checks
                 </p>
               </div>
@@ -879,14 +879,14 @@ export function AnalyticsDashboard() {
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="mb-1 flex items-center justify-between">
-                          <span className="truncate text-sm text-white/60">
+                          <span className="truncate text-sm text-muted-foreground">
                             {flag.label}
                           </span>
                           <span className="ml-2 inline-flex shrink-0 items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-400">
                             {flag.count}
                           </span>
                         </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                           <div
                             className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-400 transition-all duration-500"
                             style={{
@@ -920,10 +920,10 @@ export function AnalyticsDashboard() {
                   }
                 />
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-bold text-white">
+                  <span className="text-2xl font-bold text-foreground">
                     {stats.avgAiProbability}%
                   </span>
-                  <span className="text-[10px] text-white/40">
+                  <span className="text-[10px] text-muted-foreground">
                     avg AI prob
                   </span>
                 </div>
@@ -944,7 +944,7 @@ export function AnalyticsDashboard() {
                     return (
                       <div
                         key={seg.range}
-                        className="flex items-center justify-center text-[10px] font-semibold text-white transition-all duration-500"
+                        className="flex items-center justify-center text-[10px] font-semibold text-white dark:text-white transition-all duration-500"
                         style={{
                           width: `${pct}%`,
                           backgroundColor: AI_SEGMENT_COLORS[i],
@@ -955,7 +955,7 @@ export function AnalyticsDashboard() {
                     )
                   })}
                 </div>
-                <div className="mt-1.5 flex justify-between text-[10px] text-white/30">
+                <div className="mt-1.5 flex justify-between text-[10px] text-muted-foreground/50">
                   <span>Low</span>
                   <span>Medium</span>
                   <span>High</span>
@@ -964,11 +964,11 @@ export function AnalyticsDashboard() {
 
               {/* Stat pills */}
               <div className="flex gap-3">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/60">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   {stats.aiApplicableCount} applicable
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/60">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
                   <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
                   {stats.aiNotApplicableCount} not applicable
                 </span>
@@ -1005,7 +1005,7 @@ export function AnalyticsDashboard() {
                 layout="vertical"
                 margin={{ left: 8, right: 24 }}
               >
-                <CartesianGrid horizontal={false} stroke="rgba(255,255,255,0.07)" strokeDasharray="3 3" />
+                <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="3 3" />
                 <XAxis type="number" hide />
                 <YAxis
                   type="category"
