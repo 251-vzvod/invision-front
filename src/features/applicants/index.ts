@@ -11,4 +11,7 @@ export type {
   ApplicantsSortField,
   ApplicantsSortDirection,
   ApplicantsQueryParams,
+  LlmMetadata,
+  SemanticRubricScores,
+  AiDetector,
 } from './types'

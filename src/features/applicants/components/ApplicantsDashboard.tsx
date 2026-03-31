@@ -230,10 +230,10 @@ export function ApplicantsDashboard() {
                         <div className="flex items-start justify-between gap-4">
                           <div className="space-y-1">
                             <p className="text-foreground text-lg font-semibold">
-                              {applicant.candidate_name}
+                              {applicant.candidate_name ?? applicant.candidate_id}
                             </p>
                             <p className="text-muted-foreground text-base">
-                              {applicant.program_name}
+                              {applicant.program_name ?? 'No program specified'}
                             </p>
                           </div>
                           <Badge variant="secondary" className="px-3 py-1.5 text-sm">

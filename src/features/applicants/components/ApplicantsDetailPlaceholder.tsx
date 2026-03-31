@@ -101,6 +101,7 @@ const REVIEW_FLAG_LABELS: Record<ReviewFlag, string> = {
   cross_section_mismatch: 'Cross-section mismatch',
   section_mismatch: 'Section mismatch',
   missing_required_materials: 'Missing required materials',
+  auxiliary_ai_generation_signal: 'Auxiliary AI generation signal',
 }
 
 const FEATURE_SNAPSHOT_META: Record<keyof FeatureSnapshot, { label: string; description: string }> =
@@ -156,6 +157,50 @@ const FEATURE_SNAPSHOT_META: Record<keyof FeatureSnapshot, { label: string; desc
     contradiction_flag: {
       label: 'Contradiction Flag',
       description: 'Potential contradictory statements detected.',
+    },
+    docs_count_score: {
+      label: 'Documents Count',
+      description: 'Number of documents provided relative to maximum.',
+    },
+    portfolio_links_score: {
+      label: 'Portfolio Links',
+      description: 'Quality and presence of portfolio or project links.',
+    },
+    has_video_presentation: {
+      label: 'Video Presentation',
+      description: 'Whether candidate submitted a video presentation.',
+    },
+    logical_source_groups_present: {
+      label: 'Source Groups',
+      description: 'Number of distinct logical source groups in submission.',
+    },
+    material_support_score: {
+      label: 'Material Support',
+      description: 'How well claims are supported by submitted materials.',
+    },
+    polished_but_empty_score: {
+      label: 'Polished but Empty',
+      description: 'Degree of polished language with little substantive content.',
+    },
+    cross_section_mismatch_score: {
+      label: 'Cross-Section Mismatch',
+      description: 'Inconsistency between different sections of the application.',
+    },
+    authenticity_risk_raw: {
+      label: 'Authenticity Risk (Raw)',
+      description: 'Raw authenticity risk score before normalization.',
+    },
+    ai_detector_probability: {
+      label: 'AI Detection Probability',
+      description: 'Probability that text was AI-generated.',
+    },
+    ai_detector_applicable: {
+      label: 'AI Detector Applicable',
+      description: 'Whether AI detection analysis was applicable.',
+    },
+    excluded_sensitive_fields_count: {
+      label: 'Excluded Fields',
+      description: 'Number of sensitive fields excluded from scoring.',
     },
   }
 
@@ -362,12 +407,18 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-foreground/85 space-y-2 text-base">
-            <p>
-              <span className="text-foreground font-semibold">Name:</span> {profile.candidate_name}
-            </p>
-            <p>
-              <span className="text-foreground font-semibold">Program:</span> {profile.program_name}
-            </p>
+            {profile.candidate_name ? (
+              <p>
+                <span className="text-foreground font-semibold">Name:</span>{' '}
+                {profile.candidate_name}
+              </p>
+            ) : null}
+            {profile.program_name ? (
+              <p>
+                <span className="text-foreground font-semibold">Program:</span>{' '}
+                {profile.program_name}
+              </p>
+            ) : null}
             <p>
               <span className="text-foreground font-semibold">Eligibility:</span>
             </p>
@@ -519,17 +570,15 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
           <CardContent className="space-y-3">
             {profile.evidence_spans.map((span) => (
               <Card
-                key={`${span.dimension}-${span.source}-${span.text.slice(0, 20)}`}
+                key={`${span.source}-${span.snippet.slice(0, 20)}`}
                 size="sm"
                 className="border-primary/20 bg-primary/5"
               >
                 <CardHeader>
-                  <CardDescription>
-                    {span.dimension} • {span.source}
-                  </CardDescription>
+                  <CardDescription>{span.source}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-foreground/85 text-base">{span.text}</p>
+                  <p className="text-foreground/85 text-base">{span.snippet}</p>
                 </CardContent>
               </Card>
             ))}
@@ -561,22 +610,26 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
                     </p>
                   </div>
 
-                  {typeof value === 'number' ? (
+                  {typeof value === 'boolean' ? (
+                    <Badge variant={value ? 'secondary' : 'outline'}>
+                      {value ? 'Detected' : 'Not detected'}
+                    </Badge>
+                  ) : typeof value === 'number' &&
+                    (key === 'logical_source_groups_present' ||
+                      key === 'excluded_sensitive_fields_count') ? (
+                    <p className="text-foreground/85 text-sm font-medium">{value}</p>
+                  ) : (
                     <div className="space-y-1">
                       <p className="text-foreground/85 text-sm font-medium">
-                        {clampPercent(value).toFixed(0)}%
+                        {clampPercent(value as number).toFixed(0)}%
                       </p>
                       <div className="bg-primary/20 h-2 rounded-full">
                         <div
                           className="bg-primary h-2 rounded-full"
-                          style={{ width: `${clampPercent(value)}%` }}
+                          style={{ width: `${clampPercent(value as number)}%` }}
                         />
                       </div>
                     </div>
-                  ) : (
-                    <Badge variant={value ? 'secondary' : 'outline'}>
-                      {value ? 'Detected' : 'Not detected'}
-                    </Badge>
                   )}
                 </CardContent>
               </Card>
