@@ -1,5 +1,6 @@
 export { ApplicantsDashboard } from './components/ApplicantsDashboard'
 export { ApplicantsDetail } from './components/ApplicantsDetailPlaceholder'
+export { ComparisonView } from './components/ComparisonView'
 export { useApplicantsRankingQuery, useApplicantProfileQuery } from './api'
 export {
   DEFAULT_SORT_DIRECTION,

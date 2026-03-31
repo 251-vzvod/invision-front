@@ -243,9 +243,15 @@ function getCellValue(
 function ApplicantMobileCard({
   applicant,
   rank,
+  isSelected,
+  isDisabled,
+  onToggleSelect,
 }: {
   applicant: ApplicantProfile
   rank: number
+  isSelected: boolean
+  isDisabled: boolean
+  onToggleSelect: () => void
 }) {
   return (
     <Link
@@ -253,8 +259,24 @@ function ApplicantMobileCard({
       className="block"
       data-animate-applicant-card
     >
-      <div className="border-border hover:border-primary/30 rounded-xl border bg-white p-4 transition-all hover:shadow-sm">
-        <div className="flex items-start justify-between gap-3">
+      <div className={cn(
+        'border-border hover:border-primary/30 relative rounded-xl border bg-white p-4 transition-all hover:shadow-sm',
+        isSelected && 'border-primary/40 ring-primary/20 ring-1',
+      )}>
+        {/* Checkbox top-left */}
+        <div className="absolute top-3 left-3 z-10">
+          <Checkbox
+            checked={isSelected}
+            disabled={isDisabled}
+            onCheckedChange={onToggleSelect}
+            onClick={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
+            }}
+          />
+        </div>
+
+        <div className="flex items-start justify-between gap-3 pl-8">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-100 text-xs font-medium">
@@ -276,7 +298,7 @@ function ApplicantMobileCard({
           </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        <div className="mt-3 flex flex-wrap items-center gap-1.5 pl-8">
           <Badge
             variant="outline"
             className={cn('text-xs', RECOMMENDATION_STYLES[applicant.recommendation])}
@@ -319,6 +341,30 @@ export function ApplicantsDashboard() {
   const [selectedRecommendation, setSelectedRecommendation] = useState<Set<Recommendation>>(
     () => new Set(RECOMMENDATION_OPTIONS.map((o) => o.value)),
   )
+
+  // Selection state for comparison
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  const toggleSelection = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else if (next.size < 3) {
+        next.add(id)
+      }
+      return next
+    })
+  }, [])
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set())
+  }, [])
+
+  const handleCompare = useCallback(() => {
+    const ids = Array.from(selectedIds).join(',')
+    router.push(`/applicants/compare?ids=${ids}`)
+  }, [selectedIds, router])
 
   // Mobile sort dropdown
   const [mobileSortField, setMobileSortField] = useState<ApplicantsSortField>('score')
@@ -551,6 +597,9 @@ export function ApplicantsDashboard() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-border border-b bg-gray-50/80">
+                      <th className="w-10 px-3 py-3">
+                        <span className="sr-only">Select</span>
+                      </th>
                       {TABLE_COLUMNS.map((col) => (
                         <th
                           key={col.key}
@@ -590,6 +639,16 @@ export function ApplicantsDashboard() {
                           router.push(`/application/${applicant.candidate_id}`)
                         }}
                       >
+                        <td className="px-3 py-3">
+                          <Checkbox
+                            checked={selectedIds.has(applicant.candidate_id)}
+                            disabled={
+                              !selectedIds.has(applicant.candidate_id) && selectedIds.size >= 3
+                            }
+                            onCheckedChange={() => toggleSelection(applicant.candidate_id)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </td>
                         {TABLE_COLUMNS.map((col) => (
                           <td
                             key={col.key}
@@ -618,12 +677,34 @@ export function ApplicantsDashboard() {
                   key={applicant.candidate_id}
                   applicant={applicant}
                   rank={index + 1}
+                  isSelected={selectedIds.has(applicant.candidate_id)}
+                  isDisabled={!selectedIds.has(applicant.candidate_id) && selectedIds.size >= 3}
+                  onToggleSelect={() => toggleSelection(applicant.candidate_id)}
                 />
               ))}
             </div>
           </>
         )}
       </main>
+
+      {/* Sticky comparison bar */}
+      {selectedIds.size >= 2 && (
+        <div className="border-border fixed bottom-0 right-0 left-0 z-40 border-t bg-white shadow-lg">
+          <div className="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+            <p className="text-foreground text-sm font-medium">
+              {selectedIds.size} candidate{selectedIds.size !== 1 ? 's' : ''} selected
+            </p>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={clearSelection}>
+                Clear
+              </Button>
+              <Button size="sm" onClick={handleCompare}>
+                Compare
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
