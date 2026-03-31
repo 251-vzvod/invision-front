@@ -227,8 +227,19 @@
   background-size: 24px 24px;
 }
 
-/* ─── Dashboard page background (light version of auth panel) ─── */
+/* ─── Dashboard page background (theme-aware) ─── */
 .bg-dashboard {
+  background-color: #0a0a0a;
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(166, 216, 10, 0.1) 0%, transparent 45%),
+    radial-gradient(circle at 80% 15%, rgba(166, 216, 10, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 50% 75%, rgba(166, 216, 10, 0.04) 0%, transparent 45%),
+    radial-gradient(circle, rgba(166, 216, 10, 0.06) 1px, transparent 1px);
+  background-size: 100%, 100%, 100%, 20px 20px;
+}
+
+:is(.light *) .bg-dashboard,
+.light .bg-dashboard {
   background-color: #f9faf7;
   background-image:
     radial-gradient(circle at 10% 15%, rgba(166, 216, 10, 0.12) 0%, transparent 40%),
@@ -236,6 +247,26 @@
     radial-gradient(circle at 50% 80%, rgba(166, 216, 10, 0.06) 0%, transparent 45%),
     radial-gradient(circle, rgba(166, 216, 10, 0.07) 1px, transparent 1px);
   background-size: 100%, 100%, 100%, 20px 20px;
+}
+
+/* ─── Cursor glow on dot grid (Stitch-style) ─── */
+.cursor-glow {
+  position: relative;
+}
+.cursor-glow::before {
+  content: '';
+  position: fixed;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(166, 216, 10, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.3s;
+  left: var(--cursor-x, -200px);
+  top: var(--cursor-y, -200px);
+  opacity: var(--cursor-opacity, 0);
 }
 
 /* ─── Base styles ─── */

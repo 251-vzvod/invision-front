@@ -25,12 +25,12 @@ import type { ApplicantProfile, EligibilityStatus, Recommendation } from '../typ
 const CANDIDATE_COLORS = ['#a6d80a', '#3b82f6', '#f59e0b'] as const
 
 const RECOMMENDATION_STYLES: Record<Recommendation, string> = {
-  standard_review: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  manual_review_required: 'bg-violet-50 text-violet-700 border-violet-200',
-  review_priority: 'bg-sky-50 text-sky-700 border-sky-200',
-  insufficient_evidence: 'bg-orange-50 text-orange-700 border-orange-200',
-  incomplete_application: 'bg-amber-50 text-amber-700 border-amber-200',
-  invalid: 'bg-red-50 text-red-700 border-red-200',
+  standard_review: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  manual_review_required: 'bg-violet-500/15 text-violet-400 border-violet-500/30',
+  review_priority: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
+  insufficient_evidence: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
+  incomplete_application: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  invalid: 'bg-red-500/15 text-red-400 border-red-500/30',
 }
 
 const RECOMMENDATION_LABELS: Record<Recommendation, string> = {
@@ -43,10 +43,10 @@ const RECOMMENDATION_LABELS: Record<Recommendation, string> = {
 }
 
 const ELIGIBILITY_STYLES: Record<EligibilityStatus, string> = {
-  eligible: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  conditionally_eligible: 'bg-sky-50 text-sky-700 border-sky-200',
-  incomplete_application: 'bg-amber-50 text-amber-700 border-amber-200',
-  invalid: 'bg-red-50 text-red-700 border-red-200',
+  eligible: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  conditionally_eligible: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
+  incomplete_application: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  invalid: 'bg-red-500/15 text-red-400 border-red-500/30',
 }
 
 const ELIGIBILITY_LABELS: Record<EligibilityStatus, string> = {
@@ -139,12 +139,12 @@ function ScoreOverviewTable({ profiles }: { profiles: ApplicantProfile[] }) {
   ]
 
   return (
-    <div className="border-border overflow-hidden rounded-xl border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md">
+    <div className="border-white/10 overflow-hidden rounded-xl border bg-white/5">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-border border-b bg-gray-50/80">
-              <th className="text-muted-foreground px-4 py-3 text-left text-xs font-medium uppercase tracking-wide">
+            <tr className="border-white/10 border-b bg-white/5">
+              <th className="text-white/50 px-4 py-3 text-left text-xs font-medium uppercase tracking-wide">
                 Metric
               </th>
               {profiles.map((p, i) => (
@@ -157,7 +157,7 @@ function ScoreOverviewTable({ profiles }: { profiles: ApplicantProfile[] }) {
                       className="inline-block size-2.5 rounded-full"
                       style={{ backgroundColor: CANDIDATE_COLORS[i] }}
                     />
-                    <span className="text-foreground">
+                    <span className="text-white">
                       {p.candidate_name ?? p.candidate_id}
                     </span>
                   </div>
@@ -165,12 +165,12 @@ function ScoreOverviewTable({ profiles }: { profiles: ApplicantProfile[] }) {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-border divide-y">
+          <tbody className="divide-white/10 divide-y">
             {/* Name */}
             <tr>
-              <td className="text-muted-foreground px-4 py-2.5 text-sm font-medium">Name</td>
+              <td className="text-white/50 px-4 py-2.5 text-sm font-medium">Name</td>
               {profiles.map((p) => (
-                <td key={p.candidate_id} className="px-4 py-2.5 text-sm font-medium">
+                <td key={p.candidate_id} className="px-4 py-2.5 text-sm font-medium text-white">
                   {p.candidate_name ?? p.candidate_id}
                 </td>
               ))}
@@ -178,9 +178,9 @@ function ScoreOverviewTable({ profiles }: { profiles: ApplicantProfile[] }) {
 
             {/* Program */}
             <tr>
-              <td className="text-muted-foreground px-4 py-2.5 text-sm font-medium">Program</td>
+              <td className="text-white/50 px-4 py-2.5 text-sm font-medium">Program</td>
               {profiles.map((p) => (
-                <td key={p.candidate_id} className="text-muted-foreground px-4 py-2.5 text-sm">
+                <td key={p.candidate_id} className="text-white/50 px-4 py-2.5 text-sm">
                   {p.program_name ?? '-'}
                 </td>
               ))}
@@ -188,7 +188,7 @@ function ScoreOverviewTable({ profiles }: { profiles: ApplicantProfile[] }) {
 
             {/* Eligibility */}
             <tr>
-              <td className="text-muted-foreground px-4 py-2.5 text-sm font-medium">Eligibility</td>
+              <td className="text-white/50 px-4 py-2.5 text-sm font-medium">Eligibility</td>
               {profiles.map((p) => (
                 <td key={p.candidate_id} className="px-4 py-2.5">
                   <Badge
@@ -204,7 +204,7 @@ function ScoreOverviewTable({ profiles }: { profiles: ApplicantProfile[] }) {
 
             {/* Recommendation */}
             <tr>
-              <td className="text-muted-foreground px-4 py-2.5 text-sm font-medium">
+              <td className="text-white/50 px-4 py-2.5 text-sm font-medium">
                 Recommendation
               </td>
               {profiles.map((p) => (
@@ -224,7 +224,7 @@ function ScoreOverviewTable({ profiles }: { profiles: ApplicantProfile[] }) {
               const bestIndices = getBestIndex(row.values, row.lowest)
               return (
                 <tr key={row.label}>
-                  <td className="text-muted-foreground px-4 py-2.5 text-sm font-medium">
+                  <td className="text-white/50 px-4 py-2.5 text-sm font-medium">
                     {row.label}
                   </td>
                   {row.values.map((val, i) => {
@@ -233,7 +233,7 @@ function ScoreOverviewTable({ profiles }: { profiles: ApplicantProfile[] }) {
                       <td
                         key={profiles[i].candidate_id}
                         className={cn(
-                          'px-4 py-2.5 text-sm tabular-nums',
+                          'px-4 py-2.5 text-sm tabular-nums text-white/70',
                           isBest && 'bg-primary/10 text-primary font-bold',
                         )}
                       >
@@ -298,15 +298,15 @@ function ComparisonRadarChart({ profiles }: { profiles: ApplicantProfile[] }) {
   }, [profiles])
 
   return (
-    <div className="border-border rounded-xl border bg-white p-6 shadow-sm transition-shadow duration-200 hover:shadow-md">
-      <h3 className="text-foreground mb-4 text-base font-semibold">Skills Radar</h3>
+    <div className="border-white/10 rounded-xl border bg-white/5 p-6">
+      <h3 className="text-white mb-4 text-base font-semibold">Skills Radar</h3>
       <div className="mx-auto h-[320px] w-full max-w-[480px]">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="75%">
-            <PolarGrid stroke="#e5e7eb" />
+            <PolarGrid stroke="rgba(255,255,255,0.1)" />
             <PolarAngleAxis
               dataKey="metric"
-              tick={{ fill: '#6b7280', fontSize: 12 }}
+              tick={{ fill: '#9ca3af', fontSize: 12 }}
             />
             {profiles.map((p, i) => (
               <Radar
@@ -330,7 +330,7 @@ function ComparisonRadarChart({ profiles }: { profiles: ApplicantProfile[] }) {
               className="inline-block size-3 rounded-full"
               style={{ backgroundColor: CANDIDATE_COLORS[i] }}
             />
-            <span className="text-muted-foreground">
+            <span className="text-white/50">
               {p.candidate_name ?? p.candidate_id}
             </span>
           </div>
@@ -345,8 +345,8 @@ function ComparisonRadarChart({ profiles }: { profiles: ApplicantProfile[] }) {
 // ---------------------------------------------------------------------------
 function StrengthsGapsComparison({ profiles }: { profiles: ApplicantProfile[] }) {
   return (
-    <div className="border-border rounded-xl border bg-white p-6 shadow-sm transition-shadow duration-200 hover:shadow-md">
-      <h3 className="text-foreground mb-4 text-base font-semibold">Strengths &amp; Gaps</h3>
+    <div className="border-white/10 rounded-xl border bg-white/5 p-6">
+      <h3 className="text-white mb-4 text-base font-semibold">Strengths &amp; Gaps</h3>
       <div className={cn('grid gap-6 grid-cols-1 sm:grid-cols-2', profiles.length === 3 && 'lg:grid-cols-3')}>
         {profiles.map((p, i) => (
           <div key={p.candidate_id}>
@@ -355,7 +355,7 @@ function StrengthsGapsComparison({ profiles }: { profiles: ApplicantProfile[] })
                 className="inline-block size-2.5 rounded-full"
                 style={{ backgroundColor: CANDIDATE_COLORS[i] }}
               />
-              <span className="text-foreground text-sm font-semibold">
+              <span className="text-white text-sm font-semibold">
                 {p.candidate_name ?? p.candidate_id}
               </span>
             </div>
@@ -367,7 +367,7 @@ function StrengthsGapsComparison({ profiles }: { profiles: ApplicantProfile[] })
               </p>
               <ul className="space-y-1">
                 {p.top_strengths.slice(0, 3).map((s, idx) => (
-                  <li key={idx} className="text-muted-foreground flex items-start gap-1.5 text-sm">
+                  <li key={idx} className="text-white/50 flex items-start gap-1.5 text-sm">
                     <span className="mt-0.5 text-emerald-500">●</span>
                     <span>{s}</span>
                   </li>
@@ -382,7 +382,7 @@ function StrengthsGapsComparison({ profiles }: { profiles: ApplicantProfile[] })
               </p>
               <ul className="space-y-1">
                 {p.main_gaps.slice(0, 3).map((g, idx) => (
-                  <li key={idx} className="text-muted-foreground flex items-start gap-1.5 text-sm">
+                  <li key={idx} className="text-white/50 flex items-start gap-1.5 text-sm">
                     <span className="mt-0.5 text-orange-500">●</span>
                     <span>{g}</span>
                   </li>
@@ -406,8 +406,8 @@ function AiDetectionComparison({ profiles }: { profiles: ApplicantProfile[] }) {
   const maxProb = Math.max(...probabilities)
 
   return (
-    <div className="border-border rounded-xl border bg-white p-6 shadow-sm transition-shadow duration-200 hover:shadow-md">
-      <h3 className="text-foreground mb-4 text-base font-semibold">AI Detection</h3>
+    <div className="border-white/10 rounded-xl border bg-white/5 p-6">
+      <h3 className="text-white mb-4 text-base font-semibold">AI Detection</h3>
       <div className="space-y-3">
         {profiles.map((p, i) => {
           const prob = probabilities[i]
@@ -419,12 +419,12 @@ function AiDetectionComparison({ profiles }: { profiles: ApplicantProfile[] }) {
                   className="inline-block size-2.5 rounded-full"
                   style={{ backgroundColor: CANDIDATE_COLORS[i] }}
                 />
-                <span className="text-foreground truncate text-sm font-medium">
+                <span className="text-white truncate text-sm font-medium">
                   {p.candidate_name ?? p.candidate_id}
                 </span>
               </div>
               <div className="flex flex-1 items-center gap-3">
-                <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+                <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/10">
                   <div
                     className={cn(
                       'h-full rounded-full transition-all',
@@ -436,7 +436,7 @@ function AiDetectionComparison({ profiles }: { profiles: ApplicantProfile[] }) {
                 <span
                   className={cn(
                     'w-12 text-right text-sm font-semibold tabular-nums',
-                    isHighest ? 'text-amber-600' : 'text-muted-foreground',
+                    isHighest ? 'text-amber-400' : 'text-white/50',
                   )}
                 >
                   {prob}%
@@ -447,8 +447,8 @@ function AiDetectionComparison({ profiles }: { profiles: ApplicantProfile[] }) {
                 className={cn(
                   'text-xs',
                   p.ai_detector.applicable
-                    ? 'border-sky-200 bg-sky-50 text-sky-700'
-                    : 'border-gray-200 bg-gray-50 text-gray-500',
+                    ? 'border-sky-500/30 bg-sky-500/15 text-sky-400'
+                    : 'border-white/10 bg-white/5 text-white/40',
                 )}
               >
                 {p.ai_detector.applicable ? 'Applicable' : 'N/A'}
@@ -489,9 +489,9 @@ export function ComparisonView() {
 
   if (ids.length < 2) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[linear-gradient(180deg,#f8faf5_0%,#f1f5f0_40%,#eef2ed_70%,#e8ece7_100%)]">
-        <div className="border-border rounded-xl border bg-white p-12 text-center shadow-sm">
-          <p className="text-muted-foreground text-sm">
+      <div className="flex min-h-screen items-center justify-center bg-dashboard">
+        <div className="border-white/10 rounded-xl border bg-white/5 p-12 text-center">
+          <p className="text-white/50 text-sm">
             Select at least 2 candidates to compare.
           </p>
           <Button
@@ -519,10 +519,10 @@ export function ComparisonView() {
           </div>
 
           {/* Score overview table skeleton */}
-          <div className="border-border overflow-hidden rounded-xl border bg-white shadow-sm">
+          <div className="border-white/10 overflow-hidden rounded-xl border bg-white/5">
             <Skeleton className="h-10 w-full rounded-none" />
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="border-border flex items-center border-b px-4 last:border-b-0">
+              <div key={i} className="border-white/10 flex items-center border-b px-4 last:border-b-0">
                 <Skeleton className="my-2.5 h-6 w-full" />
               </div>
             ))}
@@ -530,11 +530,11 @@ export function ComparisonView() {
 
           {/* Two columns: radar + strengths */}
           <div className="grid gap-6 lg:grid-cols-2">
-            <div className="border-border rounded-xl border bg-white p-6 shadow-sm">
+            <div className="border-white/10 rounded-xl border bg-white/5 p-6">
               <Skeleton className="mb-4 h-5 w-28" />
               <Skeleton className="mx-auto h-72 w-full max-w-[480px] rounded-xl" />
             </div>
-            <div className="border-border rounded-xl border bg-white p-6 shadow-sm">
+            <div className="border-white/10 rounded-xl border bg-white/5 p-6">
               <Skeleton className="mb-4 h-5 w-36" />
               <div className="grid gap-6 sm:grid-cols-2">
                 {Array.from({ length: 2 }).map((_, i) => (
@@ -573,9 +573,9 @@ export function ComparisonView() {
 
   if (profiles.length < 2) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[linear-gradient(180deg,#f8faf5_0%,#f1f5f0_40%,#eef2ed_70%,#e8ece7_100%)]">
-        <div className="border-border rounded-xl border bg-white p-12 text-center shadow-sm">
-          <p className="text-muted-foreground text-sm">
+      <div className="flex min-h-screen items-center justify-center bg-dashboard">
+        <div className="border-white/10 rounded-xl border bg-white/5 p-12 text-center">
+          <p className="text-white/50 text-sm">
             Could not load candidate profiles. Some IDs may be invalid.
           </p>
           <Button
@@ -606,7 +606,7 @@ export function ComparisonView() {
             <ArrowLeft className="size-4" />
             Back
           </Button>
-          <h1 className="text-foreground text-xl font-semibold tracking-tight">
+          <h1 className="text-white text-xl font-semibold tracking-tight">
             Comparing {profiles.length} candidates
           </h1>
         </div>

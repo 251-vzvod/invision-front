@@ -62,7 +62,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-white/40 backdrop-blur-xl backdrop-saturate-150 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+    <header className="sticky top-0 z-50 bg-gray-950/60 backdrop-blur-xl backdrop-saturate-150 shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
       <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between px-4 sm:h-16 sm:px-6 lg:px-8">
         {/* Left: Logo + divider + app name */}
         <div className="flex items-center gap-3">
@@ -91,7 +91,7 @@ export function Header() {
                   'flex items-center gap-2 rounded-full px-5 py-2 text-base font-medium transition-all',
                   active
                     ? 'bg-primary/10 font-semibold text-primary'
-                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+                    : 'text-white/50 hover:bg-white/10 hover:text-white',
                 )}
               >
                 <Icon className="size-[18px]" />
@@ -127,13 +127,13 @@ export function Header() {
               <Button
                 variant="outline"
                 size="sm"
-                className="size-9 rounded-lg border-border/60 p-0"
+                className="size-9 rounded-lg border-white/20 p-0 text-white/70 hover:text-white"
               >
                 <Menu className="size-5" />
                 <span className="sr-only">Open menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80">
+            <SheetContent side="right" className="w-80 border-white/10 bg-gray-950">
               <SheetHeader className="text-left">
                 <SheetTitle>
                   <Image
@@ -159,7 +159,7 @@ export function Header() {
                           'flex items-center gap-2.5 rounded-xl px-4 py-3.5 text-lg font-medium transition-colors',
                           active
                             ? 'bg-primary/10 font-semibold text-primary'
-                            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+                            : 'text-white/50 hover:bg-white/10 hover:text-white',
                         )}
                       >
                         <Icon className="size-5" />
@@ -170,14 +170,14 @@ export function Header() {
                 })}
               </nav>
 
-              <div className="mt-auto border-t px-2 pt-4">
+              <div className="mt-auto border-t border-white/10 px-2 pt-4">
                 <Button
                   type="button"
                   variant="ghost"
                   size="default"
                   onClick={handleLogout}
                   disabled={logoutMutation.isPending}
-                  className="text-muted-foreground hover:text-foreground w-full justify-start gap-2.5 py-3.5 text-lg"
+                  className="text-white/50 hover:text-white w-full justify-start gap-2.5 py-3.5 text-lg"
                 >
                   <LogOut className="size-5" />
                   {logoutMutation.isPending ? 'Signing out...' : 'Sign out'}

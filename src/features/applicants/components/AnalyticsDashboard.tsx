@@ -346,7 +346,7 @@ function ProgressRing({
         fill="none"
         stroke="currentColor"
         strokeWidth={strokeWidth}
-        className="text-gray-100"
+        className="text-white/10"
       />
       <circle
         cx={size / 2}
@@ -386,14 +386,14 @@ function CustomTooltip({
 }) {
   if (!active || !payload || payload.length === 0) return null
   return (
-    <div className="rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 shadow-lg">
+    <div className="rounded-lg border border-white/10 bg-gray-900 px-3.5 py-2.5 shadow-lg">
       {label && (
-        <p className="mb-1 text-xs font-semibold text-gray-900">{label}</p>
+        <p className="mb-1 text-xs font-semibold text-white">{label}</p>
       )}
       {payload.map((entry, i) => (
-        <p key={i} className="text-xs text-gray-500">
+        <p key={i} className="text-xs text-white/50">
           {entry.name}:{' '}
-          <span className="font-semibold text-gray-900">{entry.value}</span>
+          <span className="font-semibold text-white">{entry.value}</span>
         </p>
       ))}
     </div>
@@ -417,20 +417,20 @@ function SectionCard({
   return (
     <div
       className={cn(
-        'rounded-2xl border border-gray-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm transition-shadow hover:shadow-md',
+        'rounded-2xl border border-white/10 bg-white/5 p-6',
         className,
       )}
     >
       <div className="mb-5 flex items-center gap-2.5">
         {Icon && (
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100">
-            <Icon className="h-4 w-4 text-gray-600" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
+            <Icon className="h-4 w-4 text-white/60" />
           </div>
         )}
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+          <h3 className="text-sm font-semibold text-white">{title}</h3>
           {subtitle && (
-            <p className="text-xs text-gray-500">{subtitle}</p>
+            <p className="text-xs text-white/50">{subtitle}</p>
           )}
         </div>
       </div>
@@ -470,7 +470,7 @@ function AnalyticsSkeleton() {
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="rounded-2xl border border-gray-200/80 bg-white/80 p-6"
+              className="rounded-2xl border border-white/10 bg-white/5 p-6"
             >
               <Skeleton className="mb-3 h-4 w-24" />
               <Skeleton className="mb-2 h-9 w-20" />
@@ -490,7 +490,7 @@ function AnalyticsSkeleton() {
           {Array.from({ length: 2 }).map((_, i) => (
             <div
               key={i}
-              className="rounded-2xl border border-gray-200/80 bg-white/80 p-6"
+              className="rounded-2xl border border-white/10 bg-white/5 p-6"
             >
               <Skeleton className="mb-4 h-5 w-40" />
               <div className="space-y-3">
@@ -507,7 +507,7 @@ function AnalyticsSkeleton() {
           {Array.from({ length: 2 }).map((_, i) => (
             <div
               key={i}
-              className="rounded-2xl border border-gray-200/80 bg-white/80 p-6"
+              className="rounded-2xl border border-white/10 bg-white/5 p-6"
             >
               <Skeleton className="mb-4 h-5 w-36" />
               <Skeleton className="h-48 w-full rounded-xl" />
@@ -559,16 +559,16 @@ export function AnalyticsDashboard() {
         {/* Header                                                          */}
         {/* ---------------------------------------------------------------- */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-3xl font-bold tracking-tight text-white">
             Analytics
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-white/50">
             Aggregated insights across{' '}
-            <span className="font-medium text-gray-700">
+            <span className="font-medium text-white/70">
               {stats.totalApplicants}
             </span>{' '}
             candidates
-            <span className="ml-2 text-gray-400">
+            <span className="ml-2 text-white/30">
               &middot; Last updated: just now
             </span>
           </p>
@@ -579,33 +579,33 @@ export function AnalyticsDashboard() {
         {/* ---------------------------------------------------------------- */}
         <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
           {/* Total Applicants */}
-          <div className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+          <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/[0.07]">
             <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-emerald-400 to-emerald-600" />
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">
+              <p className="text-sm font-medium text-white/50">
                 Total Applicants
               </p>
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">
-                <Users className="h-4 w-4 text-emerald-600" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/15">
+                <Users className="h-4 w-4 text-emerald-400" />
               </div>
             </div>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
+            <p className="mt-2 text-3xl font-bold tracking-tight text-white">
               {stats.totalApplicants}
             </p>
-            <p className="mt-1 text-xs text-gray-400">All submissions</p>
+            <p className="mt-1 text-xs text-white/30">All submissions</p>
           </div>
 
           {/* Avg Merit Score */}
-          <div className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+          <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/[0.07]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">
+                <p className="text-sm font-medium text-white/50">
                   Avg Merit Score
                 </p>
-                <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
+                <p className="mt-2 text-3xl font-bold tracking-tight text-white">
                   {stats.avgMeritScore}
                 </p>
-                <p className="mt-1 text-xs text-gray-400">out of 100</p>
+                <p className="mt-1 text-xs text-white/30">out of 100</p>
               </div>
               <div className="relative">
                 <ProgressRing
@@ -623,16 +623,16 @@ export function AnalyticsDashboard() {
           </div>
 
           {/* Avg Confidence */}
-          <div className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+          <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/[0.07]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">
+                <p className="text-sm font-medium text-white/50">
                   Avg Confidence
                 </p>
-                <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
+                <p className="mt-2 text-3xl font-bold tracking-tight text-white">
                   {stats.avgConfidence}
                 </p>
-                <p className="mt-1 text-xs text-gray-400">out of 100</p>
+                <p className="mt-1 text-xs text-white/30">out of 100</p>
               </div>
               <div className="relative">
                 <ProgressRing
@@ -652,24 +652,24 @@ export function AnalyticsDashboard() {
           {/* High Risk */}
           <div
             className={cn(
-              'group relative overflow-hidden rounded-2xl border p-6 shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md',
+              'group relative overflow-hidden rounded-2xl border p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/[0.07]',
               stats.highRiskCount > 0
-                ? 'border-red-200 bg-red-50/60'
-                : 'border-gray-200/80 bg-white/80',
+                ? 'border-red-500/30 bg-red-500/10'
+                : 'border-white/10 bg-white/5',
             )}
           >
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">High Risk</p>
+              <p className="text-sm font-medium text-white/50">High Risk</p>
               <div
                 className={cn(
                   'flex h-9 w-9 items-center justify-center rounded-lg',
-                  stats.highRiskCount > 0 ? 'bg-red-100' : 'bg-emerald-50',
+                  stats.highRiskCount > 0 ? 'bg-red-500/15' : 'bg-emerald-500/15',
                 )}
               >
                 {stats.highRiskCount > 0 ? (
-                  <AlertTriangle className="h-4 w-4 text-red-600" />
+                  <AlertTriangle className="h-4 w-4 text-red-400" />
                 ) : (
-                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                  <CheckCircle className="h-4 w-4 text-emerald-400" />
                 )}
               </div>
             </div>
@@ -678,16 +678,16 @@ export function AnalyticsDashboard() {
                 <p className="mt-2 text-3xl font-bold tracking-tight text-red-600">
                   {stats.highRiskCount}
                 </p>
-                <p className="mt-1 text-xs text-red-400">
+                <p className="mt-1 text-xs text-red-400/70">
                   authenticity risk &gt; 60
                 </p>
               </>
             ) : (
               <>
-                <p className="mt-2 text-3xl font-bold tracking-tight text-emerald-600">
+                <p className="mt-2 text-3xl font-bold tracking-tight text-emerald-400">
                   0
                 </p>
-                <p className="mt-1 text-xs text-emerald-500">
+                <p className="mt-1 text-xs text-emerald-400/70">
                   All clear &mdash; no high risk
                 </p>
               </>
@@ -712,7 +712,7 @@ export function AnalyticsDashboard() {
                 <EmeraldGradient id="barGradient" />
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="#f3f4f6"
+                  stroke="rgba(255,255,255,0.07)"
                   vertical={false}
                 />
                 <XAxis
@@ -729,7 +729,7 @@ export function AnalyticsDashboard() {
                 />
                 <Tooltip
                   content={<CustomTooltip />}
-                  cursor={{ fill: '#f9fafb' }}
+                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                 />
                 <Bar
                   dataKey="count"
@@ -742,9 +742,9 @@ export function AnalyticsDashboard() {
             </ResponsiveContainer>
           </div>
           {peakBucket.count > 0 && (
-            <p className="mt-3 text-center text-xs text-gray-400">
+            <p className="mt-3 text-center text-xs text-white/30">
               Most candidates scored between{' '}
-              <span className="font-medium text-gray-600">
+              <span className="font-medium text-white/60">
                 {peakBucket.range}
               </span>
             </p>
@@ -781,10 +781,10 @@ export function AnalyticsDashboard() {
                 </ResponsiveContainer>
                 {/* Center label */}
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-bold text-gray-900">
+                  <span className="text-2xl font-bold text-white">
                     {stats.totalApplicants}
                   </span>
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400">
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-white/40">
                     Total
                   </span>
                 </div>
@@ -800,10 +800,10 @@ export function AnalyticsDashboard() {
                       className="h-2.5 w-2.5 rounded-full"
                       style={{ backgroundColor: entry.color }}
                     />
-                    <span className="text-xs text-gray-600">
+                    <span className="text-xs text-white/50">
                       {entry.name}
                     </span>
-                    <span className="text-xs font-semibold text-gray-900">
+                    <span className="text-xs font-semibold text-white">
                       {entry.value}
                     </span>
                   </div>
@@ -823,17 +823,17 @@ export function AnalyticsDashboard() {
                 return (
                   <div key={rec.name}>
                     <div className="mb-1 flex items-center justify-between">
-                      <span className="text-xs font-medium text-gray-600">
+                      <span className="text-xs font-medium text-white/60">
                         {rec.name}
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400">{pct}%</span>
-                        <span className="inline-flex min-w-[28px] items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
+                        <span className="text-xs text-white/30">{pct}%</span>
+                        <span className="inline-flex min-w-[28px] items-center justify-center rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold text-white/70">
                           {rec.count}
                         </span>
                       </div>
                     </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
@@ -858,10 +858,10 @@ export function AnalyticsDashboard() {
             {stats.topFlags.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <CheckCircle className="mb-2 h-8 w-8 text-emerald-400" />
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-sm font-medium text-white/60">
                   No review flags
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-white/30">
                   All applicants passed checks
                 </p>
               </div>
@@ -874,19 +874,19 @@ export function AnalyticsDashboard() {
                       : 0
                   return (
                     <div key={flag.flag} className="flex items-center gap-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold text-amber-700">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-[10px] font-bold text-amber-400">
                         {index + 1}
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="mb-1 flex items-center justify-between">
-                          <span className="truncate text-sm text-gray-700">
+                          <span className="truncate text-sm text-white/60">
                             {flag.label}
                           </span>
-                          <span className="ml-2 inline-flex shrink-0 items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                          <span className="ml-2 inline-flex shrink-0 items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-400">
                             {flag.count}
                           </span>
                         </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
                           <div
                             className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-400 transition-all duration-500"
                             style={{
@@ -920,10 +920,10 @@ export function AnalyticsDashboard() {
                   }
                 />
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-bold text-gray-900">
+                  <span className="text-2xl font-bold text-white">
                     {stats.avgAiProbability}%
                   </span>
-                  <span className="text-[10px] text-gray-400">
+                  <span className="text-[10px] text-white/40">
                     avg AI prob
                   </span>
                 </div>
@@ -955,7 +955,7 @@ export function AnalyticsDashboard() {
                     )
                   })}
                 </div>
-                <div className="mt-1.5 flex justify-between text-[10px] text-gray-400">
+                <div className="mt-1.5 flex justify-between text-[10px] text-white/30">
                   <span>Low</span>
                   <span>Medium</span>
                   <span>High</span>
@@ -964,11 +964,11 @@ export function AnalyticsDashboard() {
 
               {/* Stat pills */}
               <div className="flex gap-3">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/60">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   {stats.aiApplicableCount} applicable
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/60">
                   <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
                   {stats.aiNotApplicableCount} not applicable
                 </span>
@@ -985,7 +985,7 @@ export function AnalyticsDashboard() {
             <ChartContainer config={radarConfig} className="mx-auto aspect-square max-h-72 w-full">
               <RadarChart data={stats.avgMeritBreakdown} outerRadius="72%">
                 <PolarGrid stroke="rgba(166,216,10,0.35)" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b7280', fontSize: 12 }} />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#9ca3af', fontSize: 12 }} />
                 <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
                 <Radar
                   dataKey="value"
@@ -1005,12 +1005,12 @@ export function AnalyticsDashboard() {
                 layout="vertical"
                 margin={{ left: 8, right: 24 }}
               >
-                <CartesianGrid horizontal={false} stroke="#e5e7eb" strokeDasharray="3 3" />
+                <CartesianGrid horizontal={false} stroke="rgba(255,255,255,0.07)" strokeDasharray="3 3" />
                 <XAxis type="number" hide />
                 <YAxis
                   type="category"
                   dataKey="label"
-                  tick={{ fill: '#6b7280', fontSize: 12 }}
+                  tick={{ fill: '#9ca3af', fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
                   width={110}
