@@ -1,3 +1,4 @@
+export { AnalyticsDashboard } from './components/AnalyticsDashboard'
 export { ApplicantsDashboard } from './components/ApplicantsDashboard'
 export { ApplicantsDetail } from './components/ApplicantsDetailPlaceholder'
 export { ComparisonView } from './components/ComparisonView'

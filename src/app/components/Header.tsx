@@ -32,20 +32,28 @@ export function Header() {
       className="border-border sticky top-0 z-50 border-b bg-white/80 backdrop-blur-xl"
     >
       <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/applicants" className="flex items-center gap-3">
-          <Image
-            src="/logo.svg"
-            alt="InVision Logo"
-            width={100}
-            height={50}
-            priority
-            className="h-auto w-[100px]"
-          />
-          <div className="hidden md:block">
-            <p className="text-foreground text-lg font-semibold">InVision Dashboard</p>
-            <p className="text-muted-foreground text-sm">Applicants and scoring overview</p>
-          </div>
-        </Link>
+        <div className="flex items-center gap-6">
+          <Link href="/applicants" className="flex items-center gap-3">
+            <Image
+              src="/logo.svg"
+              alt="InVision Logo"
+              width={100}
+              height={50}
+              priority
+              className="h-auto w-[100px]"
+            />
+            <div className="hidden md:block">
+              <p className="text-foreground text-lg font-semibold">InVision Dashboard</p>
+              <p className="text-muted-foreground text-sm">Applicants and scoring overview</p>
+            </div>
+          </Link>
+          <Link
+            href="/applicants/analytics"
+            className="text-muted-foreground hover:text-foreground hidden text-sm font-medium transition-colors sm:block"
+          >
+            Analytics
+          </Link>
+        </div>
 
         <div className="flex items-center gap-2">
           <Button type="button" variant="outline" size="sm">
