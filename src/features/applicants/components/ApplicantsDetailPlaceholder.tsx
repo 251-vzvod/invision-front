@@ -12,6 +12,7 @@ import {
   ClipboardCheck,
   HelpCircle,
   MessageSquare,
+  Star,
   Users,
   XCircle,
 } from 'lucide-react'
@@ -20,6 +21,16 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from 'recharts'
 import { cn } from '@/shared/lib/utils'
 import { runPageIntroAnimation } from '@/shared/lib/gsap-animations'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/shared/ui/alert-dialog'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent } from '@/shared/ui/card'
@@ -31,7 +42,13 @@ import {
 } from '@/shared/ui/chart'
 import { useApplicantProfileQuery, useApplicantsRankingQuery } from '../api'
 import { DEFAULT_SORT_DIRECTION, DEFAULT_SORT_FIELD } from '../constants'
-import type { ApplicantProfile, FeatureSnapshot, Recommendation, ReviewFlag } from '../types'
+import type {
+  ApplicantProfile,
+  CandidateDecision,
+  FeatureSnapshot,
+  Recommendation,
+  ReviewFlag,
+} from '../types'
 
 /* -------------------------------------------------------------------------- */
 /*  Meta constants                                                            */
@@ -290,6 +307,10 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
   const { data: profile, isLoading } = useApplicantProfileQuery(applicantId)
   const { data: rankedApplicants = [] } = useApplicantsRankingQuery(defaultSort)
 
+  // Committee decision state (client-side session only)
+  const [committeeDecision, setCommitteeDecision] = useState<CandidateDecision>(null)
+  const [pendingDecision, setPendingDecision] = useState<NonNullable<CandidateDecision> | null>(null)
+
   useEffect(() => {
     const root = rootRef.current
 
@@ -445,6 +466,138 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             <span className="text-muted-foreground text-xs font-medium">Authenticity Risk</span>
           </div>
         </div>
+
+        {/* ---------------------------------------------------------------- */}
+        {/*  Committee Decision                                              */}
+        {/* ---------------------------------------------------------------- */}
+        <Card
+          data-animate-detail-section
+          className="border-border bg-white shadow-sm"
+        >
+          <CardContent className="space-y-4 px-4 py-4">
+            <p className="text-lg font-semibold tracking-tight">Committee Decision</p>
+
+            {/* Current decision display */}
+            <div>
+              {committeeDecision === null && (
+                <p className="text-muted-foreground text-sm">No decision yet</p>
+              )}
+              {committeeDecision === 'approved' && (
+                <div className="flex items-center gap-2 text-emerald-600">
+                  <CheckCircle2 className="h-6 w-6" />
+                  <span className="text-xl font-bold uppercase tracking-wide">Approved</span>
+                </div>
+              )}
+              {committeeDecision === 'shortlisted' && (
+                <div className="flex items-center gap-2 text-amber-600">
+                  <Star className="h-6 w-6" />
+                  <span className="text-xl font-bold uppercase tracking-wide">Shortlisted</span>
+                </div>
+              )}
+              {committeeDecision === 'rejected' && (
+                <div className="flex items-center gap-2 text-red-600">
+                  <XCircle className="h-6 w-6" />
+                  <span className="text-xl font-bold uppercase tracking-wide">Rejected</span>
+                </div>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="default"
+                className={cn(
+                  'gap-1.5',
+                  committeeDecision === 'approved'
+                    ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-600/30 hover:bg-emerald-700'
+                    : 'bg-emerald-600 text-white hover:bg-emerald-700',
+                )}
+                onClick={() => setPendingDecision('approved')}
+              >
+                <CheckCircle2 className="size-4" />
+                Approve
+              </Button>
+              <Button
+                size="default"
+                className={cn(
+                  'gap-1.5',
+                  committeeDecision === 'shortlisted'
+                    ? 'bg-amber-500 text-white shadow-sm ring-2 ring-amber-500/30 hover:bg-amber-600'
+                    : 'bg-amber-500 text-white hover:bg-amber-600',
+                )}
+                onClick={() => {
+                  if (committeeDecision === 'rejected') {
+                    setPendingDecision('shortlisted')
+                  } else {
+                    setCommitteeDecision('shortlisted')
+                  }
+                }}
+              >
+                <Star className="size-4" />
+                Shortlist
+              </Button>
+              <Button
+                size="default"
+                className={cn(
+                  'gap-1.5',
+                  committeeDecision === 'rejected'
+                    ? 'bg-red-600 text-white shadow-sm ring-2 ring-red-600/30 hover:bg-red-700'
+                    : 'bg-red-600 text-white hover:bg-red-700',
+                )}
+                onClick={() => setPendingDecision('rejected')}
+              >
+                <XCircle className="size-4" />
+                Reject
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Confirmation dialog */}
+        <AlertDialog
+          open={pendingDecision !== null}
+          onOpenChange={(open) => {
+            if (!open) setPendingDecision(null)
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {pendingDecision === 'approved' && 'Approve candidate?'}
+                {pendingDecision === 'rejected' && 'Reject candidate?'}
+                {pendingDecision === 'shortlisted' && 'Move to shortlist?'}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {pendingDecision === 'approved' &&
+                  'Are you sure you want to approve this candidate? This marks them as approved for admission.'}
+                {pendingDecision === 'rejected' &&
+                  'Are you sure you want to reject this candidate? This marks them as rejected for the committee review.'}
+                {pendingDecision === 'shortlisted' &&
+                  'This candidate is currently rejected. Are you sure you want to move them to shortlist?'}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className={cn(
+                  pendingDecision === 'approved' && 'bg-emerald-600 hover:bg-emerald-700',
+                  pendingDecision === 'rejected' && 'bg-red-600 hover:bg-red-700',
+                  pendingDecision === 'shortlisted' && 'bg-amber-500 hover:bg-amber-600',
+                )}
+                onClick={() => {
+                  if (pendingDecision) {
+                    setCommitteeDecision(pendingDecision)
+                  }
+                  setPendingDecision(null)
+                }}
+              >
+                {pendingDecision === 'approved' && 'Approve'}
+                {pendingDecision === 'rejected' && 'Reject'}
+                {pendingDecision === 'shortlisted' && 'Move to Shortlist'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* ---------------------------------------------------------------- */}
         {/*  Two-column layout                                               */}

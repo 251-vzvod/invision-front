@@ -1,6 +1,7 @@
 import type {
   ApplicantsSortDirection,
   ApplicantsSortField,
+  CandidateDecision,
   EligibilityStatus,
   Recommendation,
 } from './types'
@@ -39,4 +40,17 @@ export const RECOMMENDATION_OPTIONS: Array<{
   { value: 'insufficient_evidence', label: 'Insufficient Evidence', dotClassName: 'bg-orange-500' },
   { value: 'incomplete_application', label: 'Incomplete Application', dotClassName: 'bg-amber-500' },
   { value: 'invalid', label: 'Invalid', dotClassName: 'bg-red-500' },
+]
+
+export type DecisionFilterValue = NonNullable<CandidateDecision> | 'pending'
+
+export const DECISION_OPTIONS: Array<{
+  value: DecisionFilterValue
+  label: string
+  dotClassName: string
+}> = [
+  { value: 'pending', label: 'No Decision', dotClassName: 'bg-gray-400' },
+  { value: 'approved', label: 'Approved', dotClassName: 'bg-emerald-500' },
+  { value: 'shortlisted', label: 'Shortlisted', dotClassName: 'bg-amber-500' },
+  { value: 'rejected', label: 'Rejected', dotClassName: 'bg-red-500' },
 ]

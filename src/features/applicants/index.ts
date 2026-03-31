@@ -23,4 +23,5 @@ export type {
   SemanticRubricScores,
   AiDetector,
   Recommendation,
+  CandidateDecision,
 } from './types'

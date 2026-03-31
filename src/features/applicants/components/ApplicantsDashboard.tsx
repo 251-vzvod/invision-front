@@ -6,15 +6,29 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowDown,
+  ArrowLeftRight,
   ArrowUp,
   ArrowUpDown,
+  CheckCircle2,
   ChevronDown,
   Filter,
   RotateCcw,
   Search,
+  Star,
+  XCircle,
 } from 'lucide-react'
 import { prefersReducedMotion } from '@/shared/lib/gsap-animations'
 import { cn } from '@/shared/lib/utils'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/shared/ui/alert-dialog'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Checkbox } from '@/shared/ui/checkbox'
@@ -22,11 +36,12 @@ import { Input } from '@/shared/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { useApplicantsRankingQuery } from '../api'
-import { ELIGIBILITY_OPTIONS, RECOMMENDATION_OPTIONS } from '../constants'
+import { DECISION_OPTIONS, ELIGIBILITY_OPTIONS, RECOMMENDATION_OPTIONS, type DecisionFilterValue } from '../constants'
 import type {
   ApplicantProfile,
   ApplicantsSortDirection,
   ApplicantsSortField,
+  CandidateDecision,
   EligibilityStatus,
   Recommendation,
 } from '../types'
@@ -81,6 +96,42 @@ const ELIGIBILITY_STYLES: Record<EligibilityStatus, string> = {
 }
 
 // ---------------------------------------------------------------------------
+// Decision badge helper
+// ---------------------------------------------------------------------------
+function DecisionBadge({ decision }: { decision: CandidateDecision }) {
+  if (!decision) return null
+
+  const config: Record<NonNullable<CandidateDecision>, { icon: React.ReactNode; className: string }> = {
+    approved: {
+      icon: <CheckCircle2 className="size-3" />,
+      className: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+    },
+    shortlisted: {
+      icon: <Star className="size-3" />,
+      className: 'bg-amber-50 text-amber-600 border-amber-200',
+    },
+    rejected: {
+      icon: <XCircle className="size-3" />,
+      className: 'bg-red-50 text-red-600 border-red-200',
+    },
+  }
+
+  const { icon, className } = config[decision]
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-medium leading-none',
+        className,
+      )}
+    >
+      {icon}
+      {decision.charAt(0).toUpperCase() + decision.slice(1)}
+    </span>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Table column definitions
 // ---------------------------------------------------------------------------
 interface ColumnDef {
@@ -92,18 +143,18 @@ interface ColumnDef {
 }
 
 const TABLE_COLUMNS: ColumnDef[] = [
-  { key: 'rank', label: '#', className: 'w-12 text-center', headerClassName: 'text-center' },
+  { key: 'rank', label: '#', className: 'w-12 text-center', headerClassName: 'justify-center' },
   { key: 'name', label: 'Name', className: 'min-w-[160px]' },
   { key: 'program', label: 'Program', className: 'min-w-[120px]' },
-  { key: 'score', label: 'Score', sortField: 'score', className: 'w-20 text-right', headerClassName: 'justify-end' },
-  { key: 'potential', label: 'Potential', sortField: 'potential', className: 'w-20 text-right', headerClassName: 'justify-end' },
-  { key: 'motivation', label: 'Motivation', sortField: 'motivation', className: 'w-24 text-right', headerClassName: 'justify-end' },
-  { key: 'leadership', label: 'Leadership', sortField: 'leadership', className: 'w-24 text-right', headerClassName: 'justify-end' },
-  { key: 'experience', label: 'Experience', sortField: 'experience', className: 'w-24 text-right', headerClassName: 'justify-end' },
-  { key: 'trust', label: 'Trust', sortField: 'trust', className: 'w-16 text-right', headerClassName: 'justify-end' },
-  { key: 'auth_risk', label: 'Auth. Risk', sortField: 'authenticity_risk', className: 'w-24 text-right', headerClassName: 'justify-end' },
-  { key: 'confidence', label: 'Confidence', sortField: 'confidence', className: 'w-24 text-right', headerClassName: 'justify-end' },
-  { key: 'status', label: 'Status', className: 'w-28' },
+  { key: 'score', label: 'Score', sortField: 'score', className: 'w-20 text-center', headerClassName: 'justify-center' },
+  { key: 'potential', label: 'Potential', sortField: 'potential', className: 'w-20 text-center', headerClassName: 'justify-center' },
+  { key: 'motivation', label: 'Motivation', sortField: 'motivation', className: 'w-24 text-center', headerClassName: 'justify-center' },
+  { key: 'leadership', label: 'Leadership', sortField: 'leadership', className: 'w-24 text-center', headerClassName: 'justify-center' },
+  { key: 'experience', label: 'Experience', sortField: 'experience', className: 'w-24 text-center', headerClassName: 'justify-center' },
+  { key: 'trust', label: 'Trust', sortField: 'trust', className: 'w-16 text-center', headerClassName: 'justify-center' },
+  { key: 'auth_risk', label: 'Auth. Risk', sortField: 'authenticity_risk', className: 'w-24 text-center', headerClassName: 'justify-center' },
+  { key: 'confidence', label: 'Confidence', sortField: 'confidence', className: 'w-24 text-center', headerClassName: 'justify-center' },
+  { key: 'status', label: 'Status', className: 'w-28 text-center', headerClassName: 'justify-center' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -180,15 +231,19 @@ function getCellValue(
   applicant: ApplicantProfile,
   columnKey: string,
   rank: number,
+  decision?: CandidateDecision,
 ): React.ReactNode {
   switch (columnKey) {
     case 'rank':
       return <span className="text-muted-foreground text-sm">{rank}</span>
     case 'name':
       return (
-        <span className="text-foreground font-medium">
-          {applicant.candidate_name ?? applicant.candidate_id}
-        </span>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-foreground truncate font-medium">
+            {applicant.candidate_name ?? applicant.candidate_id}
+          </span>
+          <DecisionBadge decision={decision ?? null} />
+        </div>
       )
     case 'program':
       return (
@@ -244,14 +299,14 @@ function ApplicantMobileCard({
   applicant,
   rank,
   isSelected,
-  isDisabled,
   onToggleSelect,
+  decision,
 }: {
   applicant: ApplicantProfile
   rank: number
   isSelected: boolean
-  isDisabled: boolean
-  onToggleSelect: () => void
+  onToggleSelect: (e: React.MouseEvent) => void
+  decision: CandidateDecision
 }) {
   return (
     <Link
@@ -267,12 +322,12 @@ function ApplicantMobileCard({
         <div className="absolute top-3 left-3 z-10">
           <Checkbox
             checked={isSelected}
-            disabled={isDisabled}
-            onCheckedChange={onToggleSelect}
             onClick={(e) => {
               e.stopPropagation()
               e.preventDefault()
+              onToggleSelect(e as unknown as React.MouseEvent)
             }}
+            onCheckedChange={() => {/* handled by onClick for shiftKey */}}
           />
         </div>
 
@@ -285,6 +340,7 @@ function ApplicantMobileCard({
               <p className="text-foreground truncate text-sm font-semibold">
                 {applicant.candidate_name ?? applicant.candidate_id}
               </p>
+              <DecisionBadge decision={decision} />
             </div>
             <p className="text-muted-foreground mt-1 truncate pl-8 text-xs">
               {applicant.program_name ?? 'No program'}
@@ -342,20 +398,53 @@ export function ApplicantsDashboard() {
     () => new Set(RECOMMENDATION_OPTIONS.map((o) => o.value)),
   )
 
-  // Selection state for comparison
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  // Decision filter
+  const [selectedDecisions, setSelectedDecisions] = useState<Set<DecisionFilterValue>>(
+    () => new Set(DECISION_OPTIONS.map((o) => o.value)),
+  )
 
-  const toggleSelection = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else if (next.size < 3) {
-        next.add(id)
-      }
-      return next
-    })
-  }, [])
+  // Selection state (no limit — batch actions work on any count)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const lastClickedIndexRef = useRef<number | null>(null)
+  const filteredApplicantsRef = useRef<ApplicantProfile[]>([])
+
+  // Decision state (client-side session only)
+  const [decisions, setDecisions] = useState<Map<string, CandidateDecision>>(new Map())
+
+  // Batch confirmation dialog state
+  const [pendingBatchDecision, setPendingBatchDecision] = useState<NonNullable<CandidateDecision> | null>(null)
+
+  const toggleSelection = useCallback(
+    (id: string, index: number, shiftKey: boolean) => {
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+
+        if (shiftKey && lastClickedIndexRef.current !== null) {
+          // Shift+Click: select range between last clicked and current
+          const list = filteredApplicantsRef.current
+          const start = Math.min(lastClickedIndexRef.current, index)
+          const end = Math.max(lastClickedIndexRef.current, index)
+          for (let i = start; i <= end; i++) {
+            const candidate = list[i]
+            if (candidate) {
+              next.add(candidate.candidate_id)
+            }
+          }
+        } else {
+          // Normal click: toggle single
+          if (next.has(id)) {
+            next.delete(id)
+          } else {
+            next.add(id)
+          }
+        }
+
+        return next
+      })
+      lastClickedIndexRef.current = index
+    },
+    [],
+  )
 
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set())
@@ -365,6 +454,52 @@ export function ApplicantsDashboard() {
     const ids = Array.from(selectedIds).join(',')
     router.push(`/applicants/compare?ids=${ids}`)
   }, [selectedIds, router])
+
+  const applyDecision = useCallback(
+    (decision: NonNullable<CandidateDecision>) => {
+      setDecisions((prev) => {
+        const next = new Map(prev)
+        for (const id of selectedIds) {
+          next.set(id, decision)
+        }
+        return next
+      })
+      setSelectedIds(new Set())
+    },
+    [selectedIds],
+  )
+
+  const hasRejectedInSelection = useMemo(() => {
+    for (const id of selectedIds) {
+      if (decisions.get(id) === 'rejected') return true
+    }
+    return false
+  }, [selectedIds, decisions])
+
+  const handleBatchDecisionClick = useCallback(
+    (decision: NonNullable<CandidateDecision>) => {
+      // Approve and Reject always need confirmation
+      if (decision === 'approved' || decision === 'rejected') {
+        setPendingBatchDecision(decision)
+        return
+      }
+      // Shortlist needs confirmation only if any selected candidate is rejected
+      if (decision === 'shortlisted' && hasRejectedInSelection) {
+        setPendingBatchDecision(decision)
+        return
+      }
+      // Otherwise apply directly
+      applyDecision(decision)
+    },
+    [applyDecision, hasRejectedInSelection],
+  )
+
+  const confirmBatchDecision = useCallback(() => {
+    if (pendingBatchDecision) {
+      applyDecision(pendingBatchDecision)
+    }
+    setPendingBatchDecision(null)
+  }, [pendingBatchDecision, applyDecision])
 
   // Mobile sort dropdown
   const [mobileSortField, setMobileSortField] = useState<ApplicantsSortField>('score')
@@ -402,8 +537,20 @@ export function ApplicantsDashboard() {
       result = result.filter((a) => selectedRecommendation.has(a.recommendation))
     }
 
+    // Decision filter
+    if (selectedDecisions.size < DECISION_OPTIONS.length) {
+      result = result.filter((a) => {
+        const decision = decisions.get(a.candidate_id) ?? null
+        const filterValue: DecisionFilterValue = decision ?? 'pending'
+        return selectedDecisions.has(filterValue)
+      })
+    }
+
     return result
-  }, [applicants, searchQuery, selectedEligibility, selectedRecommendation])
+  }, [applicants, searchQuery, selectedEligibility, selectedRecommendation, selectedDecisions, decisions])
+
+  // Keep ref in sync for shift+click range selection
+  filteredApplicantsRef.current = filteredApplicants
 
   // Toggle helpers
   const toggleEligibility = useCallback((value: EligibilityStatus) => {
@@ -430,10 +577,23 @@ export function ApplicantsDashboard() {
     })
   }, [])
 
+  const toggleDecision = useCallback((value: DecisionFilterValue) => {
+    setSelectedDecisions((prev) => {
+      const next = new Set(prev)
+      if (next.has(value)) {
+        if (next.size > 1) next.delete(value)
+      } else {
+        next.add(value)
+      }
+      return next
+    })
+  }, [])
+
   const handleResetFilters = useCallback(() => {
     setSearchQuery('')
     setSelectedEligibility(new Set(ELIGIBILITY_OPTIONS.map((o) => o.value)))
     setSelectedRecommendation(new Set(RECOMMENDATION_OPTIONS.map((o) => o.value)))
+    setSelectedDecisions(new Set(DECISION_OPTIONS.map((o) => o.value)))
     setSortState({ field: 'score', direction: 'desc' })
     setMobileSortField('score')
   }, [])
@@ -454,7 +614,8 @@ export function ApplicantsDashboard() {
   const hasActiveFilters =
     searchQuery.trim().length > 0 ||
     selectedEligibility.size < ELIGIBILITY_OPTIONS.length ||
-    selectedRecommendation.size < RECOMMENDATION_OPTIONS.length
+    selectedRecommendation.size < RECOMMENDATION_OPTIONS.length ||
+    selectedDecisions.size < DECISION_OPTIONS.length
 
   // Subtle page-level fade-in animation
   useEffect(() => {
@@ -534,6 +695,12 @@ export function ApplicantsDashboard() {
                 selected={selectedRecommendation}
                 onToggle={toggleRecommendation}
               />
+              <MultiFilterPopover
+                label="Decision"
+                options={DECISION_OPTIONS}
+                selected={selectedDecisions}
+                onToggle={toggleDecision}
+              />
 
               {/* Mobile sort dropdown */}
               <div className="md:hidden">
@@ -598,13 +765,29 @@ export function ApplicantsDashboard() {
                   <thead>
                     <tr className="border-border border-b bg-gray-50/80">
                       <th className="w-10 px-3 py-3">
-                        <span className="sr-only">Select</span>
+                        <Checkbox
+                          checked={
+                            filteredApplicants.length > 0 &&
+                            filteredApplicants.every((a) => selectedIds.has(a.candidate_id))
+                              ? true
+                              : filteredApplicants.some((a) => selectedIds.has(a.candidate_id))
+                                ? 'indeterminate'
+                                : false
+                          }
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedIds(new Set(filteredApplicants.map((a) => a.candidate_id)))
+                            } else {
+                              setSelectedIds(new Set())
+                            }
+                          }}
+                        />
                       </th>
                       {TABLE_COLUMNS.map((col) => (
                         <th
                           key={col.key}
                           className={cn(
-                            'px-3 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase',
+                            'px-3 py-3 text-left text-sm font-semibold tracking-wide text-muted-foreground',
                             col.className,
                             col.sortField && sortState?.field === col.sortField && 'text-foreground',
                           )}
@@ -642,11 +825,11 @@ export function ApplicantsDashboard() {
                         <td className="px-3 py-3">
                           <Checkbox
                             checked={selectedIds.has(applicant.candidate_id)}
-                            disabled={
-                              !selectedIds.has(applicant.candidate_id) && selectedIds.size >= 3
-                            }
-                            onCheckedChange={() => toggleSelection(applicant.candidate_id)}
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleSelection(applicant.candidate_id, index, e.shiftKey)
+                            }}
+                            onCheckedChange={() => {/* handled by onClick for shiftKey */}}
                           />
                         </td>
                         {TABLE_COLUMNS.map((col) => (
@@ -660,7 +843,7 @@ export function ApplicantsDashboard() {
                                 'bg-primary/[0.03]',
                             )}
                           >
-                            {getCellValue(applicant, col.key, index + 1)}
+                            {getCellValue(applicant, col.key, index + 1, decisions.get(applicant.candidate_id))}
                           </td>
                         ))}
                       </tr>
@@ -678,8 +861,8 @@ export function ApplicantsDashboard() {
                   applicant={applicant}
                   rank={index + 1}
                   isSelected={selectedIds.has(applicant.candidate_id)}
-                  isDisabled={!selectedIds.has(applicant.candidate_id) && selectedIds.size >= 3}
-                  onToggleSelect={() => toggleSelection(applicant.candidate_id)}
+                  onToggleSelect={(e: React.MouseEvent) => toggleSelection(applicant.candidate_id, index, e.shiftKey)}
+                  decision={decisions.get(applicant.candidate_id) ?? null}
                 />
               ))}
             </div>
@@ -687,24 +870,167 @@ export function ApplicantsDashboard() {
         )}
       </main>
 
-      {/* Sticky comparison bar */}
-      {selectedIds.size >= 2 && (
-        <div className="border-border fixed bottom-0 right-0 left-0 z-40 border-t bg-white shadow-lg">
-          <div className="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-            <p className="text-foreground text-sm font-medium">
-              {selectedIds.size} candidate{selectedIds.size !== 1 ? 's' : ''} selected
-            </p>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={clearSelection}>
+      {/* ---- Mobile: full-width bottom bar ---- */}
+      {selectedIds.size >= 1 && (
+        <div className="border-border fixed bottom-0 right-0 left-0 z-40 border-t bg-white/95 shadow-lg backdrop-blur-sm md:hidden">
+          <div className="flex flex-col gap-2.5 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <p className="text-foreground text-sm font-semibold">
+                {selectedIds.size} selected
+              </p>
+              <Button variant="ghost" size="sm" onClick={clearSelection} className="text-muted-foreground">
                 Clear
               </Button>
-              <Button size="sm" onClick={handleCompare}>
-                Compare
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <Button
+                size="default"
+                className="gap-1.5 bg-emerald-600 text-white hover:bg-emerald-700"
+                onClick={() => handleBatchDecisionClick('approved')}
+              >
+                <CheckCircle2 className="size-4" />
+                Approve
+              </Button>
+              <Button
+                size="default"
+                className="gap-1.5 bg-amber-500 text-white hover:bg-amber-600"
+                onClick={() => handleBatchDecisionClick('shortlisted')}
+              >
+                <Star className="size-4" />
+                Shortlist
+              </Button>
+              <Button
+                size="default"
+                className="gap-1.5 bg-red-600 text-white hover:bg-red-700"
+                onClick={() => handleBatchDecisionClick('rejected')}
+              >
+                <XCircle className="size-4" />
+                Reject
               </Button>
             </div>
+            <Button
+              variant="outline"
+              size="default"
+              className="gap-1.5"
+              disabled={selectedIds.size < 2 || selectedIds.size > 3}
+              onClick={handleCompare}
+            >
+              <ArrowLeftRight className="size-4" />
+              Compare ({selectedIds.size}/3)
+            </Button>
           </div>
         </div>
       )}
+
+      {/* ---- Desktop: floating centered bar ---- */}
+      {selectedIds.size >= 1 && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-40 hidden justify-center md:flex">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-border bg-white/95 px-6 py-4 shadow-2xl backdrop-blur-sm">
+            {/* Count */}
+            <div className="border-border border-r pr-4">
+              <p className="text-foreground text-lg font-bold tabular-nums">
+                {selectedIds.size}
+              </p>
+              <p className="text-muted-foreground text-xs">selected</p>
+            </div>
+
+            {/* Action buttons — large */}
+            <div className="flex items-center gap-2.5">
+              <Button
+                size="lg"
+                className="gap-2 rounded-xl bg-emerald-600 px-5 text-white shadow-sm hover:bg-emerald-700"
+                onClick={() => handleBatchDecisionClick('approved')}
+              >
+                <CheckCircle2 className="size-5" />
+                Approve
+              </Button>
+              <Button
+                size="lg"
+                className="gap-2 rounded-xl bg-amber-500 px-5 text-white shadow-sm hover:bg-amber-600"
+                onClick={() => handleBatchDecisionClick('shortlisted')}
+              >
+                <Star className="size-5" />
+                Shortlist
+              </Button>
+              <Button
+                size="lg"
+                className="gap-2 rounded-xl bg-red-600 px-5 text-white shadow-sm hover:bg-red-700"
+                onClick={() => handleBatchDecisionClick('rejected')}
+              >
+                <XCircle className="size-5" />
+                Reject
+              </Button>
+            </div>
+
+            {/* Divider */}
+            <div className="bg-border mx-1 h-8 w-px" />
+
+            {/* Compare + Clear */}
+            <Button
+              variant="outline"
+              size="lg"
+              className="gap-2 rounded-xl px-5"
+              disabled={selectedIds.size < 2 || selectedIds.size > 3}
+              onClick={handleCompare}
+              title={
+                selectedIds.size < 2 || selectedIds.size > 3
+                  ? 'Select 2-3 to compare'
+                  : undefined
+              }
+            >
+              <ArrowLeftRight className="size-4" />
+              Compare
+            </Button>
+            <Button variant="ghost" size="sm" onClick={clearSelection} className="text-muted-foreground ml-1">
+              <XCircle className="size-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Batch confirmation dialog */}
+      <AlertDialog
+        open={pendingBatchDecision !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingBatchDecision(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingBatchDecision === 'approved' &&
+                `Approve ${selectedIds.size} candidate${selectedIds.size !== 1 ? 's' : ''}?`}
+              {pendingBatchDecision === 'rejected' &&
+                `Reject ${selectedIds.size} candidate${selectedIds.size !== 1 ? 's' : ''}?`}
+              {pendingBatchDecision === 'shortlisted' &&
+                `Shortlist ${selectedIds.size} candidate${selectedIds.size !== 1 ? 's' : ''}?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingBatchDecision === 'approved' &&
+                `Are you sure you want to approve ${selectedIds.size} candidate${selectedIds.size !== 1 ? 's' : ''}?`}
+              {pendingBatchDecision === 'rejected' &&
+                `Are you sure you want to reject ${selectedIds.size} candidate${selectedIds.size !== 1 ? 's' : ''}?`}
+              {pendingBatchDecision === 'shortlisted' &&
+                'Some selected candidates are currently rejected. Move all to shortlist?'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className={cn(
+                pendingBatchDecision === 'approved' && 'bg-emerald-600 hover:bg-emerald-700',
+                pendingBatchDecision === 'rejected' && 'bg-red-600 hover:bg-red-700',
+                pendingBatchDecision === 'shortlisted' && 'bg-amber-500 hover:bg-amber-600',
+              )}
+              onClick={confirmBatchDecision}
+            >
+              {pendingBatchDecision === 'approved' && 'Approve'}
+              {pendingBatchDecision === 'rejected' && 'Reject'}
+              {pendingBatchDecision === 'shortlisted' && 'Move to Shortlist'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

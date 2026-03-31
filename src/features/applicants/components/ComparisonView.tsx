@@ -320,7 +320,7 @@ function ComparisonRadarChart({ profiles }: { profiles: ApplicantProfile[] }) {
         </ResponsiveContainer>
       </div>
       {/* Legend */}
-      <div className="mt-4 flex items-center justify-center gap-6">
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
         {profiles.map((p, i) => (
           <div key={p.candidate_id} className="flex items-center gap-2 text-sm">
             <span
@@ -344,7 +344,7 @@ function StrengthsGapsComparison({ profiles }: { profiles: ApplicantProfile[] })
   return (
     <div className="border-border rounded-xl border bg-white p-6 shadow-sm">
       <h3 className="text-foreground mb-4 text-base font-semibold">Strengths &amp; Gaps</h3>
-      <div className={cn('grid gap-6', profiles.length === 2 ? 'grid-cols-2' : 'grid-cols-3')}>
+      <div className={cn('grid gap-6 grid-cols-1 sm:grid-cols-2', profiles.length === 3 && 'lg:grid-cols-3')}>
         {profiles.map((p, i) => (
           <div key={p.candidate_id}>
             <div className="mb-3 flex items-center gap-2">
@@ -410,8 +410,8 @@ function AiDetectionComparison({ profiles }: { profiles: ApplicantProfile[] }) {
           const prob = probabilities[i]
           const isHighest = prob === maxProb && prob > 0
           return (
-            <div key={p.candidate_id} className="flex items-center gap-4">
-              <div className="flex w-40 shrink-0 items-center gap-2">
+            <div key={p.candidate_id} className="flex items-center gap-3">
+              <div className="flex w-24 shrink-0 items-center gap-2 sm:w-40">
                 <span
                   className="inline-block size-2.5 rounded-full"
                   style={{ backgroundColor: CANDIDATE_COLORS[i] }}

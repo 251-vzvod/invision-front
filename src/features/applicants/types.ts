@@ -147,6 +147,8 @@ export type ApplicantsSortField =
   | 'authenticity_risk'
   | 'confidence'
 
+export type CandidateDecision = 'approved' | 'rejected' | 'shortlisted' | null
+
 export type ApplicantsSortDirection = 'asc' | 'desc'
 
 export type EligibilityStatus = ApplicantProfile['eligibility_status']
