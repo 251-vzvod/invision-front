@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo } from 'react'
+import gsap from 'gsap'
+import { useEffect, useMemo, useRef } from 'react'
 import {
   Users,
   TrendingUp,
@@ -28,6 +29,7 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
 } from 'recharts'
+import { prefersReducedMotion } from '@/shared/lib/gsap-animations'
 import { cn } from '@/shared/lib/utils'
 import {
   ChartContainer,
@@ -522,12 +524,23 @@ function AnalyticsSkeleton() {
 // ---------------------------------------------------------------------------
 
 export function AnalyticsDashboard() {
+  const rootRef = useRef<HTMLDivElement | null>(null)
   const { data: applicants, isLoading } = useApplicantsRankingQuery({
     sortField: 'score',
     sortDirection: 'desc',
   })
 
   const stats = useMemo(() => computeStats(applicants ?? []), [applicants])
+
+  useEffect(() => {
+    if (prefersReducedMotion()) return
+    const root = rootRef.current
+    if (!root) return
+    const ctx = gsap.context(() => {
+      gsap.fromTo(root, { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' })
+    }, root)
+    return () => { ctx.revert() }
+  }, [])
 
   if (isLoading) {
     return <AnalyticsSkeleton />
@@ -540,7 +553,7 @@ export function AnalyticsDashboard() {
   )
 
   return (
-    <div className="min-h-screen bg-dashboard">
+    <div ref={rootRef} className="min-h-screen bg-dashboard">
       <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
         {/* ---------------------------------------------------------------- */}
         {/* Header                                                          */}
@@ -566,7 +579,7 @@ export function AnalyticsDashboard() {
         {/* ---------------------------------------------------------------- */}
         <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
           {/* Total Applicants */}
-          <div className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm transition-shadow hover:shadow-md">
+          <div className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-emerald-400 to-emerald-600" />
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-gray-500">
@@ -583,7 +596,7 @@ export function AnalyticsDashboard() {
           </div>
 
           {/* Avg Merit Score */}
-          <div className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm transition-shadow hover:shadow-md">
+          <div className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">
@@ -610,7 +623,7 @@ export function AnalyticsDashboard() {
           </div>
 
           {/* Avg Confidence */}
-          <div className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm transition-shadow hover:shadow-md">
+          <div className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">
@@ -639,7 +652,7 @@ export function AnalyticsDashboard() {
           {/* High Risk */}
           <div
             className={cn(
-              'group relative overflow-hidden rounded-2xl border p-6 shadow-sm backdrop-blur-sm transition-shadow hover:shadow-md',
+              'group relative overflow-hidden rounded-2xl border p-6 shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md',
               stats.highRiskCount > 0
                 ? 'border-red-200 bg-red-50/60'
                 : 'border-gray-200/80 bg-white/80',

@@ -1,7 +1,8 @@
 'use client'
 
+import gsap from 'gsap'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import {
   PolarAngleAxis,
   PolarGrid,
@@ -10,6 +11,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { ArrowLeft } from 'lucide-react'
+import { prefersReducedMotion } from '@/shared/lib/gsap-animations'
 import { cn } from '@/shared/lib/utils'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
@@ -137,7 +139,7 @@ function ScoreOverviewTable({ profiles }: { profiles: ApplicantProfile[] }) {
   ]
 
   return (
-    <div className="border-border overflow-hidden rounded-xl border bg-white shadow-sm">
+    <div className="border-border overflow-hidden rounded-xl border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -296,7 +298,7 @@ function ComparisonRadarChart({ profiles }: { profiles: ApplicantProfile[] }) {
   }, [profiles])
 
   return (
-    <div className="border-border rounded-xl border bg-white p-6 shadow-sm">
+    <div className="border-border rounded-xl border bg-white p-6 shadow-sm transition-shadow duration-200 hover:shadow-md">
       <h3 className="text-foreground mb-4 text-base font-semibold">Skills Radar</h3>
       <div className="mx-auto h-[320px] w-full max-w-[480px]">
         <ResponsiveContainer width="100%" height="100%">
@@ -343,7 +345,7 @@ function ComparisonRadarChart({ profiles }: { profiles: ApplicantProfile[] }) {
 // ---------------------------------------------------------------------------
 function StrengthsGapsComparison({ profiles }: { profiles: ApplicantProfile[] }) {
   return (
-    <div className="border-border rounded-xl border bg-white p-6 shadow-sm">
+    <div className="border-border rounded-xl border bg-white p-6 shadow-sm transition-shadow duration-200 hover:shadow-md">
       <h3 className="text-foreground mb-4 text-base font-semibold">Strengths &amp; Gaps</h3>
       <div className={cn('grid gap-6 grid-cols-1 sm:grid-cols-2', profiles.length === 3 && 'lg:grid-cols-3')}>
         {profiles.map((p, i) => (
@@ -404,7 +406,7 @@ function AiDetectionComparison({ profiles }: { profiles: ApplicantProfile[] }) {
   const maxProb = Math.max(...probabilities)
 
   return (
-    <div className="border-border rounded-xl border bg-white p-6 shadow-sm">
+    <div className="border-border rounded-xl border bg-white p-6 shadow-sm transition-shadow duration-200 hover:shadow-md">
       <h3 className="text-foreground mb-4 text-base font-semibold">AI Detection</h3>
       <div className="space-y-3">
         {profiles.map((p, i) => {
@@ -463,6 +465,7 @@ function AiDetectionComparison({ profiles }: { profiles: ApplicantProfile[] }) {
 // Main ComparisonView
 // ---------------------------------------------------------------------------
 export function ComparisonView() {
+  const rootRef = useRef<HTMLDivElement | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -473,6 +476,16 @@ export function ComparisonView() {
   }, [searchParams])
 
   const { profiles, isLoading } = useCandidateQueries(ids)
+
+  useEffect(() => {
+    if (prefersReducedMotion()) return
+    const root = rootRef.current
+    if (!root) return
+    const ctx = gsap.context(() => {
+      gsap.fromTo(root, { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' })
+    }, root)
+    return () => { ctx.revert() }
+  }, [])
 
   if (ids.length < 2) {
     return (
@@ -580,7 +593,7 @@ export function ComparisonView() {
   }
 
   return (
-    <div className="min-h-screen bg-dashboard">
+    <div ref={rootRef} className="min-h-screen bg-dashboard">
       <main className="mx-auto max-w-[1440px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         {/* Top bar */}
         <div className="flex items-center gap-4">

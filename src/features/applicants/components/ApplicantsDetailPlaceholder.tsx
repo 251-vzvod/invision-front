@@ -370,7 +370,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
           </div>
 
           {/* Committee Decision skeleton */}
-          <Card className="border-border bg-white shadow-sm">
+          <Card className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md">
             <CardContent className="space-y-4 px-4 py-4">
               <Skeleton className="h-5 w-44" />
               <Skeleton className="h-6 w-32" />
@@ -387,14 +387,14 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {/* Left column */}
             <div className="space-y-4">
               {/* Radar chart */}
-              <Card className="border-border bg-white shadow-sm">
+              <Card className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md">
                 <CardContent className="px-4 py-4">
                   <Skeleton className="mx-auto aspect-square max-h-72 w-full rounded-xl" />
                 </CardContent>
               </Card>
 
               {/* Merit breakdown bars */}
-              <Card className="border-border bg-white shadow-sm">
+              <Card className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md">
                 <CardContent className="space-y-3 px-4 py-4">
                   <Skeleton className="h-4 w-36" />
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -407,7 +407,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
               </Card>
 
               {/* AI Detection */}
-              <Card className="border-border bg-white shadow-sm">
+              <Card className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md">
                 <CardContent className="space-y-2 px-4 py-4">
                   <Skeleton className="h-4 w-28" />
                   <Skeleton className="h-8 w-16" />
@@ -419,7 +419,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {/* Right column */}
             <div className="space-y-4">
               {/* Assessment Summary */}
-              <Card className="border-border bg-white shadow-sm">
+              <Card className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md">
                 <CardContent className="space-y-4 px-4 py-4">
                   <Skeleton className="h-4 w-44" />
                   <div className="space-y-2">
@@ -432,7 +432,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
               </Card>
 
               {/* Review Flags */}
-              <Card className="border-border bg-white shadow-sm">
+              <Card className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md">
                 <CardContent className="space-y-2 px-4 py-4">
                   <Skeleton className="h-4 w-28" />
                   <div className="flex flex-wrap gap-1.5">
@@ -444,7 +444,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
               </Card>
 
               {/* Strengths & Gaps */}
-              <Card className="border-border bg-white shadow-sm">
+              <Card className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md">
                 <CardContent className="px-4 py-4">
                   <div className="grid gap-6 sm:grid-cols-2">
                     {/* Strengths */}
@@ -596,7 +596,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
         {/* ---------------------------------------------------------------- */}
         <Card
           data-animate-detail-section
-          className="border-border bg-white shadow-sm"
+          className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
         >
           <CardContent className="space-y-4 px-4 py-4">
             <p className="text-lg font-semibold tracking-tight">Committee Decision</p>
@@ -631,7 +631,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
               <Button
                 size="default"
                 className={cn(
-                  'gap-1.5',
+                  'gap-1.5 active:scale-[0.97] transition-transform duration-100',
                   committeeDecision === 'approved'
                     ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-600/30 hover:bg-emerald-700'
                     : 'bg-emerald-600 text-white hover:bg-emerald-700',
@@ -644,7 +644,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
               <Button
                 size="default"
                 className={cn(
-                  'gap-1.5',
+                  'gap-1.5 active:scale-[0.97] transition-transform duration-100',
                   committeeDecision === 'shortlisted'
                     ? 'bg-amber-500 text-white shadow-sm ring-2 ring-amber-500/30 hover:bg-amber-600'
                     : 'bg-amber-500 text-white hover:bg-amber-600',
@@ -663,7 +663,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
               <Button
                 size="default"
                 className={cn(
-                  'gap-1.5',
+                  'gap-1.5 active:scale-[0.97] transition-transform duration-100',
                   committeeDecision === 'rejected'
                     ? 'bg-red-600 text-white shadow-sm ring-2 ring-red-600/30 hover:bg-red-700'
                     : 'bg-red-600 text-white hover:bg-red-700',
@@ -734,7 +734,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {/* Radar chart */}
             <Card
               data-animate-detail-section
-              className="border-border bg-white shadow-sm"
+              className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
             >
               <CardContent className="px-4 py-4">
                 <ChartContainer
@@ -760,7 +760,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {/* Merit breakdown progress bars */}
             <Card
               data-animate-detail-section
-              className="border-border bg-white shadow-sm"
+              className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
             >
               <CardContent className="space-y-3 px-4 py-4">
                 <p className="text-sm font-semibold uppercase tracking-wide">Merit Breakdown</p>
@@ -776,7 +776,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {profile.ai_detector.enabled && (
               <Card
                 data-animate-detail-section
-                className="border-border bg-white shadow-sm"
+                className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
               >
                 <CardContent className="space-y-2 px-4 py-4">
                   <div className="flex items-center gap-2">
@@ -807,7 +807,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {profile.committee_cohorts.length > 0 && (
               <Card
                 data-animate-detail-section
-                className="border-border bg-white shadow-sm"
+                className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
               >
                 <CardContent className="space-y-2 px-4 py-4">
                   <div className="flex items-center gap-2">
@@ -839,7 +839,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {/* Assessment Summary */}
             <Card
               data-animate-detail-section
-              className="border-border bg-white shadow-sm"
+              className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
             >
               <CardContent className="space-y-4 px-4 py-4">
                 <p className="text-sm font-semibold uppercase tracking-wide">Assessment Summary</p>
@@ -863,7 +863,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {/* Review Flags */}
             <Card
               data-animate-detail-section
-              className="border-border bg-white shadow-sm"
+              className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
             >
               <CardContent className="space-y-2 px-4 py-4">
                 <p className="text-sm font-semibold uppercase tracking-wide">Review Flags</p>
@@ -888,7 +888,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {/* Strengths & Gaps */}
             <Card
               data-animate-detail-section
-              className="border-border bg-white shadow-sm"
+              className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
             >
               <CardContent className="px-4 py-4">
                 <div className="grid gap-6 sm:grid-cols-2">
@@ -941,7 +941,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {profile.what_to_verify_manually.length > 0 && (
               <Card
                 data-animate-detail-section
-                className="border-border bg-white shadow-sm"
+                className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
               >
                 <CardContent className="space-y-2 px-4 py-4">
                   <div className="flex items-center gap-2">
@@ -968,7 +968,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {profile.evidence_spans.length > 0 && (
               <Card
                 data-animate-detail-section
-                className="border-border bg-white shadow-sm"
+                className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
               >
                 <CardContent className="space-y-3 px-4 py-4">
                   <p className="text-sm font-semibold uppercase tracking-wide">Evidence Spans</p>
@@ -995,7 +995,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {/* Feature Snapshot — collapsible */}
             <Card
               data-animate-detail-section
-              className="border-border bg-white shadow-sm"
+              className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
             >
               <CardContent className="px-4 py-4">
                 <CollapsibleSection
@@ -1051,7 +1051,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             {Object.keys(profile.explanation.scoring_notes).length > 0 && (
               <Card
                 data-animate-detail-section
-                className="border-border bg-white shadow-sm"
+                className="border-border bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
               >
                 <CardContent className="px-4 py-4">
                   <CollapsibleSection title="Scoring Notes">

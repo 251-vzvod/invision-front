@@ -1,6 +1,7 @@
 'use client'
 
 import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -46,6 +47,8 @@ import type {
   EligibilityStatus,
   Recommendation,
 } from '../types'
+
+gsap.registerPlugin(ScrollTrigger)
 
 // ---------------------------------------------------------------------------
 // Sort cycle: desc -> asc -> reset (back to score desc)
@@ -654,6 +657,49 @@ export function ApplicantsDashboard() {
     )
   }, [filteredApplicants, isLoading])
 
+  // ScrollTrigger for toolbar and table
+  useEffect(() => {
+    if (prefersReducedMotion()) return
+    const root = rootRef.current
+    if (!root) return
+
+    const ctx = gsap.context(() => {
+      const toolbar = root.querySelector('[data-animate-toolbar]')
+      const table = root.querySelector('[data-animate-table]')
+
+      if (toolbar) {
+        gsap.fromTo(
+          toolbar,
+          { opacity: 0, y: 12 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.4,
+            ease: 'power2.out',
+            scrollTrigger: { trigger: toolbar, start: 'top 90%', once: true },
+          },
+        )
+      }
+
+      if (table) {
+        gsap.fromTo(
+          table,
+          { opacity: 0, y: 12 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.4,
+            delay: 0.1,
+            ease: 'power2.out',
+            scrollTrigger: { trigger: table, start: 'top 90%', once: true },
+          },
+        )
+      }
+    }, root)
+
+    return () => { ctx.revert() }
+  }, [isLoading])
+
   return (
     <div ref={rootRef} className="min-h-screen bg-dashboard">
       <main className="mx-auto max-w-[1440px] space-y-5 px-4 py-6 sm:px-6 lg:px-8">
@@ -669,7 +715,7 @@ export function ApplicantsDashboard() {
         </div>
 
         {/* Toolbar: search + filters */}
-        <div className="border-border flex flex-col gap-3 rounded-xl border bg-white p-4 shadow-sm">
+        <div data-animate-toolbar className="border-border flex flex-col gap-3 rounded-xl border bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             {/* Search */}
             <div className="relative flex-1">
@@ -769,7 +815,7 @@ export function ApplicantsDashboard() {
         ) : (
           <>
             {/* Desktop table */}
-            <div className="border-border hidden overflow-hidden rounded-xl border bg-white shadow-sm md:block">
+            <div data-animate-table className="border-border hidden overflow-hidden rounded-xl border bg-white shadow-sm md:block">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
