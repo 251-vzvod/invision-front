@@ -139,13 +139,13 @@ export function Header() {
               <Button
                 variant="outline"
                 size="sm"
-                className="size-9 rounded-lg border-border p-0 text-muted-foreground hover:text-foreground"
+                className="size-9 rounded-lg border-border dark:border-white/10 p-0 text-muted-foreground hover:text-foreground"
               >
                 <Menu className="size-5" />
                 <span className="sr-only">Open menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80 border-border bg-background">
+            <SheetContent side="right" className="w-80 border-border dark:border-white/10 bg-background">
               <SheetHeader className="text-left">
                 <SheetTitle>
                   <Image
@@ -183,7 +183,7 @@ export function Header() {
               </nav>
 
               {/* Theme toggle in mobile menu */}
-              <div className="mt-4 border-t border-border px-2 pt-4">
+              <div className="mt-4 border-t border-border dark:border-white/10 px-2 pt-4">
                 <Button
                   type="button"
                   variant="ghost"
@@ -196,7 +196,7 @@ export function Header() {
                 </Button>
               </div>
 
-              <div className="mt-auto border-t border-border px-2 pt-4">
+              <div className="mt-auto border-t border-border dark:border-white/10 px-2 pt-4">
                 <Button
                   type="button"
                   variant="ghost"

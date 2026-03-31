@@ -139,11 +139,11 @@ function ScoreOverviewTable({ profiles }: { profiles: ApplicantProfile[] }) {
   ]
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card">
+    <div className="overflow-hidden rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border bg-muted">
+            <tr className="border-b border-border dark:border-white/10 bg-muted/50 dark:bg-white/[0.03]">
               <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Metric
               </th>
@@ -298,7 +298,7 @@ function ComparisonRadarChart({ profiles }: { profiles: ApplicantProfile[] }) {
   }, [profiles])
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
+    <div className="rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-6">
       <h3 className="mb-4 text-base font-semibold text-foreground">Skills Radar</h3>
       <div className="mx-auto h-[320px] w-full max-w-[480px]">
         <ResponsiveContainer width="100%" height="100%">
@@ -345,7 +345,7 @@ function ComparisonRadarChart({ profiles }: { profiles: ApplicantProfile[] }) {
 // ---------------------------------------------------------------------------
 function StrengthsGapsComparison({ profiles }: { profiles: ApplicantProfile[] }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
+    <div className="rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-6">
       <h3 className="mb-4 text-base font-semibold text-foreground">Strengths &amp; Gaps</h3>
       <div className={cn('grid gap-6 grid-cols-1 sm:grid-cols-2', profiles.length === 3 && 'lg:grid-cols-3')}>
         {profiles.map((p, i) => (
@@ -406,7 +406,7 @@ function AiDetectionComparison({ profiles }: { profiles: ApplicantProfile[] }) {
   const maxProb = Math.max(...probabilities)
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
+    <div className="rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-6">
       <h3 className="mb-4 text-base font-semibold text-foreground">AI Detection</h3>
       <div className="space-y-3">
         {profiles.map((p, i) => {
@@ -448,7 +448,7 @@ function AiDetectionComparison({ profiles }: { profiles: ApplicantProfile[] }) {
                   'text-xs',
                   p.ai_detector.applicable
                     ? 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/15 dark:text-sky-400'
-                    : 'border-border bg-muted text-muted-foreground',
+                    : 'border-border dark:border-white/10 bg-muted text-muted-foreground',
                 )}
               >
                 {p.ai_detector.applicable ? 'Applicable' : 'N/A'}
@@ -490,7 +490,7 @@ export function ComparisonView() {
   if (ids.length < 2) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-dashboard">
-        <div className="rounded-xl border border-border bg-card p-12 text-center">
+        <div className="rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-12 text-center">
           <p className="text-sm text-muted-foreground">
             Select at least 2 candidates to compare.
           </p>
@@ -519,10 +519,10 @@ export function ComparisonView() {
           </div>
 
           {/* Score overview table skeleton */}
-          <div className="overflow-hidden rounded-xl border border-border bg-card">
+          <div className="overflow-hidden rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl">
             <Skeleton className="h-10 w-full rounded-none" />
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="flex items-center border-b border-border px-4 last:border-b-0">
+              <div key={i} className="flex items-center border-b border-border dark:border-white/10 px-4 last:border-b-0">
                 <Skeleton className="my-2.5 h-6 w-full" />
               </div>
             ))}
@@ -530,11 +530,11 @@ export function ComparisonView() {
 
           {/* Two columns: radar + strengths */}
           <div className="grid gap-6 lg:grid-cols-2">
-            <div className="rounded-xl border border-border bg-card p-6">
+            <div className="rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-6">
               <Skeleton className="mb-4 h-5 w-28" />
               <Skeleton className="mx-auto h-72 w-full max-w-[480px] rounded-xl" />
             </div>
-            <div className="rounded-xl border border-border bg-card p-6">
+            <div className="rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-6">
               <Skeleton className="mb-4 h-5 w-36" />
               <div className="grid gap-6 sm:grid-cols-2">
                 {Array.from({ length: 2 }).map((_, i) => (
@@ -553,7 +553,7 @@ export function ComparisonView() {
           </div>
 
           {/* AI Detection skeleton */}
-          <div className="rounded-xl border border-border bg-card p-6">
+          <div className="rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-6">
             <Skeleton className="mb-4 h-5 w-28" />
             <div className="space-y-3">
               {Array.from({ length: 2 }).map((_, i) => (
@@ -574,7 +574,7 @@ export function ComparisonView() {
   if (profiles.length < 2) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-dashboard">
-        <div className="rounded-xl border border-border bg-card p-12 text-center">
+        <div className="rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-12 text-center">
           <p className="text-sm text-muted-foreground">
             Could not load candidate profiles. Some IDs may be invalid.
           </p>

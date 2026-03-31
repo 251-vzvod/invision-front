@@ -386,7 +386,7 @@ function CustomTooltip({
 }) {
   if (!active || !payload || payload.length === 0) return null
   return (
-    <div className="rounded-lg border border-border bg-popover px-3.5 py-2.5 shadow-lg">
+    <div className="rounded-lg border border-border dark:border-white/10 bg-popover px-3.5 py-2.5 shadow-lg">
       {label && (
         <p className="mb-1 text-xs font-semibold text-foreground">{label}</p>
       )}
@@ -417,7 +417,7 @@ function SectionCard({
   return (
     <div
       className={cn(
-        'rounded-2xl border border-border bg-card p-6',
+        'rounded-2xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-6',
         className,
       )}
     >
@@ -470,7 +470,7 @@ function AnalyticsSkeleton() {
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="rounded-2xl border border-border bg-card p-6"
+              className="rounded-2xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-6"
             >
               <Skeleton className="mb-3 h-4 w-24" />
               <Skeleton className="mb-2 h-9 w-20" />
@@ -480,7 +480,7 @@ function AnalyticsSkeleton() {
         </div>
 
         {/* Score distribution skeleton */}
-        <div className="mb-6 rounded-2xl border border-border bg-card p-6">
+        <div className="mb-6 rounded-2xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-6">
           <Skeleton className="mb-4 h-5 w-48" />
           <Skeleton className="h-[280px] w-full rounded-xl" />
         </div>
@@ -490,7 +490,7 @@ function AnalyticsSkeleton() {
           {Array.from({ length: 2 }).map((_, i) => (
             <div
               key={i}
-              className="rounded-2xl border border-border bg-card p-6"
+              className="rounded-2xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-6"
             >
               <Skeleton className="mb-4 h-5 w-40" />
               <div className="space-y-3">
@@ -507,7 +507,7 @@ function AnalyticsSkeleton() {
           {Array.from({ length: 2 }).map((_, i) => (
             <div
               key={i}
-              className="rounded-2xl border border-border bg-card p-6"
+              className="rounded-2xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-6"
             >
               <Skeleton className="mb-4 h-5 w-36" />
               <Skeleton className="h-48 w-full rounded-xl" />
@@ -579,7 +579,7 @@ export function AnalyticsDashboard() {
         {/* ---------------------------------------------------------------- */}
         <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
           {/* Total Applicants */}
-          <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent">
+          <div className="group relative overflow-hidden rounded-2xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent">
             <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-emerald-400 to-emerald-600" />
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-muted-foreground">
@@ -596,7 +596,7 @@ export function AnalyticsDashboard() {
           </div>
 
           {/* Avg Merit Score */}
-          <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent">
+          <div className="group relative overflow-hidden rounded-2xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
@@ -623,7 +623,7 @@ export function AnalyticsDashboard() {
           </div>
 
           {/* Avg Confidence */}
-          <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent">
+          <div className="group relative overflow-hidden rounded-2xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
@@ -655,7 +655,7 @@ export function AnalyticsDashboard() {
               'group relative overflow-hidden rounded-2xl border p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent',
               stats.highRiskCount > 0
                 ? 'border-red-500/30 bg-red-500/10'
-                : 'border-border bg-card',
+                : 'border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl',
             )}
           >
             <div className="flex items-center justify-between">

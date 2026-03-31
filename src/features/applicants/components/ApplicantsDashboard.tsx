@@ -192,7 +192,7 @@ function MultiFilterPopover<T extends string>({
           <ChevronDown className="size-3.5 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-56 border-border bg-popover p-2">
+      <PopoverContent align="start" className="w-56 border-border dark:border-white/10 bg-popover p-2">
         <div className="flex flex-col gap-0.5">
           {options.map((option) => (
             <label
@@ -319,7 +319,7 @@ function ApplicantMobileCard({
       data-animate-applicant-card
     >
       <div className={cn(
-        'relative rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:bg-accent',
+        'relative rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-4 transition-all hover:border-primary/30 hover:bg-accent',
         isSelected && 'border-primary/40 ring-primary/20 ring-1',
       )}>
         {/* Checkbox top-left */}
@@ -715,7 +715,7 @@ export function ApplicantsDashboard() {
         </div>
 
         {/* Toolbar: search + filters */}
-        <div data-animate-toolbar className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
+        <div data-animate-toolbar className="flex flex-col gap-3 rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             {/* Search */}
             <div className="relative flex-1">
@@ -787,16 +787,16 @@ export function ApplicantsDashboard() {
             {/* Table header skeleton */}
             <Skeleton className="h-10 w-full rounded-t-xl rounded-b-none" />
             {/* Table body rows */}
-            <div className="overflow-hidden rounded-b-xl border border-t-0 border-border bg-card">
+            <div className="overflow-hidden rounded-b-xl border border-t-0 border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 border-b border-border px-4 last:border-b-0">
+                <div key={i} className="flex items-center gap-4 border-b border-border dark:border-white/10 px-4 last:border-b-0">
                   <Skeleton className="my-3 h-8 w-full" />
                 </div>
               ))}
             </div>
           </div>
         ) : filteredApplicants.length === 0 ? (
-          <div className="rounded-xl border border-border bg-card p-12 text-center">
+          <div className="rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-12 text-center">
             <p className="text-sm text-muted-foreground">
               No applicants match the current filters.
             </p>
@@ -815,11 +815,11 @@ export function ApplicantsDashboard() {
         ) : (
           <>
             {/* Desktop table */}
-            <div data-animate-table className="hidden overflow-hidden rounded-xl border border-border bg-card md:block">
+            <div data-animate-table className="hidden overflow-hidden rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl md:block">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-border bg-muted">
+                    <tr className="border-b border-border dark:border-white/10 bg-muted/50 dark:bg-white/[0.03]">
                       <th className="w-10 px-3 py-3">
                         <Checkbox
                           checked={
@@ -928,7 +928,7 @@ export function ApplicantsDashboard() {
 
       {/* ---- Mobile: full-width bottom bar ---- */}
       {selectedIds.size >= 1 && (
-        <div className="fixed bottom-0 right-0 left-0 z-40 border-t border-border bg-background/90 shadow-lg backdrop-blur-sm md:hidden">
+        <div className="fixed bottom-0 right-0 left-0 z-40 border-t border-border dark:border-white/10 bg-background/90 shadow-lg backdrop-blur-sm md:hidden">
           <div className="flex flex-col gap-2.5 px-4 py-3">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-foreground">
@@ -981,9 +981,9 @@ export function ApplicantsDashboard() {
       {/* ---- Desktop: floating centered bar ---- */}
       {selectedIds.size >= 1 && (
         <div className="pointer-events-none fixed inset-x-0 bottom-6 z-40 hidden justify-center md:flex">
-          <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-border bg-background/90 px-6 py-4 shadow-2xl backdrop-blur-sm">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-border dark:border-white/10 bg-background/90 px-6 py-4 shadow-2xl backdrop-blur-sm">
             {/* Count */}
-            <div className="border-r border-border pr-4">
+            <div className="border-r border-border dark:border-white/10 pr-4">
               <p className="text-lg font-bold tabular-nums text-foreground">
                 {selectedIds.size}
               </p>

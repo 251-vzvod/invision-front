@@ -229,12 +229,12 @@
 
 /* ─── Dashboard page background (theme-aware) ─── */
 .bg-dashboard {
-  background-color: #0a0a0a;
+  background-color: #111111;
   background-image:
-    radial-gradient(circle at 15% 20%, rgba(166, 216, 10, 0.1) 0%, transparent 45%),
-    radial-gradient(circle at 80% 15%, rgba(166, 216, 10, 0.06) 0%, transparent 40%),
-    radial-gradient(circle at 50% 75%, rgba(166, 216, 10, 0.04) 0%, transparent 45%),
-    radial-gradient(circle, rgba(166, 216, 10, 0.06) 1px, transparent 1px);
+    radial-gradient(circle at 15% 20%, rgba(166, 216, 10, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 80% 15%, rgba(166, 216, 10, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 50% 75%, rgba(166, 216, 10, 0.05) 0%, transparent 45%),
+    radial-gradient(circle, rgba(166, 216, 10, 0.15) 1px, transparent 1px);
   background-size: 100%, 100%, 100%, 20px 20px;
 }
 
