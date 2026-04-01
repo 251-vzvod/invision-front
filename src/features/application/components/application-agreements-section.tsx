@@ -18,7 +18,7 @@ export function ApplicationAgreementsSection({
   submissionError,
 }: ApplicationAgreementsSectionProps) {
   return (
-    <div className="border-border border-t px-4 py-5 sm:px-6">
+    <div className="border-border border-t px-4 py-5 sm:px-6 dark:border-white/10 dark:bg-white/[0.03]">
       <div className="space-y-3">
         <div className="flex items-start gap-2.5">
           <Checkbox
@@ -27,7 +27,7 @@ export function ApplicationAgreementsSection({
             onCheckedChange={(checked) => onChange({ personalDataConsent: checked === true })}
             className="mt-1"
           />
-          <Label htmlFor="personal-data-consent" className="text-sm leading-5">
+          <Label htmlFor="personal-data-consent" className="text-sm leading-5 dark:text-white/85">
             By submitting this form, you agree to the processing of your personal data in accordance
             with our Privacy Policy <span className="text-destructive">*</span>
           </Label>
@@ -40,7 +40,7 @@ export function ApplicationAgreementsSection({
             onCheckedChange={(checked) => onChange({ underageParentConsent: checked === true })}
             className="mt-1"
           />
-          <Label htmlFor="underage-parent-consent" className="text-sm leading-5">
+          <Label htmlFor="underage-parent-consent" className="text-sm leading-5 dark:text-white/85">
             If the participant is under the age of 18, this questionnaire must be completed by their
             parent or legal guardian. By proceeding, you confirm that you are either (a) the
             participant aged 18 or older, or (b) the parent or legal guardian completing this form

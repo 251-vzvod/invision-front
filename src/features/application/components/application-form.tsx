@@ -2,7 +2,10 @@
 
 import gsap from 'gsap'
 import { useEffect, useRef, useState } from 'react'
+import { Moon, Sun } from 'lucide-react'
 import { runPageIntroAnimation, prefersReducedMotion } from '@/shared/lib/gsap-animations'
+import { useThemeStore } from '@/shared/stores/theme-store'
+import { Button } from '@/shared/ui/button'
 import { Tabs, TabsContent } from '@/shared/ui/tabs'
 import { useApplicationFormStore } from '../hooks/use-application-form'
 import { useApplicationFormFlow } from '../hooks/use-application-form-flow'
@@ -37,7 +40,7 @@ function ProgressBar({ activeTab }: { activeTab: ApplicationTab }) {
   const percent = progressMap[activeTab] ?? 0
 
   return (
-    <div className="h-1 w-full rounded-full bg-gray-100">
+    <div className="bg-muted/70 h-1 w-full rounded-full dark:bg-white/15">
       <div
         className="bg-primary h-full rounded-full transition-all duration-500 ease-out"
         style={{ width: `${percent}%` }}
@@ -48,6 +51,7 @@ function ProgressBar({ activeTab }: { activeTab: ApplicationTab }) {
 
 export function ApplicationForm() {
   const { data, activeTab, setActiveTab, setProgram, setAgreements } = useApplicationFormStore()
+  const { theme, toggleTheme } = useThemeStore()
   const [programDialogOpen, setProgramDialogOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
   const tabNavigationRef = useRef<HTMLDivElement | null>(null)
@@ -135,7 +139,18 @@ export function ApplicationForm() {
   }, [activeTab, viewMode])
 
   return (
-    <div ref={rootRef} className="bg-dashboard min-h-screen">
+    <div ref={rootRef} className="bg-dashboard relative min-h-screen">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={toggleTheme}
+        className="border-border bg-background/80 text-muted-foreground hover:text-foreground absolute top-4 right-4 z-30 size-9 rounded-lg p-0 backdrop-blur dark:border-white/10"
+        title="Toggle theme"
+      >
+        {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+      </Button>
+
       <div data-animate-form-section className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
         <ApplicationFormHeader
           viewMode={viewMode}
@@ -146,7 +161,7 @@ export function ApplicationForm() {
 
         <div
           data-animate-form-section
-          className="rounded-2xl border border-border bg-white shadow-sm"
+          className="border-border bg-card rounded-xl border dark:border-white/10 dark:bg-white/[0.08] dark:backdrop-blur-2xl"
         >
           {viewMode === 'form' ? (
             <>
@@ -155,8 +170,11 @@ export function ApplicationForm() {
                 onValueChange={(value) => handleTabChange(value as ApplicationTab)}
                 className="w-full gap-0"
               >
-                <div ref={tabNavigationRef} className="sticky top-0 z-40">
-                  <div className="px-4 pt-4 sm:px-6 sm:pt-6">
+                <div
+                  ref={tabNavigationRef}
+                  className="border-border bg-background/90 sticky top-0 z-40 overflow-hidden rounded-t-xl border-b backdrop-blur-2xl dark:border-white/10 dark:bg-[#131c10]/90"
+                >
+                  <div className="px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-4">
                     <ProgressBar activeTab={activeTab} />
                   </div>
                   <ApplicationTabsNavigation

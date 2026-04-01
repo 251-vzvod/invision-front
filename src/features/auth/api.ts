@@ -18,8 +18,8 @@ export const useLoginMutation = () => {
 
   return useMutation({
     mutationFn: login,
-    onSuccess: (result) => {
-      queryClient.setQueryData(authQueryKeys.session, result)
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: authQueryKeys.session })
     },
   })
 }

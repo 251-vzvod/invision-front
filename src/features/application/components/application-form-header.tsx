@@ -35,14 +35,14 @@ export function ApplicationFormHeader({
           type="button"
           onClick={onOpenProgramDialog}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-xl border bg-white px-3 py-1.5 text-sm font-medium transition-all hover:border-primary/30 hover:shadow-sm',
+            'hover:border-primary/30 dark:hover:border-primary/50 inline-flex items-center gap-1.5 rounded-xl border bg-white px-3 py-1.5 text-sm font-medium transition-all hover:shadow-sm dark:border-white/15 dark:bg-[#131c10]/90 dark:text-white/90 dark:hover:bg-[#1a2615] dark:hover:text-white',
             program
-              ? 'border-border text-foreground'
-              : 'border-border text-muted-foreground border-dashed',
+              ? 'border-border text-foreground dark:text-white/95'
+              : 'border-border text-muted-foreground border-dashed dark:border-white/20 dark:text-white/70',
           )}
         >
           {program ? program.displayLabel : 'Select program...'}
-          <Pencil className="text-muted-foreground size-3.5" />
+          <Pencil className="text-muted-foreground size-3.5 dark:text-white/70" />
         </button>
       </div>
 

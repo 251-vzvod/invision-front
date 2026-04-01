@@ -194,24 +194,24 @@ export function MotivationForm() {
             <label
               htmlFor="motivation-letter-upload"
               className={cn(
-                'flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-8 text-center transition-all hover:border-primary/40 hover:bg-primary/5',
+                'bg-card/70 border-border hover:border-primary/40 hover:bg-primary/5 flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-8 text-center transition-all dark:border-white/15 dark:bg-white/[0.03]',
                 isBusy && 'pointer-events-none opacity-60',
               )}
             >
               <Upload className="text-muted-foreground size-8" />
               <span className="text-sm font-medium">
-                {uploadMutation.isPending ? 'Uploading file...' : 'Click or drag to upload motivation letter'}
+                {uploadMutation.isPending
+                  ? 'Uploading file...'
+                  : 'Click or drag to upload motivation letter'}
               </span>
-              <span className="text-muted-foreground text-xs">
-                DOC, DOCX, PDF, TXT up to 5 MB
-              </span>
+              <span className="text-muted-foreground text-xs">DOC, DOCX, PDF, TXT up to 5 MB</span>
             </label>
           )}
 
           {selectedFile && (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-white p-4">
+            <div className="border-border bg-card flex items-center justify-between gap-3 rounded-xl border p-4 dark:border-white/10 dark:bg-white/[0.03]">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                <div className="bg-muted/80 flex size-10 shrink-0 items-center justify-center rounded-lg dark:bg-white/[0.06]">
                   <FileText className="text-muted-foreground size-5" />
                 </div>
                 <div className="min-w-0">

@@ -29,8 +29,8 @@ export function ApplicationTabsNavigation({
   )
 
   return (
-    <div className="border-b border-border bg-white/95 px-4 backdrop-blur-sm sm:px-6">
-      <TabsList className="my-4 flex h-auto w-full flex-wrap gap-0 rounded-xl bg-gray-100 p-1">
+    <div className="px-4 pb-4 sm:px-6">
+      <TabsList className="bg-muted/80 flex h-auto w-full flex-wrap gap-0 rounded-xl p-1 dark:bg-white/[0.04]">
         {tabs.map((tab) => (
           <TabsTrigger
             key={tab.value}
@@ -39,7 +39,8 @@ export function ApplicationTabsNavigation({
             className={cn(
               'flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all',
               'text-muted-foreground hover:text-foreground',
-              'data-active:bg-white data-active:text-foreground data-active:shadow-sm',
+              'dark:text-white/70 dark:hover:text-white',
+              'data-active:bg-card data-active:text-foreground data-active:shadow-sm dark:data-active:bg-white/10 dark:data-active:text-white',
             )}
           >
             {tab.label}
@@ -52,7 +53,7 @@ export function ApplicationTabsNavigation({
       </TabsList>
 
       {hasWarnings && (
-        <p className="text-destructive pb-3 text-xs">
+        <p className="text-destructive mt-2 text-xs">
           Some sections contain invalid or missing required fields.
         </p>
       )}
