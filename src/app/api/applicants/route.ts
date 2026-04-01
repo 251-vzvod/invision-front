@@ -1,23 +1,25 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 const getApiBase = (): string | null => {
   const raw = process.env.API_URL
   return raw ? raw.replace(/\/$/, '') : null
 }
 
-export async function POST(request: Request) {
+export async function GET(request: NextRequest) {
   const base = getApiBase()
   if (!base) {
     return NextResponse.json({ message: 'API_URL is not configured' }, { status: 500 })
   }
 
   try {
-    const payload = await request.json()
-    const backendResponse = await fetch(`${base}/api/v1/forms`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
+    const { searchParams } = request.nextUrl
+    const page = searchParams.get('page') ?? '1'
+    const size = searchParams.get('size') ?? '10'
+
+    const backendResponse = await fetch(
+      `${base}/api/v1/forms?page=${encodeURIComponent(page)}&size=${encodeURIComponent(size)}`,
+      { method: 'GET', headers: { 'Content-Type': 'application/json' } },
+    )
 
     const contentType = backendResponse.headers.get('content-type')
     const responseBody = contentType?.includes('application/json')
@@ -28,25 +30,12 @@ export async function POST(request: Request) {
       const message =
         typeof responseBody === 'object' && responseBody && 'detail' in responseBody
           ? String(responseBody.detail)
-          : 'Failed to submit application'
+          : 'Failed to fetch applicants'
 
       return NextResponse.json({ message, details: responseBody }, { status: backendResponse.status })
     }
 
-    // Extract applicant ID from Location header: /api/v1/forms/{id}
-    const location = backendResponse.headers.get('location')
-    let applicantId: string | null = null
-    if (location) {
-      const match = location.match(/\/(\d+)\/?$/)
-      if (match) {
-        applicantId = match[1]
-      }
-    }
-
-    return NextResponse.json(
-      { data: responseBody, applicant_id: applicantId },
-      { status: backendResponse.status },
-    )
+    return NextResponse.json(responseBody, { status: 200 })
   } catch (error) {
     return NextResponse.json(
       { message: error instanceof Error ? error.message : 'Unexpected error' },

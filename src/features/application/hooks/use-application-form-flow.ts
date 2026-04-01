@@ -1,11 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  useInternalTestChatMutation,
+  useAgentChatMutation,
   useSubmitApplicationMutation,
   prepareSubmitApplicationPayload,
 } from '../api'
+import type { AgentReplyResponse } from '../api'
 import {
   applicationSubmitSchema,
   contactTabSchema,
@@ -18,8 +19,42 @@ import type {
   ApplicationTab,
   ApplicationViewMode,
   ChatMessage,
-  ChatResponsePayload,
 } from '../types'
+
+/* ─── localStorage helpers for applicant ID and chat history ─── */
+
+const APPLICANT_ID_KEY = 'invision_applicant_id'
+const CHAT_HISTORY_KEY_PREFIX = 'invision_chat_history_'
+
+const persistApplicantId = (id: number) => {
+  localStorage.setItem(APPLICANT_ID_KEY, String(id))
+}
+
+const getPersistedApplicantId = (): number | null => {
+  const raw = localStorage.getItem(APPLICANT_ID_KEY)
+  if (!raw) return null
+  const parsed = Number(raw)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+}
+
+const getChatHistoryKey = (applicantId: number) =>
+  `${CHAT_HISTORY_KEY_PREFIX}${applicantId}`
+
+const persistChatHistory = (applicantId: number, history: ChatMessage[]) => {
+  localStorage.setItem(getChatHistoryKey(applicantId), JSON.stringify(history))
+}
+
+const getPersistedChatHistory = (applicantId: number): ChatMessage[] => {
+  try {
+    const raw = localStorage.getItem(getChatHistoryKey(applicantId))
+    if (!raw) return []
+    return JSON.parse(raw) as ChatMessage[]
+  } catch {
+    return []
+  }
+}
+
+/* ─── Tab validation helpers ─── */
 
 interface TabFieldError {
   field: string
@@ -68,10 +103,7 @@ function toPathKey(path: ReadonlyArray<string | number | symbol>) {
 }
 
 function humanizePath(pathKey: string) {
-  if (!pathKey) {
-    return 'Field'
-  }
-
+  if (!pathKey) return 'Field'
   const lastSegment = pathKey.split('.').pop() ?? pathKey
   return lastSegment
     .replace(/([A-Z])/g, ' $1')
@@ -87,21 +119,18 @@ function mapTabIssuesToFieldErrors(
 
   return issues.reduce<TabFieldError[]>((acc, issue) => {
     const pathKey = toPathKey(issue.path)
-    let field = TAB_FIELD_LABELS[tab][pathKey] ?? humanizePath(pathKey)
+    const field = TAB_FIELD_LABELS[tab][pathKey] ?? humanizePath(pathKey)
 
     const dedupeKey = `${field}:${issue.message}`
-    if (dedupe.has(dedupeKey)) {
-      return acc
-    }
+    if (dedupe.has(dedupeKey)) return acc
 
     dedupe.add(dedupeKey)
-    acc.push({
-      field,
-      message: issue.message,
-    })
+    acc.push({ field, message: issue.message })
     return acc
   }, [])
 }
+
+/* ─── Main hook ─── */
 
 interface UseApplicationFormFlowParams {
   data: ApplicationFormData
@@ -110,16 +139,9 @@ interface UseApplicationFormFlowParams {
   tabs: ReadonlyArray<{ value: ApplicationTab }>
 }
 
-const INTERNAL_TEST_GREETING: ChatMessage = {
-  question_id: 0,
-  sender: 'Agent',
-  text: 'Congratulations. Your application has been submitted successfully. You now need to complete an internal test with our AI agent. The test usually includes around 15 questions to identify your strongest skills. Please answer carefully and provide thoughtful details.',
-}
-
-const normalizeAgentMessage = (message: ChatResponsePayload): ChatMessage => ({
-  question_id: Number.isFinite(message.question_id) ? message.question_id : 0,
-  sender: 'Agent',
-  text: message.text?.trim() || 'Thank you. Please continue with the next answer.',
+const agentResponseToMessage = (response: AgentReplyResponse): ChatMessage => ({
+  sender: 'agent',
+  text: response.message || 'Thank you. Please continue.',
 })
 
 export function useApplicationFormFlow({
@@ -129,7 +151,7 @@ export function useApplicationFormFlow({
   tabs,
 }: UseApplicationFormFlowParams) {
   const [viewMode, setViewMode] = useState<ApplicationViewMode>('form')
-  const [internalTestUserId, setInternalTestUserId] = useState<string | null>(null)
+  const [applicantId, setApplicantId] = useState<number | null>(null)
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([])
   const [chatError, setChatError] = useState<string | null>(null)
   const [touchedTabs, setTouchedTabs] = useState<Record<ApplicationTab, boolean>>({
@@ -142,21 +164,25 @@ export function useApplicationFormFlow({
   const [stepNavigationWarning, setStepNavigationWarning] = useState<string | null>(null)
 
   const submitMutation = useSubmitApplicationMutation()
-  const chatMutation = useInternalTestChatMutation()
+  const chatMutation = useAgentChatMutation()
+
+  // Persist chat history whenever it changes
+  useEffect(() => {
+    if (applicantId && chatHistory.length > 0) {
+      persistChatHistory(applicantId, chatHistory)
+    }
+  }, [applicantId, chatHistory])
 
   const tabValidationState = useMemo(() => {
     const personalResult = personalTabSchema.safeParse({
       personalInformation: data.personalInformation,
     })
-
     const contactResult = contactTabSchema.safeParse({
       contactInformation: data.contactInformation,
     })
-
     const educationResult = educationTabSchema.safeParse({
       education: data.education,
     })
-
     const motivationResult = motivationTabSchema.safeParse({
       motivation: data.motivation,
     })
@@ -191,13 +217,8 @@ export function useApplicationFormFlow({
   const isFirstTab = currentIndex <= 0
   const isLastTab = currentIndex === tabs.length - 1
 
-  const clearSubmissionStatus = () => {
-    setSubmissionError(null)
-  }
-
-  const clearStepNavigationWarning = () => {
-    setStepNavigationWarning(null)
-  }
+  const clearSubmissionStatus = () => setSubmissionError(null)
+  const clearStepNavigationWarning = () => setStepNavigationWarning(null)
 
   const markTabTouched = (tab: ApplicationTab) => {
     setTouchedTabs((prev) => ({ ...prev, [tab]: true }))
@@ -205,10 +226,7 @@ export function useApplicationFormFlow({
 
   const handleTabChange = (nextTab: ApplicationTab) => {
     markTabTouched(activeTab)
-
-    if (nextTab === activeTab) {
-      return
-    }
+    if (nextTab === activeTab) return
 
     if (!tabValidation[activeTab]) {
       setStepNavigationWarning(
@@ -218,17 +236,13 @@ export function useApplicationFormFlow({
       clearStepNavigationWarning()
     }
 
-    setTouchedTabs((prev) => ({
-      ...prev,
-      [nextTab]: true,
-    }))
+    setTouchedTabs((prev) => ({ ...prev, [nextTab]: true }))
     clearSubmissionStatus()
     setActiveTab(nextTab)
   }
 
   const handleNextStep = () => {
     markTabTouched(activeTab)
-
     if (!tabValidation[activeTab]) {
       setStepNavigationWarning(
         `Fix invalid fields in ${TAB_LABELS[activeTab]} before moving to another step.`,
@@ -236,18 +250,13 @@ export function useApplicationFormFlow({
     } else {
       clearStepNavigationWarning()
     }
-
-    if (isLastTab) {
-      return
-    }
-
+    if (isLastTab) return
     setActiveTab(tabs[currentIndex + 1].value)
     clearSubmissionStatus()
   }
 
   const handleBackStep = () => {
     markTabTouched(activeTab)
-
     if (!tabValidation[activeTab]) {
       setStepNavigationWarning(
         `Fix invalid fields in ${TAB_LABELS[activeTab]} before moving to another step.`,
@@ -255,11 +264,7 @@ export function useApplicationFormFlow({
     } else {
       clearStepNavigationWarning()
     }
-
-    if (isFirstTab) {
-      return
-    }
-
+    if (isFirstTab) return
     setActiveTab(tabs[currentIndex - 1].value)
     clearSubmissionStatus()
   }
@@ -293,11 +298,7 @@ export function useApplicationFormFlow({
       const firstInvalidTab = (tabs.map((tab) => tab.value) as ApplicationTab[]).find(
         (tab) => !tabValidation[tab],
       )
-
-      if (firstInvalidTab) {
-        setActiveTab(firstInvalidTab)
-      }
-
+      if (firstInvalidTab) setActiveTab(firstInvalidTab)
       setSubmissionError('Please fill all required fields correctly before submitting.')
       return
     }
@@ -306,11 +307,13 @@ export function useApplicationFormFlow({
       const payload = prepareSubmitApplicationPayload(data)
       const response = await submitMutation.mutateAsync(payload)
 
-      if (!response.user_id) {
-        throw new Error('The server did not return user_id for internal test initialization.')
+      const id = response.applicant_id ? Number(response.applicant_id) : null
+      if (!id || !Number.isFinite(id)) {
+        throw new Error('The server did not return a valid applicant ID.')
       }
 
-      setInternalTestUserId(response.user_id)
+      setApplicantId(id)
+      persistApplicantId(id)
       setViewMode('testIntro')
       setChatHistory([])
       setChatError(null)
@@ -321,40 +324,42 @@ export function useApplicationFormFlow({
     }
   }
 
-  const requestAgentMessage = async (history: ChatMessage[]) => {
-    if (!internalTestUserId) {
-      throw new Error('user_id is missing. Please submit the application again.')
-    }
-
-    const response = await chatMutation.mutateAsync({
-      user_id: internalTestUserId,
-      history,
-    })
-
-    return normalizeAgentMessage(response)
-  }
-
   const handleStartInternalTest = async () => {
-    if (chatMutation.isPending) {
-      return
-    }
-
-    if (!internalTestUserId) {
-      setChatError('Unable to start internal test: user_id is missing.')
+    if (chatMutation.isPending || !applicantId) {
+      if (!applicantId) setChatError('Unable to start internal test: applicant ID is missing.')
       return
     }
 
     setViewMode('testChat')
     setChatError(null)
-    setChatHistory([INTERNAL_TEST_GREETING])
+
+    // Check for persisted chat history
+    const persisted = getPersistedChatHistory(applicantId)
+    if (persisted.length > 0) {
+      setChatHistory(persisted)
+      return
+    }
+
+    // Start fresh — send initial empty message to get first question
+    const greeting: ChatMessage = {
+      sender: 'agent',
+      text: 'Welcome! Your application has been submitted. Now we will ask you a few questions to better understand your strengths and potential. Please answer thoughtfully.',
+    }
+    setChatHistory([greeting])
 
     try {
-      const firstAgentQuestion = await requestAgentMessage([INTERNAL_TEST_GREETING])
-      setChatHistory((prev) => [...prev, firstAgentQuestion])
+      const response = await chatMutation.mutateAsync({
+        text: '',
+        applicant_external_id: applicantId,
+      })
 
-      if (firstAgentQuestion.question_id === 0) {
+      if (response.status === 'finished') {
         setViewMode('testFinished')
+        return
       }
+
+      const agentMsg = agentResponseToMessage(response)
+      setChatHistory((prev) => [...prev, agentMsg])
     } catch (error) {
       setChatError(
         error instanceof Error
@@ -364,45 +369,40 @@ export function useApplicationFormFlow({
     }
   }
 
-  const handleSendChatMessage = async (text: string) => {
-    const trimmedText = text.trim()
-    if (!trimmedText || chatMutation.isPending) {
-      return
-    }
+  const handleSendChatMessage = useCallback(
+    async (text: string) => {
+      const trimmedText = text.trim()
+      if (!trimmedText || chatMutation.isPending || !applicantId) return
 
-    if (!internalTestUserId) {
-      setChatError('Unable to continue internal test: user_id is missing.')
-      return
-    }
+      const userMessage: ChatMessage = { sender: 'user', text: trimmedText }
+      setChatHistory((prev) => [...prev, userMessage])
+      setChatError(null)
 
-    const latestQuestionId =
-      [...chatHistory]
-        .reverse()
-        .find((message) => message.sender === 'Agent' && message.question_id > 0)?.question_id ?? 1
+      try {
+        const response = await chatMutation.mutateAsync({
+          text: trimmedText,
+          applicant_external_id: applicantId,
+        })
 
-    const userMessage: ChatMessage = {
-      question_id: latestQuestionId,
-      sender: 'User',
-      text: trimmedText,
-    }
+        if (response.status === 'finished') {
+          const finalMsg = agentResponseToMessage(response)
+          setChatHistory((prev) => [...prev, finalMsg])
+          setViewMode('testFinished')
+          return
+        }
 
-    const nextHistory = [...chatHistory, userMessage]
-    setChatHistory(nextHistory)
-    setChatError(null)
-
-    try {
-      const agentReply = await requestAgentMessage(nextHistory)
-      setChatHistory((prev) => [...prev, agentReply])
-
-      if (agentReply.question_id === 0) {
-        setViewMode('testFinished')
+        const agentMsg = agentResponseToMessage(response)
+        setChatHistory((prev) => [...prev, agentMsg])
+      } catch (error) {
+        setChatError(
+          error instanceof Error
+            ? error.message
+            : 'Failed to send your answer. Please try again.',
+        )
       }
-    } catch (error) {
-      setChatError(
-        error instanceof Error ? error.message : 'Failed to send your answer. Please try again.',
-      )
-    }
-  }
+    },
+    [applicantId, chatMutation],
+  )
 
   return {
     viewMode,

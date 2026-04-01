@@ -8,7 +8,7 @@ interface InternalTestFinishedProps {
 export function InternalTestFinished({ history }: InternalTestFinishedProps) {
   const finalMessage = [...history]
     .reverse()
-    .find((entry) => entry.sender === 'Agent' && entry.question_id === 0)?.text
+    .find((entry) => entry.sender === 'agent')?.text
 
   return (
     <section className="flex min-h-105 flex-col items-center justify-center px-6 py-12 text-center">

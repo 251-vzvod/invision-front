@@ -50,11 +50,11 @@ export function InternalTestChat({ history, isLoading, error, onSend }: Internal
         className="flex-1 space-y-4 overflow-y-auto rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-5"
       >
         {history.map((entry, index) => {
-          const isAgent = entry.sender === 'Agent'
+          const isAgent = entry.sender === 'agent'
 
           return (
             <div
-              key={`${entry.sender}-${entry.question_id}-${index}`}
+              key={`${entry.sender}-${index}`}
               className={cn('flex', isAgent ? 'justify-start' : 'justify-end')}
             >
               <div

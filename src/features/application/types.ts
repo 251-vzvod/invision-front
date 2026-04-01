@@ -102,22 +102,10 @@ export interface ApplicationFormData {
 
 export type ApplicationTab = 'personal' | 'contact' | 'education' | 'motivation'
 
-export type ChatSender = 'Agent' | 'User'
+/* ─── Chat (Agent) ─── */
 
 export interface ChatMessage {
-  question_id: number
-  sender: ChatSender
-  text: string
-}
-
-export interface ChatRequestPayload {
-  user_id: string
-  history: ChatMessage[]
-}
-
-export interface ChatResponsePayload {
-  question_id: number
-  sender: 'Agent'
+  sender: 'agent' | 'user'
   text: string
 }
 

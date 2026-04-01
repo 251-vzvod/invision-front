@@ -13,10 +13,13 @@ export async function POST(request: Request) {
 
   try {
     const payload = await request.json()
-    const backendResponse = await fetch(`${base}/api/v1/forms`, {
+    const backendResponse = await fetch(`${base}/api/v1/agent/reply`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        text: payload.text ?? '',
+        applicant_external_id: payload.applicant_external_id,
+      }),
     })
 
     const contentType = backendResponse.headers.get('content-type')
@@ -28,25 +31,13 @@ export async function POST(request: Request) {
       const message =
         typeof responseBody === 'object' && responseBody && 'detail' in responseBody
           ? String(responseBody.detail)
-          : 'Failed to submit application'
+          : 'Agent reply failed'
 
       return NextResponse.json({ message, details: responseBody }, { status: backendResponse.status })
     }
 
-    // Extract applicant ID from Location header: /api/v1/forms/{id}
-    const location = backendResponse.headers.get('location')
-    let applicantId: string | null = null
-    if (location) {
-      const match = location.match(/\/(\d+)\/?$/)
-      if (match) {
-        applicantId = match[1]
-      }
-    }
-
-    return NextResponse.json(
-      { data: responseBody, applicant_id: applicantId },
-      { status: backendResponse.status },
-    )
+    // Backend returns { message, status, question? }
+    return NextResponse.json(responseBody, { status: 200 })
   } catch (error) {
     return NextResponse.json(
       { message: error instanceof Error ? error.message : 'Unexpected error' },

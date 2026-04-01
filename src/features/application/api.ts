@@ -2,13 +2,16 @@
 
 import { useMutation } from '@tanstack/react-query'
 import { apiClient, apiRequest } from '@/shared/lib/api-client'
-import type { ApplicationFormData, ChatRequestPayload, ChatResponsePayload } from './types'
+import type { ApplicationFormData } from './types'
+
+/* ─── Application Form Submission ─── */
 
 export interface SubmitApplicationPayload {
   program: {
     level: 'undergraduate' | 'foundation'
     faculty_id: string | null
-    speciality_id: string | null
+    speciality_id: number | null
+    display_label: string
   }
   personal_information: {
     first_name: string
@@ -19,11 +22,22 @@ export interface SubmitApplicationPayload {
     citizenship: string
   }
   contact_information: {
-    contacts: ApplicationFormData['contactInformation']['contacts']
+    contacts: {
+      phone: string
+      whatsapp: string
+      instagram: string
+      telegram: string
+    }
   }
   education: {
-    english_proficiency: ApplicationFormData['education']['englishProficiency']
-    school_certificate: ApplicationFormData['education']['schoolCertificate']
+    english_proficiency: {
+      type: 'ielts' | 'toefl'
+      score: number
+    }
+    school_certificate: {
+      type: 'unt'
+      score: number
+    }
   }
   motivation: {
     presentation_link: string
@@ -32,10 +46,8 @@ export interface SubmitApplicationPayload {
 }
 
 export interface SubmitApplicationResponse {
-  id: string
-  user_id: string
-  status: 'draft' | 'submitted'
-  message?: string
+  data: unknown
+  applicant_id: string | null
 }
 
 export const prepareSubmitApplicationPayload = (
@@ -54,11 +66,20 @@ export const prepareSubmitApplicationPayload = (
     throw new Error('Motivation letter file is required')
   }
 
+  if (data.education.englishProficiency.score == null) {
+    throw new Error('English proficiency score is required')
+  }
+
+  if (data.education.schoolCertificate.score == null) {
+    throw new Error('School certificate score is required')
+  }
+
   return {
     program: {
       level: data.program.level,
       faculty_id: data.program.facultyId,
-      speciality_id: data.program.specialityId,
+      speciality_id: data.program.specialityId ? Number(data.program.specialityId) : null,
+      display_label: data.program.displayLabel,
     },
     personal_information: {
       first_name: data.personalInformation.firstName,
@@ -72,8 +93,14 @@ export const prepareSubmitApplicationPayload = (
       contacts: data.contactInformation.contacts,
     },
     education: {
-      english_proficiency: data.education.englishProficiency,
-      school_certificate: data.education.schoolCertificate,
+      english_proficiency: {
+        type: data.education.englishProficiency.type,
+        score: data.education.englishProficiency.score,
+      },
+      school_certificate: {
+        type: data.education.schoolCertificate.type,
+        score: data.education.schoolCertificate.score,
+      },
     },
     motivation: {
       presentation_link: data.motivation.presentationLink,
@@ -82,46 +109,50 @@ export const prepareSubmitApplicationPayload = (
   }
 }
 
-export interface UploadFileResponse {
-  file_url: string
+/* ─── S3 File Upload / Delete ─── */
+
+export interface S3UploadResponse {
+  url: string
+  filename: string
 }
 
-export interface DeleteFilePayload {
-  file_url: string
-}
-
-export const uploadMotivationLetter = async (file: File): Promise<UploadFileResponse> => {
+export const uploadMotivationLetter = async (file: File): Promise<S3UploadResponse> => {
   const formData = new FormData()
   formData.append('file', file)
 
-  return apiClient.post<UploadFileResponse>('/api/file', formData)
+  return apiClient.post<S3UploadResponse>('/api/file', formData)
 }
 
 export const deleteMotivationLetter = async (fileUrl: string): Promise<void> => {
   await apiRequest<void>('/api/file', {
     method: 'DELETE',
-    body: { file_url: fileUrl } satisfies DeleteFilePayload,
+    body: { url: fileUrl },
   })
 }
 
-const getChatEndpoint = (): string => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL
-  if (!apiUrl) {
-    throw new Error('NEXT_PUBLIC_API_URL is not configured. Unable to start internal test.')
-  }
+/* ─── Agent Chat ─── */
 
-  return `${apiUrl.replace(/\/$/, '')}/chat`
+export interface AgentReplyPayload {
+  text: string
+  applicant_external_id: number
 }
 
-export const sendInternalTestMessage = async (
-  payload: ChatRequestPayload,
-): Promise<ChatResponsePayload> => {
-  const endpoint = getChatEndpoint()
-  return apiRequest<ChatResponsePayload>(endpoint, {
-    method: 'POST',
-    body: payload,
-  })
+export interface AgentReplyResponse {
+  message: string
+  status: string
+  question?: {
+    question: string | null
+    answer: string | null
+  } | null
 }
+
+export const sendAgentMessage = async (
+  payload: AgentReplyPayload,
+): Promise<AgentReplyResponse> => {
+  return apiClient.post<AgentReplyResponse>('/api/chat', payload)
+}
+
+/* ─── Mutations ─── */
 
 export const useSubmitApplicationMutation = () =>
   useMutation({
@@ -139,7 +170,7 @@ export const useDeleteMotivationLetterMutation = () =>
     mutationFn: (fileUrl: string) => deleteMotivationLetter(fileUrl),
   })
 
-export const useInternalTestChatMutation = () =>
+export const useAgentChatMutation = () =>
   useMutation({
-    mutationFn: (payload: ChatRequestPayload) => sendInternalTestMessage(payload),
+    mutationFn: (payload: AgentReplyPayload) => sendAgentMessage(payload),
   })

@@ -111,8 +111,8 @@ export function MotivationForm() {
         const response = await uploadMutation.mutateAsync(file)
         setMotivation({
           motivationLetter: {
-            fileUrl: response.file_url,
-            fileName: file.name,
+            fileUrl: response.url,
+            fileName: response.filename || file.name,
             mimeType: file.type || 'application/octet-stream',
             size: file.size,
           },
