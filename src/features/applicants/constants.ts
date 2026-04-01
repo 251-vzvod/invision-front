@@ -11,11 +11,11 @@ export const DEFAULT_SORT_DIRECTION: ApplicantsSortDirection = 'desc'
 
 export const SORT_FIELD_BUTTONS: Array<{ value: ApplicantsSortField; label: string }> = [
   { value: 'score', label: 'By score' },
-  { value: 'potential', label: 'Potential' },
-  { value: 'motivation', label: 'Motivation' },
-  { value: 'leadership', label: 'Leadership' },
-  { value: 'experience', label: 'Experience' },
-  { value: 'trust', label: 'Trust' },
+  { value: 'confidence', label: 'Confidence' },
+  { value: 'hidden_potential', label: 'Hidden Potential' },
+  { value: 'trajectory', label: 'Trajectory' },
+  { value: 'shortlist_priority', label: 'Shortlist Priority' },
+  { value: 'authenticity_risk', label: 'Authenticity Risk' },
 ]
 
 export const ELIGIBILITY_OPTIONS: Array<{

@@ -151,11 +151,11 @@ const TABLE_COLUMNS: ColumnDef[] = [
   { key: 'name', label: 'Name', className: 'min-w-[160px]' },
   { key: 'program', label: 'Program', className: 'min-w-[120px]' },
   { key: 'score', label: 'Score', sortField: 'score', className: 'w-20 text-center', headerClassName: 'justify-center' },
-  { key: 'potential', label: 'Potential', sortField: 'potential', className: 'w-20 text-center', headerClassName: 'justify-center' },
-  { key: 'motivation', label: 'Motivation', sortField: 'motivation', className: 'w-24 text-center', headerClassName: 'justify-center' },
-  { key: 'leadership', label: 'Leadership', sortField: 'leadership', className: 'w-24 text-center', headerClassName: 'justify-center' },
-  { key: 'experience', label: 'Experience', sortField: 'experience', className: 'w-24 text-center', headerClassName: 'justify-center' },
-  { key: 'trust', label: 'Trust', sortField: 'trust', className: 'w-16 text-center', headerClassName: 'justify-center' },
+  { key: 'hidden_potential', label: 'Hidden Potential', sortField: 'hidden_potential', className: 'w-28 text-center', headerClassName: 'justify-center' },
+  { key: 'trajectory', label: 'Trajectory', sortField: 'trajectory', className: 'w-24 text-center', headerClassName: 'justify-center' },
+  { key: 'shortlist_priority', label: 'Shortlist Priority', sortField: 'shortlist_priority', className: 'w-28 text-center', headerClassName: 'justify-center' },
+  { key: 'evidence_coverage', label: 'Evidence Coverage', className: 'w-28 text-center', headerClassName: 'justify-center' },
+  { key: 'support_needed', label: 'Support Needed', className: 'w-28 text-center', headerClassName: 'justify-center' },
   { key: 'auth_risk', label: 'Auth. Risk', sortField: 'authenticity_risk', className: 'w-24 text-center', headerClassName: 'justify-center' },
   { key: 'confidence', label: 'Confidence', sortField: 'confidence', className: 'w-24 text-center', headerClassName: 'justify-center' },
   { key: 'status', label: 'Status', className: 'w-28 text-center', headerClassName: 'justify-center' },
@@ -261,16 +261,16 @@ function getCellValue(
           {applicant.merit_score}
         </span>
       )
-    case 'potential':
-      return <span className="tabular-nums text-foreground/80">{applicant.merit_breakdown.potential}</span>
-    case 'motivation':
-      return <span className="tabular-nums text-foreground/80">{applicant.merit_breakdown.motivation}</span>
-    case 'leadership':
-      return <span className="tabular-nums text-foreground/80">{applicant.merit_breakdown.leadership_agency}</span>
-    case 'experience':
-      return <span className="tabular-nums text-foreground/80">{applicant.merit_breakdown.experience_skills}</span>
-    case 'trust':
-      return <span className="tabular-nums text-foreground/80">{applicant.merit_breakdown.trust_completeness}</span>
+    case 'hidden_potential':
+      return <span className="tabular-nums text-foreground/80">{applicant.hidden_potential_score}</span>
+    case 'trajectory':
+      return <span className="tabular-nums text-foreground/80">{applicant.trajectory_score}</span>
+    case 'shortlist_priority':
+      return <span className="tabular-nums text-foreground/80">{applicant.shortlist_priority_score}</span>
+    case 'evidence_coverage':
+      return <span className="tabular-nums text-foreground/80">{applicant.evidence_coverage_score}</span>
+    case 'support_needed':
+      return <span className="tabular-nums text-foreground/80">{applicant.support_needed_score}</span>
     case 'auth_risk':
       return (
         <span className="tabular-nums text-foreground/80">

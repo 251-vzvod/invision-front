@@ -118,23 +118,23 @@ function ScoreOverviewTable({ profiles }: { profiles: ApplicantProfile[] }) {
     },
     {
       label: 'Potential',
-      values: profiles.map((p) => p.merit_breakdown.potential),
+      values: profiles.map((p) => p.hidden_potential_score),
     },
     {
-      label: 'Motivation',
-      values: profiles.map((p) => p.merit_breakdown.motivation),
+      label: 'Trajectory',
+      values: profiles.map((p) => p.trajectory_score),
     },
     {
-      label: 'Leadership',
-      values: profiles.map((p) => p.merit_breakdown.leadership_agency),
+      label: 'Shortlist Priority',
+      values: profiles.map((p) => p.shortlist_priority_score),
     },
     {
-      label: 'Experience',
-      values: profiles.map((p) => p.merit_breakdown.experience_skills),
+      label: 'Evidence',
+      values: profiles.map((p) => p.evidence_coverage_score),
     },
     {
-      label: 'Trust',
-      values: profiles.map((p) => p.merit_breakdown.trust_completeness),
+      label: 'Support Needed',
+      values: profiles.map((p) => p.support_needed_score),
     },
   ]
 
@@ -260,10 +260,10 @@ function ComparisonRadarChart({ profiles }: { profiles: ApplicantProfile[] }) {
   const radarData = useMemo(() => {
     const metrics = [
       { key: 'potential', label: 'Potential' },
-      { key: 'motivation', label: 'Motivation' },
-      { key: 'leadership', label: 'Leadership' },
-      { key: 'experience', label: 'Experience' },
-      { key: 'trust', label: 'Trust' },
+      { key: 'trajectory', label: 'Trajectory' },
+      { key: 'shortlist', label: 'Shortlist Priority' },
+      { key: 'evidence', label: 'Evidence' },
+      { key: 'support', label: 'Support Needed' },
       { key: 'confidence', label: 'Confidence' },
     ] as const
 
@@ -273,19 +273,19 @@ function ComparisonRadarChart({ profiles }: { profiles: ApplicantProfile[] }) {
         let value: number
         switch (m.key) {
           case 'potential':
-            value = p.merit_breakdown.potential
+            value = p.hidden_potential_score
             break
-          case 'motivation':
-            value = p.merit_breakdown.motivation
+          case 'trajectory':
+            value = p.trajectory_score
             break
-          case 'leadership':
-            value = p.merit_breakdown.leadership_agency
+          case 'shortlist':
+            value = p.shortlist_priority_score
             break
-          case 'experience':
-            value = p.merit_breakdown.experience_skills
+          case 'evidence':
+            value = p.evidence_coverage_score
             break
-          case 'trust':
-            value = p.merit_breakdown.trust_completeness
+          case 'support':
+            value = p.support_needed_score
             break
           case 'confidence':
             value = p.confidence_score
@@ -399,19 +399,17 @@ function StrengthsGapsComparison({ profiles }: { profiles: ApplicantProfile[] })
 // ---------------------------------------------------------------------------
 // AI Detection comparison
 // ---------------------------------------------------------------------------
-function AiDetectionComparison({ profiles }: { profiles: ApplicantProfile[] }) {
-  const probabilities = profiles.map((p) =>
-    Math.round(p.ai_detector.probability_ai_generated * 100),
-  )
-  const maxProb = Math.max(...probabilities)
+function AuthenticityRiskComparison({ profiles }: { profiles: ApplicantProfile[] }) {
+  const risks = profiles.map((p) => Math.round(p.authenticity_risk))
+  const maxRisk = Math.max(...risks)
 
   return (
     <div className="rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl p-6">
-      <h3 className="mb-4 text-base font-semibold text-foreground">AI Detection</h3>
+      <h3 className="mb-4 text-base font-semibold text-foreground">Authenticity Risk</h3>
       <div className="space-y-3">
         {profiles.map((p, i) => {
-          const prob = probabilities[i]
-          const isHighest = prob === maxProb && prob > 0
+          const risk = risks[i]
+          const isHighest = risk === maxRisk && risk > 0
           return (
             <div key={p.candidate_id} className="flex items-center gap-3">
               <div className="flex w-24 shrink-0 items-center gap-2 sm:w-40">
@@ -430,7 +428,7 @@ function AiDetectionComparison({ profiles }: { profiles: ApplicantProfile[] }) {
                       'h-full rounded-full transition-all',
                       isHighest ? 'bg-amber-500' : 'bg-gray-300',
                     )}
-                    style={{ width: `${prob}%` }}
+                    style={{ width: `${risk}%` }}
                   />
                 </div>
                 <span
@@ -439,20 +437,9 @@ function AiDetectionComparison({ profiles }: { profiles: ApplicantProfile[] }) {
                     isHighest ? 'text-amber-500 dark:text-amber-400' : 'text-muted-foreground',
                   )}
                 >
-                  {prob}%
+                  {risk}%
                 </span>
               </div>
-              <Badge
-                variant="outline"
-                className={cn(
-                  'text-xs',
-                  p.ai_detector.applicable
-                    ? 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/15 dark:text-sky-400'
-                    : 'border-border dark:border-white/10 bg-muted text-muted-foreground',
-                )}
-              >
-                {p.ai_detector.applicable ? 'Applicable' : 'N/A'}
-              </Badge>
             </div>
           )
         })}
@@ -620,8 +607,8 @@ export function ComparisonView() {
           <StrengthsGapsComparison profiles={profiles} />
         </div>
 
-        {/* AI Detection */}
-        <AiDetectionComparison profiles={profiles} />
+        {/* Authenticity Risk */}
+        <AuthenticityRiskComparison profiles={profiles} />
       </main>
     </div>
   )

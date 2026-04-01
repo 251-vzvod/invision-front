@@ -2,15 +2,12 @@
 
 import gsap from 'gsap'
 import {
-  AlertCircle,
-  AlertTriangle,
   ArrowLeft,
-  Bot,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
   ClipboardCheck,
-  HelpCircle,
+  FileText,
   MessageSquare,
   Star,
   Users,
@@ -46,7 +43,6 @@ import { DEFAULT_SORT_DIRECTION, DEFAULT_SORT_FIELD } from '../constants'
 import type {
   ApplicantProfile,
   CandidateDecision,
-  FeatureSnapshot,
   Recommendation,
   ReviewFlag,
 } from '../types'
@@ -125,111 +121,10 @@ const REVIEW_FLAG_LABELS: Record<ReviewFlag, string> = {
   auxiliary_ai_generation_signal: 'Auxiliary AI generation signal',
 }
 
-const FEATURE_SNAPSHOT_META: Record<keyof FeatureSnapshot, { label: string; description: string }> =
-  {
-    motivation_clarity: {
-      label: 'Motivation Clarity',
-      description: 'How clearly the applicant explains goals and intent.',
-    },
-    initiative: {
-      label: 'Initiative',
-      description: 'Signals of self-started actions and ownership.',
-    },
-    leadership_impact: {
-      label: 'Leadership Impact',
-      description: 'Evidence of influencing outcomes and people.',
-    },
-    growth_trajectory: {
-      label: 'Growth Trajectory',
-      description: 'Pattern of progress over time.',
-    },
-    resilience: {
-      label: 'Resilience',
-      description: 'Ability to recover, adapt, and keep momentum.',
-    },
-    program_fit: {
-      label: 'Program Fit',
-      description: 'Match between profile and chosen program.',
-    },
-    evidence_richness: {
-      label: 'Evidence Richness',
-      description: 'Density of concrete supporting details.',
-    },
-    specificity_score: {
-      label: 'Specificity',
-      description: 'How specific claims and examples are.',
-    },
-    evidence_count: {
-      label: 'Evidence Count Signal',
-      description: 'Relative amount of evidence across sections.',
-    },
-    consistency_score: {
-      label: 'Consistency',
-      description: 'How internally consistent the application is.',
-    },
-    completeness_score: {
-      label: 'Completeness',
-      description: 'Coverage of expected fields and content.',
-    },
-    genericness_score: {
-      label: 'Genericness',
-      description: 'Degree of generic language in responses.',
-    },
-    contradiction_flag: {
-      label: 'Contradiction Flag',
-      description: 'Potential contradictory statements detected.',
-    },
-    docs_count_score: {
-      label: 'Documents Count',
-      description: 'Number of documents provided relative to maximum.',
-    },
-    portfolio_links_score: {
-      label: 'Portfolio Links',
-      description: 'Quality and presence of portfolio or project links.',
-    },
-    has_video_presentation: {
-      label: 'Video Presentation',
-      description: 'Whether candidate submitted a video presentation.',
-    },
-    logical_source_groups_present: {
-      label: 'Source Groups',
-      description: 'Number of distinct logical source groups in submission.',
-    },
-    material_support_score: {
-      label: 'Material Support',
-      description: 'How well claims are supported by submitted materials.',
-    },
-    polished_but_empty_score: {
-      label: 'Polished but Empty',
-      description: 'Degree of polished language with little substantive content.',
-    },
-    cross_section_mismatch_score: {
-      label: 'Cross-Section Mismatch',
-      description: 'Inconsistency between different sections of the application.',
-    },
-    authenticity_risk_raw: {
-      label: 'Authenticity Risk (Raw)',
-      description: 'Raw authenticity risk score before normalization.',
-    },
-    ai_detector_probability: {
-      label: 'AI Detection Probability',
-      description: 'Probability that text was AI-generated.',
-    },
-    ai_detector_applicable: {
-      label: 'AI Detector Applicable',
-      description: 'Whether AI detection analysis was applicable.',
-    },
-    excluded_sensitive_fields_count: {
-      label: 'Excluded Fields',
-      description: 'Number of sensitive fields excluded from scoring.',
-    },
-  }
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
 /* -------------------------------------------------------------------------- */
-
-const clampPercent = (value: number): number => Math.max(0, Math.min(100, value * 100))
 
 const formatMachineLabel = (value: string): string =>
   value
@@ -244,7 +139,7 @@ const formatMachineLabel = (value: string): string =>
 function MeritProgressBar({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="w-24 shrink-0 text-sm text-muted-foreground">{label}</span>
+      <span className="w-32 shrink-0 text-sm text-muted-foreground">{label}</span>
       <div className="h-1.5 flex-1 rounded-full bg-muted">
         <div
           className="bg-primary h-1.5 rounded-full transition-all"
@@ -406,14 +301,6 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
                 </CardContent>
               </Card>
 
-              {/* AI Detection */}
-              <Card className="border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl shadow-none">
-                <CardContent className="space-y-2 px-4 py-4">
-                  <Skeleton className="h-4 w-28" />
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-32" />
-                </CardContent>
-              </Card>
             </div>
 
             {/* Right column */}
@@ -494,34 +381,16 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
   const recommendationMeta = RECOMMENDATION_META[profile.recommendation]
 
   const radarData = [
-    { metric: 'Potential', value: profile.merit_breakdown.potential },
-    { metric: 'Motivation', value: profile.merit_breakdown.motivation },
-    { metric: 'Leadership', value: profile.merit_breakdown.leadership_agency },
-    { metric: 'Experience', value: profile.merit_breakdown.experience_skills },
-    { metric: 'Trust', value: profile.merit_breakdown.trust_completeness },
+    { metric: 'Hidden Potential', value: profile.hidden_potential_score },
+    { metric: 'Support Needed', value: profile.support_needed_score },
+    { metric: 'Shortlist Priority', value: profile.shortlist_priority_score },
+    { metric: 'Evidence Coverage', value: profile.evidence_coverage_score },
+    { metric: 'Trajectory', value: profile.trajectory_score },
   ]
 
   const radarConfig: ChartConfig = {
     value: { label: 'Score', color: '#a6d80a' },
   }
-
-  const featureSnapshotEntries = Object.entries(profile.feature_snapshot) as Array<
-    [keyof FeatureSnapshot, FeatureSnapshot[keyof FeatureSnapshot]]
-  >
-
-  const numericFeatureEntries = featureSnapshotEntries.filter(
-    ([key, value]) =>
-      typeof value === 'number' &&
-      key !== 'logical_source_groups_present' &&
-      key !== 'excluded_sensitive_fields_count',
-  ) as Array<[keyof FeatureSnapshot, number]>
-
-  const nonNumericFeatureEntries = featureSnapshotEntries.filter(
-    ([key, value]) =>
-      typeof value === 'boolean' ||
-      key === 'logical_source_groups_present' ||
-      key === 'excluded_sensitive_fields_count',
-  )
 
   return (
     <div ref={rootRef} className="min-h-screen bg-dashboard">
@@ -763,48 +632,17 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
               className="border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl shadow-none"
             >
               <CardContent className="space-y-3 px-4 py-4">
-                <p className="text-sm font-semibold uppercase tracking-wide text-foreground">Merit Breakdown</p>
-                <MeritProgressBar label="Potential" value={profile.merit_breakdown.potential} />
-                <MeritProgressBar label="Motivation" value={profile.merit_breakdown.motivation} />
-                <MeritProgressBar label="Leadership" value={profile.merit_breakdown.leadership_agency} />
-                <MeritProgressBar label="Experience" value={profile.merit_breakdown.experience_skills} />
-                <MeritProgressBar label="Trust" value={profile.merit_breakdown.trust_completeness} />
+                <p className="text-sm font-semibold uppercase tracking-wide text-foreground">Score Breakdown</p>
+                <MeritProgressBar label="Hidden Potential" value={profile.hidden_potential_score} />
+                <MeritProgressBar label="Support Needed" value={profile.support_needed_score} />
+                <MeritProgressBar label="Shortlist Priority" value={profile.shortlist_priority_score} />
+                <MeritProgressBar label="Evidence Coverage" value={profile.evidence_coverage_score} />
+                <MeritProgressBar label="Trajectory" value={profile.trajectory_score} />
               </CardContent>
             </Card>
 
-            {/* AI Detection */}
-            {profile.ai_detector.enabled && (
-              <Card
-                data-animate-detail-section
-                className="border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl shadow-none"
-              >
-                <CardContent className="space-y-2 px-4 py-4">
-                  <div className="flex items-center gap-2">
-                    <Bot className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-sm font-semibold uppercase tracking-wide text-foreground">AI Detection</p>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-foreground">
-                      {(profile.ai_detector.probability_ai_generated * 100).toFixed(0)}%
-                    </span>
-                    <span className="text-xs text-muted-foreground">AI probability</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      {profile.ai_detector.model}
-                    </span>
-                    {profile.ai_detector.applicable && (
-                      <Badge variant="outline" className="text-xs">
-                        Applicable
-                      </Badge>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Committee Cohorts */}
-            {profile.committee_cohorts.length > 0 && (
+            {(profile.committee_cohorts?.length ?? 0) > 0 && (
               <Card
                 data-animate-detail-section
                 className="border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl shadow-none"
@@ -867,7 +705,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             >
               <CardContent className="space-y-2 px-4 py-4">
                 <p className="text-sm font-semibold uppercase tracking-wide text-foreground">Review Flags</p>
-                {profile.review_flags.length === 0 ? (
+                {(profile.review_flags?.length ?? 0) === 0 ? (
                   <p className="text-sm text-muted-foreground">No flags</p>
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
@@ -918,27 +756,11 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
                   </div>
                 </div>
 
-                {/* Uncertainties */}
-                {profile.uncertainties.length > 0 && (
-                  <div className="mt-4 space-y-2 border-t border-border dark:border-white/10 pt-4">
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Uncertainties
-                    </p>
-                    <ul className="space-y-1.5">
-                      {profile.uncertainties.map((item) => (
-                        <li key={item} className="flex items-start gap-2 text-sm">
-                          <HelpCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                          <span className="text-muted-foreground">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </CardContent>
             </Card>
 
             {/* What to Verify Manually */}
-            {profile.what_to_verify_manually.length > 0 && (
+            {(profile.what_to_verify_manually?.length ?? 0) > 0 && (
               <Card
                 data-animate-detail-section
                 className="border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl shadow-none"
@@ -964,88 +786,48 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
               </Card>
             )}
 
-            {/* Evidence Spans */}
-            {profile.evidence_spans.length > 0 && (
+            {/* Evidence Highlights */}
+            {(profile.evidence_highlights?.length ?? 0) > 0 && (
               <Card
                 data-animate-detail-section
                 className="border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl shadow-none"
               >
                 <CardContent className="space-y-3 px-4 py-4">
-                  <p className="text-sm font-semibold uppercase tracking-wide text-foreground">Evidence Spans</p>
-                  {profile.evidence_spans.map((span) => (
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm font-semibold uppercase tracking-wide text-foreground">Evidence Highlights</p>
+                  </div>
+                  {profile.evidence_highlights.map((highlight) => (
                     <div
-                      key={`${span.source}-${span.snippet.slice(0, 20)}`}
-                      className="flex items-start gap-3"
+                      key={`${highlight.source}-${highlight.claim.slice(0, 30)}`}
+                      className="space-y-1.5 rounded-lg border border-border dark:border-white/10 bg-muted/30 p-3"
                     >
-                      <Badge
-                        variant="outline"
-                        className="mt-0.5 shrink-0 text-xs"
-                      >
-                        {formatMachineLabel(span.source)}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="shrink-0 text-xs">
+                          {formatMachineLabel(highlight.source)}
+                        </Badge>
+                        <Badge
+                          variant="secondary"
+                          className="shrink-0 text-xs"
+                        >
+                          {formatMachineLabel(highlight.support_level)}
+                        </Badge>
+                        <span className="ml-auto text-xs font-medium text-muted-foreground">
+                          {highlight.support_score}/10
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium text-foreground">{highlight.claim}</p>
                       <blockquote className="border-l-2 border-border dark:border-white/10 pl-3 text-sm italic text-muted-foreground">
-                        {span.snippet}
+                        {highlight.snippet}
                       </blockquote>
+                      {highlight.rationale && (
+                        <p className="text-xs text-muted-foreground">{highlight.rationale}</p>
+                      )}
                     </div>
                   ))}
                 </CardContent>
               </Card>
             )}
-
-            {/* Feature Snapshot — collapsible */}
-            <Card
-              data-animate-detail-section
-              className="border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl shadow-none"
-            >
-              <CardContent className="px-4 py-4">
-                <CollapsibleSection
-                  title={`Show detailed signals (${featureSnapshotEntries.length})`}
-                >
-                  <div className="space-y-4">
-                    {/* Numeric features as 2-col progress bars */}
-                    <div className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
-                      {numericFeatureEntries.map(([key, value]) => (
-                        <div key={key} className="flex items-center gap-2">
-                          <span className="w-36 shrink-0 truncate text-xs text-muted-foreground">
-                            {FEATURE_SNAPSHOT_META[key].label}
-                          </span>
-                          <div className="h-1.5 flex-1 rounded-full bg-muted">
-                            <div
-                              className="bg-primary h-1.5 rounded-full"
-                              style={{ width: `${clampPercent(value)}%` }}
-                            />
-                          </div>
-                          <span className="w-10 shrink-0 text-right text-xs font-medium text-foreground">
-                            {clampPercent(value).toFixed(0)}%
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Boolean / count features */}
-                    {nonNumericFeatureEntries.length > 0 && (
-                      <div className="flex flex-wrap gap-2 border-t border-border dark:border-white/10 pt-3">
-                        {nonNumericFeatureEntries.map(([key, value]) => (
-                          <div key={key} className="flex items-center gap-1.5">
-                            <span className="text-xs text-muted-foreground">
-                              {FEATURE_SNAPSHOT_META[key].label}:
-                            </span>
-                            {typeof value === 'boolean' ? (
-                              <Badge variant={value ? 'secondary' : 'outline'} className="text-xs">
-                                {value ? 'Yes' : 'No'}
-                              </Badge>
-                            ) : (
-                              <span className="text-xs font-medium text-foreground">
-                                {String(value)}
-                              </span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </CollapsibleSection>
-              </CardContent>
-            </Card>
 
             {/* Scoring Notes — collapsible */}
             {Object.keys(profile.explanation.scoring_notes).length > 0 && (
@@ -1068,30 +850,6 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
               </Card>
             )}
 
-            {/* Authenticity Review Reasons */}
-            {profile.authenticity_review_reasons.length > 0 && (
-              <Card
-                data-animate-detail-section
-                className="border-amber-200 bg-amber-50 shadow-none dark:border-amber-500/30 dark:bg-amber-500/10"
-              >
-                <CardContent className="space-y-2 px-4 py-4">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-600" />
-                    <p className="text-sm font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-                      Authenticity Review
-                    </p>
-                  </div>
-                  <ul className="space-y-1.5">
-                    {profile.authenticity_review_reasons.map((reason) => (
-                      <li key={reason} className="flex items-start gap-2 text-sm">
-                        <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
-                        <span className="text-amber-700 dark:text-amber-300/80">{reason}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
       </main>

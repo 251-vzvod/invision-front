@@ -12,17 +12,12 @@ export {
 } from './constants'
 export type {
   ApplicantProfile,
-  MeritBreakdown,
-  FeatureSnapshot,
-  EvidenceSpan,
+  EvidenceHighlight,
   ApplicantExplanation,
   ApplicantsSortField,
   ApplicantsSortDirection,
   ApplicantsQueryParams,
   EligibilityStatus,
-  LlmMetadata,
-  SemanticRubricScores,
-  AiDetector,
   Recommendation,
   CandidateDecision,
 } from './types'

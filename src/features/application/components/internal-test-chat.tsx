@@ -50,7 +50,7 @@ export function InternalTestChat({ history, isLoading, error, onSend }: Internal
     <section className="flex h-[70vh] min-h-130 flex-col p-4 sm:p-6">
       <div
         ref={messagesContainerRef}
-        className="flex-1 space-y-4 overflow-y-auto rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-5"
+        className="flex-1 space-y-4 overflow-y-auto rounded-2xl border border-border bg-card dark:bg-white/5 p-4 shadow-sm sm:p-5"
       >
         {history.map((entry, index) => {
           const isAgent = entry.sender === 'agent'
@@ -64,7 +64,7 @@ export function InternalTestChat({ history, isLoading, error, onSend }: Internal
                 className={cn(
                   'max-w-[90%] rounded-2xl px-4 py-3 text-sm leading-6 sm:max-w-[75%]',
                   isAgent
-                    ? 'rounded-bl-md bg-gray-100 text-foreground'
+                    ? 'rounded-bl-md bg-muted dark:bg-white/10 text-foreground'
                     : 'bg-primary text-primary-foreground rounded-br-md',
                 )}
               >
@@ -79,7 +79,7 @@ export function InternalTestChat({ history, isLoading, error, onSend }: Internal
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="rounded-2xl rounded-bl-md bg-gray-100 px-4 py-3 text-sm text-foreground">
+            <div className="rounded-2xl rounded-bl-md bg-muted dark:bg-white/10 px-4 py-3 text-sm text-foreground">
               <p className="mb-1 text-xs font-semibold tracking-wide opacity-60">Agent</p>
               <p className="animate-pulse">Typing...</p>
             </div>
