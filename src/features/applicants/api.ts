@@ -150,6 +150,20 @@ const sortApplicants = (
   })
 }
 
+/* ─── Analytics response (from /api/analytics route handler) ─── */
+
+export interface FormAnalyticsData {
+  total: number
+  byStatus: Record<string, number>
+  byProgram: Record<string, number>
+  byFaculty: Record<string, number>
+  byGender: Record<string, number>
+  avgEnglishScore: number
+  avgUntScore: number
+  englishScoreDistribution: Array<{ range: string; count: number }>
+  untScoreDistribution: Array<{ range: string; count: number }>
+}
+
 /* ─── Queries ─── */
 
 export const useApplicantsRankingQuery = (params: ApplicantsQueryParams) =>
@@ -163,6 +177,13 @@ export const useApplicantsRankingQuery = (params: ApplicantsQueryParams) =>
       return sortApplicants(profiles, params)
     },
     staleTime: 30_000,
+  })
+
+export const useFormAnalyticsQuery = () =>
+  useQuery({
+    queryKey: ['analytics', 'forms'] as const,
+    queryFn: async () => apiClient.get<FormAnalyticsData>('/api/analytics'),
+    staleTime: 60_000,
   })
 
 export const useApplicantProfileQuery = (candidateId: string) =>
