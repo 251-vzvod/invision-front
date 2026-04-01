@@ -256,7 +256,7 @@ export function ApplicationForm() {
             />
           ) : null}
 
-          {viewMode === 'testFinished' ? <InternalTestFinished history={chatHistory} /> : null}
+          {viewMode === 'testFinished' ? <InternalTestFinished /> : null}
         </div>
       </div>
 

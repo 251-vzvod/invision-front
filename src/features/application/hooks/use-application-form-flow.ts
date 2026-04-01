@@ -139,10 +139,32 @@ interface UseApplicationFormFlowParams {
   tabs: ReadonlyArray<{ value: ApplicationTab }>
 }
 
-const agentResponseToMessage = (response: AgentReplyResponse): ChatMessage => ({
-  sender: 'agent',
-  text: response.message || 'Thank you. Please continue.',
-})
+/**
+ * Extracts chat messages from agent response.
+ * - First response: shows message + question as separate bubbles
+ * - Subsequent: only question.question
+ */
+const agentResponseToMessages = (
+  response: AgentReplyResponse,
+  isFirst: boolean,
+): ChatMessage[] => {
+  const messages: ChatMessage[] = []
+
+  if (isFirst && response.message) {
+    messages.push({ sender: 'agent', text: response.message })
+  }
+
+  if (response.question?.question) {
+    messages.push({ sender: 'agent', text: response.question.question })
+  }
+
+  // Fallback if nothing to show
+  if (messages.length === 0 && response.message) {
+    messages.push({ sender: 'agent', text: response.message })
+  }
+
+  return messages
+}
 
 export function useApplicationFormFlow({
   data,
@@ -340,26 +362,22 @@ export function useApplicationFormFlow({
       return
     }
 
-    // Start fresh — send initial empty message to get first question
-    const greeting: ChatMessage = {
-      sender: 'agent',
-      text: 'Welcome! Your application has been submitted. Now we will ask you a few questions to better understand your strengths and potential. Please answer thoughtfully.',
-    }
-    setChatHistory([greeting])
+    // Start fresh — send prompt to tell backend to begin the interview
+    setChatHistory([])
 
     try {
       const response = await chatMutation.mutateAsync({
-        text: '',
+        text: 'The student is ready. Please start the interview with questions.',
         applicant_external_id: applicantId,
       })
 
-      if (response.status === 'finished') {
+      if (response.status === 'ready') {
         setViewMode('testFinished')
         return
       }
 
-      const agentMsg = agentResponseToMessage(response)
-      setChatHistory((prev) => [...prev, agentMsg])
+      const messages = agentResponseToMessages(response, true)
+      setChatHistory(messages)
     } catch (error) {
       setChatError(
         error instanceof Error
@@ -384,15 +402,18 @@ export function useApplicationFormFlow({
           applicant_external_id: applicantId,
         })
 
-        if (response.status === 'finished') {
-          const finalMsg = agentResponseToMessage(response)
-          setChatHistory((prev) => [...prev, finalMsg])
+        if (response.status === 'ready') {
+          // Interview complete — show final message if any, then finish
+          const finalMessages = agentResponseToMessages(response, false)
+          if (finalMessages.length > 0) {
+            setChatHistory((prev) => [...prev, ...finalMessages])
+          }
           setViewMode('testFinished')
           return
         }
 
-        const agentMsg = agentResponseToMessage(response)
-        setChatHistory((prev) => [...prev, agentMsg])
+        const messages = agentResponseToMessages(response, false)
+        setChatHistory((prev) => [...prev, ...messages])
       } catch (error) {
         setChatError(
           error instanceof Error

@@ -1,15 +1,6 @@
-import { CheckCircle2 } from 'lucide-react'
-import type { ChatMessage } from '../types'
+import { CheckCircle2, PartyPopper } from 'lucide-react'
 
-interface InternalTestFinishedProps {
-  history: ChatMessage[]
-}
-
-export function InternalTestFinished({ history }: InternalTestFinishedProps) {
-  const finalMessage = [...history]
-    .reverse()
-    .find((entry) => entry.sender === 'agent')?.text
-
+export function InternalTestFinished() {
   return (
     <section className="flex min-h-105 flex-col items-center justify-center px-6 py-12 text-center">
       <div className="mx-auto max-w-lg">
@@ -23,12 +14,28 @@ export function InternalTestFinished({ history }: InternalTestFinishedProps) {
           </span>
         </div>
 
-        <h2 className="text-2xl font-semibold tracking-tight">Internal Test Completed</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">
+          All Stages Completed!
+        </h2>
 
-        <p className="text-muted-foreground mt-3 text-sm leading-6 sm:text-base">
-          {finalMessage ||
-            'Thank you for completing the internal test. Your applicant profile has been fully submitted. Our admissions team will review your information and contact you with the next update.'}
-        </p>
+        <div className="mt-4 space-y-3">
+          <p className="text-muted-foreground text-sm leading-6 sm:text-base">
+            You have successfully completed all stages of the application process — your form
+            has been submitted and the interview with our AI agent is finished.
+          </p>
+
+          <p className="text-muted-foreground text-sm leading-6 sm:text-base">
+            Our admissions team will now review your application. We will reach out to you
+            with updates as soon as possible.
+          </p>
+
+          <div className="mt-6 inline-flex items-center gap-2 rounded-xl bg-amber-500/10 px-4 py-2.5">
+            <PartyPopper className="size-5 text-amber-500" />
+            <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
+              Good luck! We wish you the best.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   )

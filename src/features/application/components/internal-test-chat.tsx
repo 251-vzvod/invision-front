@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { FormEvent, useEffect, useRef, useState } from 'react'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { cn } from '@/shared/lib/utils'
@@ -29,7 +29,10 @@ export function InternalTestChat({ history, isLoading, error, onSend }: Internal
     })
   }, [history])
 
-  const canSend = useMemo(() => message.trim().length > 0 && !isLoading, [message, isLoading])
+  const MIN_CHARS = 100
+  const trimmedLength = message.trim().length
+  const isTooShort = trimmedLength > 0 && trimmedLength < MIN_CHARS
+  const canSend = trimmedLength >= MIN_CHARS && !isLoading
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -90,18 +93,35 @@ export function InternalTestChat({ history, isLoading, error, onSend }: Internal
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-4 flex gap-3">
-        <Input
-          value={message}
-          disabled={isLoading}
-          onChange={(event) => setMessage(event.target.value)}
-          placeholder="Type your answer..."
-          className="h-12"
-        />
+      <form onSubmit={handleSubmit} className="mt-4 space-y-2">
+        <div className="flex gap-3">
+          <Input
+            value={message}
+            disabled={isLoading}
+            onChange={(event) => setMessage(event.target.value)}
+            placeholder="Type your answer..."
+            className="h-12"
+          />
 
-        <Button type="submit" disabled={!canSend} className="h-12 min-w-24 rounded-xl">
-          Send
-        </Button>
+          <Button type="submit" disabled={!canSend} className="h-12 min-w-24 rounded-xl">
+            Send
+          </Button>
+        </div>
+
+        <div className="flex items-center justify-between px-1">
+          {isTooShort ? (
+            <p className="text-xs text-amber-500">
+              Please provide a detailed answer — at least {MIN_CHARS} characters ({MIN_CHARS - trimmedLength} more)
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground/50">
+              Minimum {MIN_CHARS} characters — answer as broadly and honestly as possible
+            </p>
+          )}
+          <span className={cn('text-xs tabular-nums', isTooShort ? 'text-amber-500' : 'text-muted-foreground/50')}>
+            {trimmedLength}/{MIN_CHARS}
+          </span>
+        </div>
       </form>
     </section>
   )
