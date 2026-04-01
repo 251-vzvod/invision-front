@@ -26,6 +26,17 @@ const getManagerCredentials = (): { login: string; password: string } | null => 
 const getSessionSecret = (credentials: { login: string; password: string }): string =>
   `${credentials.login}:${credentials.password}`
 
+const shouldUseSecureCookie = (request: Request): boolean => {
+  const forwardedProto = request.headers.get('x-forwarded-proto')?.toLowerCase()
+
+  if (forwardedProto) {
+    return forwardedProto.includes('https')
+  }
+
+  const protocol = new URL(request.url).protocol
+  return protocol === 'https:'
+}
+
 export async function POST(request: Request) {
   const credentials = getManagerCredentials()
   if (!credentials) {
@@ -64,7 +75,7 @@ export async function POST(request: Request) {
     value: sessionToken,
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: shouldUseSecureCookie(request),
     path: '/',
     maxAge: AUTH_COOKIE_MAX_AGE_SECONDS,
   })

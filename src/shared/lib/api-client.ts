@@ -55,6 +55,7 @@ export async function apiRequest<TResponse>(
   const response = await fetch(url, {
     method,
     signal,
+    credentials: 'include',
     headers: {
       ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...headers,
