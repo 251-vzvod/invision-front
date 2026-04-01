@@ -157,3 +157,53 @@ export interface ApplicantsQueryParams {
   sortField: ApplicantsSortField
   sortDirection: ApplicantsSortDirection
 }
+
+/* ─── Backend form response (GET /api/v1/forms) ─── */
+// TODO: Remove this type when backend merges scoring into the response
+
+export type ProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed'
+export type ApplicationFormStatus = 'chat' | 'in_review' | 'reviewed'
+
+export interface ApplicationFormResponse {
+  id: number
+  created_at: string
+  updated_at: string
+  status: ApplicationFormStatus
+  program: {
+    level: 'foundation' | 'undergraduate'
+    faculty_id: string | null
+  }
+  personal_information: {
+    first_name: string
+    last_name: string
+    patronymic: string | null
+    birth_date: string
+    gender: 'MALE' | 'FEMALE'
+    citizenship: string
+  }
+  contact_information: {
+    contacts: {
+      phone: string
+      whatsapp: string | null
+      instagram: string | null
+      telegram: string | null
+    }
+  }
+  education: {
+    english_proficiency: { type: 'ielts' | 'toefl'; score: number }
+    school_certificate: { type: 'unt'; score: number }
+  }
+  motivation: {
+    presentation: {
+      link: string | null
+      text: string | null
+      status: ProcessingStatus
+    }
+    motivation_letter: {
+      link: string | null
+      text: string | null
+      status: ProcessingStatus
+    }
+  }
+  personal_data_consent: boolean
+}
