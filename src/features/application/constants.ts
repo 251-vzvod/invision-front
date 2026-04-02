@@ -22,7 +22,7 @@ export const FACULTIES: Faculty[] = [
     ],
   },
   {
-    id: 'art-media',
+    id: 'art_media',
     name: 'Art + Media',
     specialities: [
       {
@@ -42,7 +42,7 @@ export const FACULTIES: Faculty[] = [
     ],
   },
   {
-    id: 'policy-reform',
+    id: 'policy_reform',
     name: 'Policy Reform',
     specialities: [
       {

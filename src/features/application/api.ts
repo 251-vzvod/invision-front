@@ -78,7 +78,7 @@ export const prepareSubmitApplicationPayload = (
     program: {
       level: data.program.level,
       faculty_id: data.program.facultyId,
-      speciality_id: data.program.specialityId ? Number(data.program.specialityId) : null,
+      speciality_id: null,
       display_label: data.program.displayLabel,
     },
     personal_information: {
