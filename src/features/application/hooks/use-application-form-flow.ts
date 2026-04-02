@@ -139,31 +139,9 @@ interface UseApplicationFormFlowParams {
   tabs: ReadonlyArray<{ value: ApplicationTab }>
 }
 
-/**
- * Extracts chat messages from agent response.
- * - First response: shows message + question as separate bubbles
- * - Subsequent: only question.question
- */
-const agentResponseToMessages = (
-  response: AgentReplyResponse,
-  isFirst: boolean,
-): ChatMessage[] => {
-  const messages: ChatMessage[] = []
-
-  if (isFirst && response.message) {
-    messages.push({ sender: 'agent', text: response.message })
-  }
-
-  if (response.question?.question) {
-    messages.push({ sender: 'agent', text: response.question.question })
-  }
-
-  // Fallback if nothing to show
-  if (messages.length === 0 && response.message) {
-    messages.push({ sender: 'agent', text: response.message })
-  }
-
-  return messages
+const agentResponseToMessages = (response: AgentReplyResponse): ChatMessage[] => {
+  if (!response.message) return []
+  return [{ sender: 'agent', text: response.message }]
 }
 
 export function useApplicationFormFlow({
@@ -376,7 +354,7 @@ export function useApplicationFormFlow({
         return
       }
 
-      const messages = agentResponseToMessages(response, true)
+      const messages = agentResponseToMessages(response)
       setChatHistory(messages)
     } catch (error) {
       setChatError(
@@ -404,7 +382,7 @@ export function useApplicationFormFlow({
 
         if (response.status === 'ready') {
           // Interview complete — show final message if any, then finish
-          const finalMessages = agentResponseToMessages(response, false)
+          const finalMessages = agentResponseToMessages(response)
           if (finalMessages.length > 0) {
             setChatHistory((prev) => [...prev, ...finalMessages])
           }
@@ -412,7 +390,7 @@ export function useApplicationFormFlow({
           return
         }
 
-        const messages = agentResponseToMessages(response, false)
+        const messages = agentResponseToMessages(response)
         setChatHistory((prev) => [...prev, ...messages])
       } catch (error) {
         setChatError(

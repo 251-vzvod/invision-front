@@ -12,6 +12,8 @@ import {
   ArrowUpDown,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Filter,
   RotateCcw,
   Search,
@@ -388,6 +390,10 @@ export function ApplicantsDashboard() {
   const rootRef = useRef<HTMLDivElement | null>(null)
   const router = useRouter()
 
+  // Pagination state
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(25)
+
   // Sort state: null means default (score desc)
   const [sortState, setSortState] = useState<SortState>({
     field: 'score',
@@ -531,11 +537,15 @@ export function ApplicantsDashboard() {
     () => ({
       sortField: sortState?.field ?? 'score',
       sortDirection: sortState?.direction ?? 'desc',
+      page,
+      size: pageSize,
     }),
-    [sortState],
+    [sortState, page, pageSize],
   )
 
-  const { data: applicants = [], isLoading } = useApplicantsRankingQuery(queryParams)
+  const { data, isLoading } = useApplicantsRankingQuery(queryParams)
+  const applicants = data?.items ?? []
+  const hasMore = data?.hasMore ?? false
 
   // Filter applicants client-side
   const filteredApplicants = useMemo(() => {
@@ -619,6 +629,7 @@ export function ApplicantsDashboard() {
     setSelectedDecisions(new Set(DECISION_OPTIONS.map((o) => o.value)))
     setSortState({ field: 'score', direction: 'desc' })
     setMobileSortField('score')
+    setPage(1)
   }, [])
 
   const handleColumnSort = useCallback(
@@ -940,6 +951,35 @@ export function ApplicantsDashboard() {
                   decision={decisions.get(applicant.candidate_id) ?? null}
                 />
               ))}
+            </div>
+
+            {/* Pagination controls */}
+            <div className="flex items-center justify-between rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl px-4 py-3">
+              <p className="text-sm text-muted-foreground">
+                Page {page} · {filteredApplicants.length} candidates
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1 || isLoading}
+                  className="gap-1"
+                >
+                  <ChevronLeft className="size-4" />
+                  Prev
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={!hasMore || isLoading}
+                  className="gap-1"
+                >
+                  Next
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
             </div>
           </>
         )}

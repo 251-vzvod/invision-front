@@ -111,6 +111,8 @@ export type ApplicantsSortDirection = 'asc' | 'desc'
 export interface ApplicantsQueryParams {
   sortField: ApplicantsSortField
   sortDirection: ApplicantsSortDirection
+  page: number
+  size: number
 }
 
 /* ─── Backend form response (GET /api/v1/forms) ─── */

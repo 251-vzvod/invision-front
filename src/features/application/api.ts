@@ -139,11 +139,7 @@ export interface AgentReplyPayload {
 
 export interface AgentReplyResponse {
   message: string
-  status: string
-  question?: {
-    question: string | null
-    answer: string | null
-  } | null
+  status: 'ready' | 'not_ready'
 }
 
 export const sendAgentMessage = async (

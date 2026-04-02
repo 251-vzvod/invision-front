@@ -120,10 +120,16 @@ export const useApplicantsRankingQuery = (params: ApplicantsQueryParams) =>
     queryKey: applicantsQueryKeys.ranking(params),
     queryFn: async () => {
       const forms = await apiClient.get<ApplicationFormResponse[]>(
-        '/api/applicants?page=1&size=100',
+        `/api/applicants?page=${params.page}&size=${params.size}`,
       )
       const profiles = forms.map(mapFormToProfile)
-      return sortApplicants(profiles, params)
+      const sorted = sortApplicants(profiles, params)
+      return {
+        items: sorted,
+        page: params.page,
+        size: params.size,
+        hasMore: forms.length === params.size,
+      }
     },
     staleTime: 30_000,
   })
