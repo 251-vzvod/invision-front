@@ -2,14 +2,7 @@
 
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import {
-  Activity,
-  ArrowRight,
-  Eye,
-  Shield,
-  Sparkles,
-  Users,
-} from 'lucide-react'
+import { Activity, ArrowRight, BookOpen, Eye, Shield, Sparkles, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useRef } from 'react'
 
@@ -32,14 +25,12 @@ const FEATURES = [
   {
     icon: Eye,
     title: 'Explainable AI',
-    description:
-      'Every score comes with evidence spans, review flags, and scoring notes.',
+    description: 'Every score comes with evidence spans, review flags, and scoring notes.',
   },
   {
     icon: Users,
     title: 'Human in the Loop',
-    description:
-      'Committee makes the final call. AI provides insights, not decisions.',
+    description: 'Committee makes the final call. AI provides insights, not decisions.',
   },
 ] as const
 
@@ -47,20 +38,17 @@ const STEPS = [
   {
     number: 1,
     title: 'Apply',
-    description:
-      'Candidates submit applications, essays, and video presentations',
+    description: 'Candidates submit applications, essays, and video presentations',
   },
   {
     number: 2,
     title: 'Analyze',
-    description:
-      'AI engine scores across 22+ quality signals and 5 merit dimensions',
+    description: 'AI engine scores across 22+ quality signals and 5 merit dimensions',
   },
   {
     number: 3,
     title: 'Review',
-    description:
-      'Committee reviews ranked candidates with full transparency',
+    description: 'Committee reviews ranked candidates with full transparency',
   },
 ] as const
 
@@ -81,6 +69,7 @@ export function HomeLanding() {
   const featuresRef = useRef<HTMLElement | null>(null)
   const stepsRef = useRef<HTMLElement | null>(null)
   const statsRef = useRef<HTMLElement | null>(null)
+  const docsRef = useRef<HTMLElement | null>(null)
   const ctaRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
@@ -272,6 +261,24 @@ export function HomeLanding() {
         },
       )
 
+      /* ── Docs section ── */
+      gsap.fromTo(
+        '[data-docs-content]',
+        { autoAlpha: 0, y: 30, scale: 0.96 },
+        {
+          autoAlpha: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.75,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: docsRef.current,
+            start: 'top 82%',
+            once: true,
+          },
+        },
+      )
+
       /* ── CTA section ── */
       gsap.fromTo(
         '[data-cta-content]',
@@ -295,7 +302,7 @@ export function HomeLanding() {
   }, [])
 
   return (
-    <main ref={rootRef} className="relative bg-gray-950 bg-dot-grid overflow-x-hidden">
+    <main ref={rootRef} className="bg-dot-grid relative overflow-x-hidden bg-gray-950">
       {/* Radial gradient overlays */}
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(166,216,10,0.15)_0%,transparent_50%)]" />
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(166,216,10,0.08)_0%,transparent_50%)]" />
@@ -315,9 +322,9 @@ export function HomeLanding() {
 
           <h1
             data-hero-heading
-            className="invisible mx-auto max-w-4xl text-5xl font-bold leading-tight tracking-tight text-white sm:text-6xl lg:text-7xl"
+            className="invisible mx-auto max-w-4xl text-5xl leading-tight font-bold tracking-tight text-white sm:text-6xl lg:text-7xl"
           >
-            <span className="bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+            <span className="from-primary via-primary/80 to-primary bg-gradient-to-r bg-clip-text text-transparent">
               AI-Powered
             </span>{' '}
             Admissions
@@ -327,8 +334,7 @@ export function HomeLanding() {
             data-hero-subtitle
             className="invisible mx-auto mt-6 max-w-2xl text-lg text-white/60 sm:text-xl"
           >
-            Intelligent candidate screening for inVision U. Evaluate talent,
-            not just applications.
+            Intelligent candidate screening for inVision U. Evaluate talent, not just applications.
           </p>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -347,7 +353,7 @@ export function HomeLanding() {
               asChild
               size="lg"
               variant="outline"
-              className="invisible h-12 gap-2 bg-transparent border-white/20 px-6 text-base font-semibold text-white hover:bg-white/10"
+              className="invisible h-12 gap-2 border-white/20 bg-transparent px-6 text-base font-semibold text-white hover:bg-white/10"
               data-hero-btn
             >
               <Link href="/applicants">Manager Dashboard</Link>
@@ -359,36 +365,27 @@ export function HomeLanding() {
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div
             data-float-card
-            className="invisible absolute left-[5%] top-[18%] rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 shadow-lg backdrop-blur-md sm:left-[8%]"
+            className="invisible absolute top-[18%] left-[5%] rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 shadow-lg backdrop-blur-md sm:left-[8%]"
           >
-            <p className="text-sm font-semibold text-white/70">
-              8+ Merit Dimensions
-            </p>
+            <p className="text-sm font-semibold text-white/70">8+ Merit Dimensions</p>
           </div>
           <div
             data-float-card
-            className="invisible absolute right-[5%] top-[25%] rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 shadow-lg backdrop-blur-md sm:right-[10%]"
+            className="invisible absolute top-[25%] right-[5%] rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 shadow-lg backdrop-blur-md sm:right-[10%]"
           >
-            <p className="text-sm font-semibold text-white/70">
-              AI Scoring Engine
-            </p>
+            <p className="text-sm font-semibold text-white/70">AI Scoring Engine</p>
           </div>
           <div
             data-float-card
             className="invisible absolute bottom-[22%] left-[12%] rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 shadow-lg backdrop-blur-md sm:left-[15%]"
           >
-            <p className="text-sm font-semibold text-white/70">
-              Real-time Analysis
-            </p>
+            <p className="text-sm font-semibold text-white/70">Real-time Analysis</p>
           </div>
         </div>
       </section>
 
       {/* ═══════ Section 2: Features ═══════ */}
-      <section
-        ref={featuresRef}
-        className="mx-auto w-full max-w-7xl px-4 py-24 sm:px-6 lg:px-8"
-      >
+      <section ref={featuresRef} className="mx-auto w-full max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
         <h2
           data-features-title
           className="invisible mb-14 text-center text-3xl font-bold tracking-tight text-white sm:text-4xl"
@@ -403,23 +400,18 @@ export function HomeLanding() {
               data-feature-card
               className="invisible rounded-2xl border border-white/10 bg-white/5 p-8 shadow-sm backdrop-blur-sm transition-shadow hover:shadow-md"
             >
-              <div className="mb-5 inline-flex size-12 items-center justify-center rounded-xl bg-white/10 text-primary">
+              <div className="text-primary mb-5 inline-flex size-12 items-center justify-center rounded-xl bg-white/10">
                 <feature.icon className="size-6" />
               </div>
               <h3 className="mb-2 text-xl font-semibold text-white">{feature.title}</h3>
-              <p className="leading-relaxed text-white/60">
-                {feature.description}
-              </p>
+              <p className="leading-relaxed text-white/60">{feature.description}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* ═══════ Section 3: How it works ═══════ */}
-      <section
-        ref={stepsRef}
-        className="mx-auto w-full max-w-7xl px-4 py-24 sm:px-6 lg:px-8"
-      >
+      <section ref={stepsRef} className="mx-auto w-full max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
         <h2
           data-steps-title
           className="invisible mb-16 text-center text-3xl font-bold tracking-tight text-white sm:text-4xl"
@@ -437,7 +429,7 @@ export function HomeLanding() {
               {i < STEPS.length - 1 && (
                 <div
                   data-step-line
-                  className="absolute left-[calc(50%+2rem)] top-6 hidden h-0.5 origin-left bg-white/10 md:block"
+                  className="absolute top-6 left-[calc(50%+2rem)] hidden h-0.5 origin-left bg-white/10 md:block"
                   style={{ width: 'calc(100% - 4rem)' }}
                 />
               )}
@@ -445,14 +437,12 @@ export function HomeLanding() {
               <div data-step-item className="invisible relative z-10">
                 <div
                   data-step-number
-                  className="mx-auto mb-5 flex size-12 items-center justify-center rounded-full bg-primary text-lg font-bold text-gray-950"
+                  className="bg-primary mx-auto mb-5 flex size-12 items-center justify-center rounded-full text-lg font-bold text-gray-950"
                 >
                   {step.number}
                 </div>
                 <h3 className="mb-2 text-xl font-semibold text-white">{step.title}</h3>
-                <p className="max-w-xs text-white/50">
-                  {step.description}
-                </p>
+                <p className="max-w-xs text-white/50">{step.description}</p>
               </div>
             </div>
           ))}
@@ -460,10 +450,7 @@ export function HomeLanding() {
       </section>
 
       {/* ═══════ Section 4: Stats ═══════ */}
-      <section
-        ref={statsRef}
-        className="bg-white/[0.02] py-24 backdrop-blur-sm"
-      >
+      <section ref={statsRef} className="bg-white/[0.02] py-24 backdrop-blur-sm">
         <div className="mx-auto grid w-full max-w-5xl grid-cols-2 gap-10 px-4 sm:px-6 md:grid-cols-4 lg:px-8">
           {STATS.map((stat) => (
             <div
@@ -474,41 +461,59 @@ export function HomeLanding() {
               <span
                 data-stat-value={stat.value}
                 data-stat-suffix={stat.suffix}
-                className="text-4xl font-bold text-primary sm:text-5xl"
+                className="text-primary text-4xl font-bold sm:text-5xl"
               >
                 0
               </span>
-              <span className="mt-2 text-sm font-medium text-white/50">
-                {stat.label}
-              </span>
+              <span className="mt-2 text-sm font-medium text-white/50">{stat.label}</span>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ═══════ Section 5: CTA / Footer ═══════ */}
-      <section
-        ref={ctaRef}
-        className="mx-auto w-full max-w-7xl px-4 py-24 sm:px-6 lg:px-8"
-      >
+      {/* ═══════ Section 5: Documentation ═══════ */}
+      <section ref={docsRef} className="mx-auto w-full max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
         <div
-          data-cta-content
-          className="invisible flex flex-col items-center text-center"
+          data-docs-content
+          className="invisible rounded-3xl border border-white/10 bg-linear-to-br from-white/10 to-white/3 p-8 backdrop-blur-md sm:p-10"
         >
-          <Shield className="mb-4 size-10 text-primary" />
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="max-w-2xl">
+              <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold tracking-wide text-white/70 uppercase">
+                <BookOpen className="size-3.5" />
+                API Reference
+              </p>
+              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                Read our technical documentation
+              </h2>
+              <p className="mt-3 text-white/60">
+                Endpoint descriptions, request and response examples, and ML scoring service details
+                are available in one place.
+              </p>
+            </div>
+
+            <Button asChild size="lg" className="h-12 gap-2 px-6 text-base font-semibold">
+              <Link href="/docs">
+                Open Documentation
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════ Section 6: CTA / Footer ═══════ */}
+      <section ref={ctaRef} className="mx-auto w-full max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+        <div data-cta-content className="invisible flex flex-col items-center text-center">
+          <Shield className="text-primary mb-4 size-10" />
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Ready to Transform Admissions?
           </h2>
           <p className="mt-4 max-w-xl text-white/60">
-            Join inVision U in building a fairer, faster, and fully
-            transparent admissions process.
+            Join inVision U in building a fairer, faster, and fully transparent admissions process.
           </p>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-            <Button
-              asChild
-              size="lg"
-              className="h-12 gap-2 px-6 text-base font-semibold"
-            >
+            <Button asChild size="lg" className="h-12 gap-2 px-6 text-base font-semibold">
               <Link href="/form">
                 Apply Now
                 <ArrowRight className="size-4" />
@@ -518,7 +523,7 @@ export function HomeLanding() {
               asChild
               size="lg"
               variant="outline"
-              className="h-12 bg-transparent border-white/20 px-6 text-base font-semibold text-white hover:bg-white/10"
+              className="h-12 border-white/20 bg-transparent px-6 text-base font-semibold text-white hover:bg-white/10"
             >
               <Link href="/applicants">Manager Dashboard</Link>
             </Button>
