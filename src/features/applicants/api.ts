@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/lib/api-client'
 import type { ApplicantProfile, ApplicantsQueryParams, ApplicationFormResponse } from './types'
 
@@ -134,6 +134,17 @@ export const useFormAnalyticsQuery = () =>
     queryFn: async () => apiClient.get<FormAnalyticsData>('/api/analytics'),
     staleTime: 60_000,
   })
+
+export const useRankCandidatesMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (candidateIds: string[]) =>
+      apiClient.post<unknown>('/api/rank', { candidate_ids: candidateIds }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: applicantsQueryKeys.all })
+    },
+  })
+}
 
 export const useApplicantProfileQuery = (candidateId: string) =>
   useQuery({
