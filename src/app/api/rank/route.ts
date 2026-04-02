@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const backendResponse = await fetch(`${base}/api/v1/rank`, {
+    const backendResponse = await fetch(`${base}/api/v1/rankings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message, details: responseBody }, { status: backendResponse.status })
     }
 
-    return NextResponse.json(responseBody, { status: 200 })
+    return NextResponse.json(responseBody, { status: 202 })
   } catch (error) {
     return NextResponse.json(
       { message: error instanceof Error ? error.message : 'Unexpected error' },
