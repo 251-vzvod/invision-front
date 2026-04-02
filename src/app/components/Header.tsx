@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { BarChart3, BookOpen, LogOut, Menu, Moon, Sun, User, Users, X } from 'lucide-react'
+import { BarChart3, BookOpen, LogOut, Menu, Moon, Sun, Trophy, User, Users, X } from 'lucide-react'
 import { useLogoutMutation } from '@/features/auth'
 import { useAuthStore } from '@/shared/stores/auth-store'
 import { useThemeStore } from '@/shared/stores/theme-store'
@@ -29,6 +29,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Applicants', href: '/applicants', icon: Users },
+  { label: 'Ranking', href: '/applicants/ranking', icon: Trophy },
   { label: 'Analytics', href: '/applicants/analytics', icon: BarChart3 },
   { label: 'API Docs', href: '/docs', icon: BookOpen },
 ]
@@ -40,7 +41,9 @@ function isNavActive(href: string, pathname: string): boolean {
   if (href === '/applicants') {
     return (
       (pathname === '/applicants' || pathname.startsWith('/applicants/')) &&
-      !pathname.startsWith('/applicants/analytics')
+      !pathname.startsWith('/applicants/analytics') &&
+      !pathname.startsWith('/applicants/ranking') &&
+      !pathname.startsWith('/applicants/compare')
     )
   }
   return pathname.startsWith(href)

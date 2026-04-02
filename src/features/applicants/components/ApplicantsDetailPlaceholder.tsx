@@ -196,12 +196,15 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
     () => ({
       sortField: DEFAULT_SORT_FIELD,
       sortDirection: DEFAULT_SORT_DIRECTION,
+      page: 1,
+      size: 25,
     }),
     [],
   )
 
   const { data: profile, isLoading } = useApplicantProfileQuery(applicantId)
-  const { data: rankedApplicants = [] } = useApplicantsRankingQuery(defaultSort)
+  const { data: rankingData } = useApplicantsRankingQuery(defaultSort)
+  const rankedApplicants = rankingData?.items ?? []
 
   // Committee decision state (client-side session only)
   const [committeeDecision, setCommitteeDecision] = useState<CandidateDecision>(null)

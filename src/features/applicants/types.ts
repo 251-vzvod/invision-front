@@ -53,6 +53,7 @@ export interface ApplicantProfile {
   /* Frontend-derived (from form data) */
   candidate_name?: string
   program_name?: string
+  application_status?: string
 }
 
 /* ─── Enums ─── */
@@ -115,8 +116,74 @@ export interface ApplicantsQueryParams {
   size: number
 }
 
+/* ─── ML Assessment list item (from GET /api/v1/ml-assessments) ─── */
+
+export interface MLAssessmentListItem {
+  candidate_id: number
+  first_name: string
+  last_name: string
+  full_name: string
+  program: string
+  application_status: string
+  eligibility_status: string | null
+  recommendation: string | null
+  merit_score: number
+  confidence_score: number
+  authenticity_risk: number
+  hidden_potential_score: number
+  support_needed_score: number
+  shortlist_priority_score: number
+  evidence_coverage_score: number
+  trajectory_score: number
+}
+
+export interface MLAssessmentListResponse {
+  items: MLAssessmentListItem[]
+  page: number
+  size: number
+  total: number
+}
+
+/* ─── ML Assessment detail (from GET /api/v1/forms/{id}/ml-assessment) ─── */
+
+export interface MLAssessmentDetail {
+  id: number
+  created_at: string
+  updated_at: string
+  candidate_id: number
+  scoring_run_id: string
+  scoring_version: string
+  eligibility_status: string
+  eligibility_reasons: string[]
+  merit_score: number
+  confidence_score: number
+  authenticity_risk: number
+  recommendation: string
+  review_flags: string[]
+  hidden_potential_score: number
+  support_needed_score: number
+  shortlist_priority_score: number
+  evidence_coverage_score: number
+  trajectory_score: number
+  committee_cohorts: string[]
+  why_candidate_surfaced: string[]
+  what_to_verify_manually: string[]
+  suggested_follow_up_question: string | null
+  evidence_highlights: EvidenceHighlight[]
+  top_strengths: string[]
+  main_gaps: string[]
+  explanation: ApplicantExplanation
+  raw_response: Record<string, unknown>
+}
+
+/* ─── Combined response for detail endpoint ─── */
+
+export interface ApplicantDetailResponse {
+  form: ApplicationFormResponse | null
+  ml_assessment: MLAssessmentDetail | null
+}
+
 /* ─── Backend form response (GET /api/v1/forms) ─── */
-// TODO: Remove when backend merges scoring into the response
 
 export type ProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed'
 export type ApplicationFormStatus = 'chat' | 'in_review' | 'reviewed'
@@ -163,4 +230,57 @@ export interface ApplicationFormResponse {
     }
   }
   personal_data_consent: boolean
+}
+
+/* ─── Ranking ─── */
+
+export type RankingStatus = 'pending' | 'processing' | 'completed' | 'failed'
+
+export interface RankedCandidate {
+  candidate_id: number
+  rank_position: number
+  recommendation: string
+  merit_score: number
+  confidence_score: number
+  authenticity_risk: number
+  shortlist_priority_score: number
+  hidden_potential_score: number
+  support_needed_score: number
+  evidence_coverage_score: number
+  trajectory_score: number
+  is_shortlist_candidate: boolean
+  is_hidden_potential_candidate: boolean
+  is_support_needed_candidate: boolean
+  is_authenticity_review_candidate: boolean
+}
+
+export interface RankingCreateResponse {
+  ranking_id: number
+  status: RankingStatus
+  candidate_ids: number[]
+  top_k: number | null
+  celery_task_id: string | null
+}
+
+export interface RankingResult {
+  id: number
+  created_at: string
+  updated_at: string
+  status: RankingStatus
+  candidate_ids: number[]
+  top_k: number | null
+  celery_task_id: string | null
+  scoring_run_id: string | null
+  scoring_version: string | null
+  count: number
+  returned_count: number
+  ranked_candidate_ids: number[]
+  shortlist_candidate_ids: number[]
+  hidden_potential_candidate_ids: number[]
+  support_needed_candidate_ids: number[]
+  authenticity_review_candidate_ids: number[]
+  ranker_metadata: Record<string, unknown>
+  error_message: string | null
+  items: RankedCandidate[]
+  raw_response: Record<string, unknown>
 }

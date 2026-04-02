@@ -2,6 +2,7 @@ export { AnalyticsDashboard } from './components/AnalyticsDashboard'
 export { ApplicantsDashboard } from './components/ApplicantsDashboard'
 export { ApplicantsDetail } from './components/ApplicantsDetailPlaceholder'
 export { ComparisonView } from './components/ComparisonView'
+export { RankingView } from './components/RankingView'
 export { useApplicantsRankingQuery, useApplicantProfileQuery } from './api'
 export {
   DEFAULT_SORT_DIRECTION,

@@ -14,10 +14,10 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl
     const page = searchParams.get('page') ?? '1'
-    const size = searchParams.get('size') ?? '10'
+    const size = searchParams.get('size') ?? '25'
 
     const backendResponse = await fetch(
-      `${base}/api/v1/forms?page=${encodeURIComponent(page)}&size=${encodeURIComponent(size)}`,
+      `${base}/api/v1/ml-assessments?page=${encodeURIComponent(page)}&size=${encodeURIComponent(size)}`,
       { method: 'GET', headers: { 'Content-Type': 'application/json' } },
     )
 
