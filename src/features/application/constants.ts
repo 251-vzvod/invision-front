@@ -42,7 +42,7 @@ export const FACULTIES: Faculty[] = [
     ],
   },
   {
-    id: 'policy_reform',
+    id: 't',
     name: 'Policy Reform',
     specialities: [
       {

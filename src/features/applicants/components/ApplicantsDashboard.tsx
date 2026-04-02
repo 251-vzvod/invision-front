@@ -40,7 +40,7 @@ import { Checkbox } from '@/shared/ui/checkbox'
 import { Input } from '@/shared/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
-import { useApplicantsRankingQuery, useRankCandidatesMutation } from '../api'
+import { useApplicantsRankingQuery } from '../api'
 import { DECISION_OPTIONS, ELIGIBILITY_OPTIONS, RECOMMENDATION_OPTIONS, type DecisionFilterValue } from '../constants'
 import type {
   ApplicantProfile,
@@ -425,9 +425,7 @@ export function ApplicantsDashboard() {
   // Batch confirmation dialog state
   const [pendingBatchDecision, setPendingBatchDecision] = useState<NonNullable<CandidateDecision> | null>(null)
 
-  // Rank confirmation dialog state
-  const [rankConfirmOpen, setRankConfirmOpen] = useState(false)
-  const rankMutation = useRankCandidatesMutation()
+  // Rank — navigate to ranking page with selected IDs
 
   const toggleSelection = useCallback(
     (id: string, index: number, shiftKey: boolean) => {
@@ -517,18 +515,9 @@ export function ApplicantsDashboard() {
   }, [pendingBatchDecision, applyDecision])
 
   const handleRankClick = useCallback(() => {
-    setRankConfirmOpen(true)
-  }, [])
-
-  const confirmRank = useCallback(async () => {
-    const ids = Array.from(selectedIds)
-    try {
-      await rankMutation.mutateAsync(ids)
-      clearSelection()
-    } finally {
-      setRankConfirmOpen(false)
-    }
-  }, [selectedIds, rankMutation, clearSelection])
+    const ids = Array.from(selectedIds).join(',')
+    router.push(`/applicants/ranking?ids=${ids}`)
+  }, [selectedIds, router])
 
   // Mobile sort dropdown
   const [mobileSortField, setMobileSortField] = useState<ApplicantsSortField>('score')
@@ -1037,10 +1026,9 @@ export function ApplicantsDashboard() {
               size="default"
               className="gap-1.5 bg-[#a6d80a] text-black hover:bg-[#95c209]"
               onClick={handleRankClick}
-              disabled={rankMutation.isPending}
             >
               <Sparkles className="size-4" />
-              {rankMutation.isPending ? 'Ranking...' : 'Rank with AI'}
+              Rank with AI
             </Button>
           </div>
         </div>
@@ -1090,10 +1078,9 @@ export function ApplicantsDashboard() {
               size="lg"
               className="gap-2 rounded-xl bg-[#a6d80a] px-5 text-black shadow-sm hover:bg-[#95c209]"
               onClick={handleRankClick}
-              disabled={rankMutation.isPending}
             >
               <Sparkles className="size-5" />
-              {rankMutation.isPending ? 'Ranking...' : 'Rank with AI'}
+              Rank with AI
             </Button>
 
             {/* Divider */}
@@ -1166,31 +1153,6 @@ export function ApplicantsDashboard() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Rank confirmation dialog */}
-      <AlertDialog open={rankConfirmOpen} onOpenChange={setRankConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Rank {selectedIds.size} candidate{selectedIds.size !== 1 ? 's' : ''} with AI?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Selected candidates will be sent to the ML scoring pipeline. Scores and rankings will
-              be updated automatically once processing is complete.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={rankMutation.isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="gap-1.5 bg-[#a6d80a] text-black hover:bg-[#95c209]"
-              onClick={confirmRank}
-              disabled={rankMutation.isPending}
-            >
-              <Sparkles className="size-4" />
-              {rankMutation.isPending ? 'Ranking...' : 'Rank'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }

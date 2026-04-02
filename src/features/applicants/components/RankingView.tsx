@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
   AlertTriangle,
   ArrowRight,
@@ -69,7 +70,12 @@ function CategoryDot({ active, color, label }: { active: boolean; color: string;
 // Main component
 // ---------------------------------------------------------------------------
 export function RankingView() {
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const searchParams = useSearchParams()
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => {
+    const raw = searchParams.get('ids')
+    if (!raw) return new Set()
+    return new Set(raw.split(',').map(Number).filter((n) => n > 0))
+  })
   const [topK, setTopK] = useState('')
   const [rankingId, setRankingId] = useState<number | null>(null)
 

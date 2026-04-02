@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 import { Separator } from '@/shared/ui/separator'
@@ -16,6 +16,14 @@ export function EducationForm() {
     setEducation,
   } = useApplicationFormStore()
 
+  // Local string states so trailing dots / partial input aren't lost on re-render
+  const [englishRaw, setEnglishRaw] = useState<string>(
+    education.englishProficiency.score != null ? String(education.englishProficiency.score) : '',
+  )
+  const [untRaw, setUntRaw] = useState<string>(
+    education.schoolCertificate.score != null ? String(education.schoolCertificate.score) : '',
+  )
+
   const handleEnglishTypeChange = useCallback(
     (type: EnglishProficiencyType) => {
       setEducation({
@@ -30,11 +38,14 @@ export function EducationForm() {
 
   const handleEnglishScoreChange = useCallback(
     (value: string) => {
-      const parsedScore = Number(value)
+      // Allow empty, digits and a single dot (e.g. "6.", "6.5")
+      if (value !== '' && !/^\d*\.?\d*$/.test(value)) return
+      setEnglishRaw(value)
+      const parsed = value === '' || value === '.' ? null : Number(value)
       setEducation({
         englishProficiency: {
           ...education.englishProficiency,
-          score: Number.isFinite(parsedScore) ? parsedScore : null,
+          score: parsed !== null && Number.isFinite(parsed) ? parsed : null,
         },
       })
     },
@@ -43,11 +54,14 @@ export function EducationForm() {
 
   const handleUntScoreChange = useCallback(
     (value: string) => {
-      const parsedScore = Number(value)
+      // Allow empty or digits only
+      if (value !== '' && !/^\d+$/.test(value)) return
+      setUntRaw(value)
+      const parsed = value === '' ? null : Number(value)
       setEducation({
         schoolCertificate: {
           ...education.schoolCertificate,
-          score: Number.isFinite(parsedScore) ? parsedScore : null,
+          score: parsed !== null && Number.isFinite(parsed) ? parsed : null,
         },
       })
     },
@@ -98,12 +112,10 @@ export function EducationForm() {
 
           <FormField label={isIelts ? 'IELTS score' : 'TOEFL score'} required className="max-w-xs">
             <Input
-              type="number"
-              min={0}
-              max={isIelts ? 9 : 120}
-              step={isIelts ? 0.5 : 1}
-              placeholder={isIelts ? '0.0 - 9.0' : '0 - 120'}
-              value={education.englishProficiency.score ?? ''}
+              type="text"
+              inputMode={isIelts ? 'decimal' : 'numeric'}
+              placeholder={isIelts ? 'e.g. 6.5' : 'e.g. 95'}
+              value={englishRaw}
               onChange={(event) => handleEnglishScoreChange(event.target.value)}
             />
           </FormField>
@@ -118,12 +130,10 @@ export function EducationForm() {
 
         <FormField label="UNT score" required className="max-w-xs">
           <Input
-            type="number"
-            min={0}
-            max={UNT_MAX_SCORE}
-            step={1}
-            placeholder={`0 - ${UNT_MAX_SCORE}`}
-            value={education.schoolCertificate.score ?? ''}
+            type="text"
+            inputMode="numeric"
+            placeholder={`e.g. 110 (max ${UNT_MAX_SCORE})`}
+            value={untRaw}
             onChange={(event) => handleUntScoreChange(event.target.value)}
           />
         </FormField>

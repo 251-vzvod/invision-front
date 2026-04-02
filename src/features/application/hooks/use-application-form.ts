@@ -159,7 +159,7 @@ export const useApplicationFormStore = create<ApplicationFormState>()(
     }),
     {
       name: 'invision-application-form',
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         data: state.data,
