@@ -1,23 +1,30 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import gsap from 'gsap'
 import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
   Eye,
+  Hash,
   Loader2,
   RotateCcw,
+  Search,
   Sparkles,
+  Star,
   Trophy,
+  Users,
+  Zap,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
+import { prefersReducedMotion } from '@/shared/lib/gsap-animations'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Input } from '@/shared/ui/input'
-import { Label } from '@/shared/ui/label'
 import { Skeleton } from '@/shared/ui/skeleton'
 import {
   useApplicantsRankingQuery,
@@ -54,9 +61,41 @@ const RECOMMENDATION_LABELS: Record<string, string> = {
 }
 
 // ---------------------------------------------------------------------------
+// Top K presets
+// ---------------------------------------------------------------------------
+const TOP_K_PRESETS = [
+  { label: '5', value: '5' },
+  { label: '10', value: '10' },
+  { label: '20', value: '20' },
+  { label: '50', value: '50' },
+  { label: 'All', value: '' },
+] as const
+
+// ---------------------------------------------------------------------------
+// Medal helper for top 3 ranks
+// ---------------------------------------------------------------------------
+function RankMedal({ rank }: { rank: number }) {
+  if (rank === 1)
+    return <Trophy className="size-5 text-amber-500" aria-label="1st place" />
+  if (rank === 2)
+    return <Trophy className="size-5 text-gray-400" aria-label="2nd place" />
+  if (rank === 3)
+    return <Trophy className="size-5 text-amber-700" aria-label="3rd place" />
+  return <span className="tabular-nums font-semibold">{rank}</span>
+}
+
+// ---------------------------------------------------------------------------
 // Category flag dot component
 // ---------------------------------------------------------------------------
-function CategoryDot({ active, color, label }: { active: boolean; color: string; label: string }) {
+function CategoryDot({
+  active,
+  color,
+  label,
+}: {
+  active: boolean
+  color: string
+  label: string
+}) {
   if (!active) return null
   return (
     <span
@@ -74,10 +113,24 @@ export function RankingView() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(() => {
     const raw = searchParams.get('ids')
     if (!raw) return new Set()
-    return new Set(raw.split(',').map(Number).filter((n) => n > 0))
+    return new Set(
+      raw
+        .split(',')
+        .map(Number)
+        .filter((n) => n > 0),
+    )
   })
   const [topK, setTopK] = useState('')
   const [rankingId, setRankingId] = useState<number | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Refs for GSAP animations
+  const pageRef = useRef<HTMLDivElement>(null)
+  const progressCardRef = useRef<HTMLDivElement>(null)
+  const resultsRef = useRef<HTMLDivElement>(null)
+  const selectionRowRefs = useRef<Map<number, HTMLTableRowElement>>(new Map())
+  const resultRowRefs = useRef<Map<number, HTMLTableRowElement>>(new Map())
+  const statCardRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 
   // Fetch candidate list for selection
   const candidatesQuery = useApplicantsRankingQuery({
@@ -93,6 +146,18 @@ export function RankingView() {
   const rankingStatus = rankingQuery.data?.status ?? null
   const rankingResult = rankingQuery.data ?? null
 
+  // Client-side search filter
+  const filteredCandidates = useMemo(() => {
+    if (!searchQuery.trim()) return candidates
+    const q = searchQuery.toLowerCase()
+    return candidates.filter(
+      (c) =>
+        (c.candidate_name ?? '').toLowerCase().includes(q) ||
+        (c.program_name ?? '').toLowerCase().includes(q) ||
+        String(c.candidate_id).includes(q),
+    )
+  }, [candidates, searchQuery])
+
   // Build a quick lookup: candidate_id (number) -> profile name
   const candidateNameMap = useMemo(() => {
     const map = new Map<number, string>()
@@ -103,16 +168,162 @@ export function RankingView() {
   }, [candidates])
 
   // ---------------------------------------------------------------------------
+  // GSAP: Page intro animation (selection state)
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (
+      prefersReducedMotion() ||
+      rankingId !== null ||
+      !pageRef.current ||
+      candidatesQuery.isLoading
+    )
+      return
+
+    const sections = pageRef.current.querySelectorAll('[data-animate-section]')
+    const rows = selectionRowRefs.current
+
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+
+    if (sections.length > 0) {
+      tl.fromTo(
+        sections,
+        { autoAlpha: 0, y: 20 },
+        {
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.7,
+          stagger: 0.08,
+          clearProps: 'opacity,visibility,transform',
+        },
+      )
+    }
+
+    if (rows.size > 0) {
+      const rowEls = Array.from(rows.values())
+      tl.fromTo(
+        rowEls,
+        { opacity: 0, y: 8 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          stagger: 0.03,
+          clearProps: 'opacity,transform',
+        },
+        sections.length > 0 ? '-=0.3' : 0,
+      )
+    }
+
+    return () => {
+      tl.kill()
+    }
+  }, [rankingId, candidatesQuery.isLoading])
+
+  // ---------------------------------------------------------------------------
+  // GSAP: Pulsing glow on "in-progress" card
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (
+      prefersReducedMotion() ||
+      !progressCardRef.current ||
+      (rankingStatus !== 'pending' && rankingStatus !== 'processing')
+    )
+      return
+
+    const tl = gsap.timeline({ repeat: -1, yoyo: true })
+    tl.to(progressCardRef.current, {
+      boxShadow: '0 0 30px 4px rgba(59, 130, 246, 0.25)',
+      duration: 1.2,
+      ease: 'sine.inOut',
+    })
+
+    return () => {
+      tl.kill()
+    }
+  }, [rankingStatus])
+
+  // ---------------------------------------------------------------------------
+  // GSAP: Results reveal animation
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (
+      prefersReducedMotion() ||
+      rankingStatus !== 'completed' ||
+      !resultsRef.current
+    )
+      return
+
+    const statEls = Array.from(statCardRefs.current.values())
+    const rowEls = Array.from(resultRowRefs.current.values())
+
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+
+    if (statEls.length > 0) {
+      tl.fromTo(
+        statEls,
+        { autoAlpha: 0, y: 20, scale: 0.95 },
+        {
+          autoAlpha: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.6,
+          stagger: 0.08,
+          clearProps: 'opacity,visibility,transform',
+        },
+      )
+    }
+
+    if (rowEls.length > 0) {
+      tl.fromTo(
+        rowEls,
+        { opacity: 0, y: 8 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          stagger: 0.04,
+          clearProps: 'opacity,transform',
+        },
+        '-=0.3',
+      )
+    }
+
+    return () => {
+      tl.kill()
+    }
+  }, [rankingStatus])
+
+  // ---------------------------------------------------------------------------
   // Selection handlers
   // ---------------------------------------------------------------------------
-  const toggleCandidate = useCallback((id: number) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }, [])
+  const toggleCandidate = useCallback(
+    (id: number) => {
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        if (next.has(id)) next.delete(id)
+        else next.add(id)
+        return next
+      })
+
+      // GSAP flash on the toggled row
+      if (!prefersReducedMotion()) {
+        const row = selectionRowRefs.current.get(id)
+        if (row) {
+          gsap.fromTo(
+            row,
+            { backgroundColor: 'rgba(99, 102, 241, 0.2)' },
+            {
+              backgroundColor: 'rgba(99, 102, 241, 0.05)',
+              duration: 0.4,
+              ease: 'power2.out',
+              clearProps: 'backgroundColor',
+            },
+          )
+        }
+      }
+    },
+    [],
+  )
 
   const selectAll = useCallback(() => {
     setSelectedIds(new Set(candidates.map((c) => Number(c.candidate_id))))
@@ -149,22 +360,35 @@ export function RankingView() {
   }, [startMutation])
 
   // ---------------------------------------------------------------------------
+  // Top K chip handler
+  // ---------------------------------------------------------------------------
+  const handleTopKPreset = useCallback((value: string) => {
+    setTopK(value)
+  }, [])
+
+  // ---------------------------------------------------------------------------
   // Render: Polling / In-Progress state
   // ---------------------------------------------------------------------------
-  if (rankingId !== null && (rankingStatus === 'pending' || rankingStatus === 'processing')) {
+  if (
+    rankingId !== null &&
+    (rankingStatus === 'pending' || rankingStatus === 'processing')
+  ) {
     return (
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
         <PageHeader />
-        <div className="rounded-xl border border-border dark:border-white/10 bg-card p-8 text-center">
-          <Loader2 className="mx-auto size-10 animate-spin text-primary" />
-          <h2 className="mt-4 text-xl font-semibold">Ranking in progress...</h2>
+        <div
+          ref={progressCardRef}
+          className="rounded-xl border border-border dark:border-white/10 bg-card p-10 text-center"
+        >
+          <Loader2 className="mx-auto size-12 animate-spin text-primary" />
+          <h2 className="mt-5 text-xl font-semibold">Ranking in progress...</h2>
           <Badge
             variant="outline"
-            className="mt-2 bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/15 dark:text-sky-400 dark:border-sky-500/30"
+            className="mt-3 bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/15 dark:text-sky-400 dark:border-sky-500/30"
           >
             {rankingStatus}
           </Badge>
-          <p className="mt-3 text-sm text-muted-foreground">
+          <p className="mt-4 text-sm text-muted-foreground">
             Polling for results every 3 seconds...
           </p>
           <Button variant="outline" className="mt-6" onClick={handleReset}>
@@ -211,52 +435,87 @@ export function RankingView() {
     )
 
     return (
-      <div className="mx-auto max-w-[1440px] space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <div
+        ref={resultsRef}
+        className="mx-auto max-w-[1440px] space-y-6 px-4 py-8 sm:px-6 lg:px-8"
+      >
         <PageHeader />
 
         {/* Summary stats */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard label="Total Candidates" value={rankingResult.count} />
-          <StatCard label="Returned" value={rankingResult.returned_count} />
-          <StatCard label="Top K" value={rankingResult.top_k ?? 'All'} />
-          <StatCard label="Scoring Version" value={rankingResult.scoring_version ?? 'N/A'} />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <ResultStatCard
+            ref={(el) => {
+              if (el) statCardRefs.current.set(0, el)
+            }}
+            label="Total Candidates"
+            value={rankingResult.count}
+            icon={<Users className="size-5 text-primary" />}
+          />
+          <ResultStatCard
+            ref={(el) => {
+              if (el) statCardRefs.current.set(1, el)
+            }}
+            label="Returned"
+            value={rankingResult.returned_count}
+            icon={<CheckCircle2 className="size-5 text-emerald-500" />}
+          />
+          <ResultStatCard
+            ref={(el) => {
+              if (el) statCardRefs.current.set(2, el)
+            }}
+            label="Top K"
+            value={rankingResult.top_k ?? 'All'}
+            icon={<Zap className="size-5 text-amber-500" />}
+          />
+          <ResultStatCard
+            ref={(el) => {
+              if (el) statCardRefs.current.set(3, el)
+            }}
+            label="Scoring Version"
+            value={rankingResult.scoring_version ?? 'N/A'}
+            icon={<Hash className="size-5 text-sky-500" />}
+          />
         </div>
 
         {/* Category badges */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           {rankingResult.shortlist_candidate_ids.length > 0 && (
             <Badge
               variant="outline"
-              className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30"
+              className="h-8 gap-1.5 px-3 text-sm bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30"
             >
-              <Trophy className="mr-1 size-3" />
+              <Trophy className="size-4" />
               Shortlist: {rankingResult.shortlist_candidate_ids.length}
             </Badge>
           )}
           {rankingResult.hidden_potential_candidate_ids.length > 0 && (
             <Badge
               variant="outline"
-              className="bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/15 dark:text-violet-400 dark:border-violet-500/30"
+              className="h-8 gap-1.5 px-3 text-sm bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/15 dark:text-violet-400 dark:border-violet-500/30"
             >
-              <Sparkles className="mr-1 size-3" />
-              Hidden Potential: {rankingResult.hidden_potential_candidate_ids.length}
+              <Sparkles className="size-4" />
+              Hidden Potential:{' '}
+              {rankingResult.hidden_potential_candidate_ids.length}
             </Badge>
           )}
           {rankingResult.support_needed_candidate_ids.length > 0 && (
             <Badge
               variant="outline"
-              className="bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/15 dark:text-orange-400 dark:border-orange-500/30"
+              className="h-8 gap-1.5 px-3 text-sm bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/15 dark:text-orange-400 dark:border-orange-500/30"
             >
-              Support Needed: {rankingResult.support_needed_candidate_ids.length}
+              <Star className="size-4" />
+              Support Needed:{' '}
+              {rankingResult.support_needed_candidate_ids.length}
             </Badge>
           )}
           {rankingResult.authenticity_review_candidate_ids.length > 0 && (
             <Badge
               variant="outline"
-              className="bg-red-50 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-400 dark:border-red-500/30"
+              className="h-8 gap-1.5 px-3 text-sm bg-red-50 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-400 dark:border-red-500/30"
             >
-              <Eye className="mr-1 size-3" />
-              Auth Review: {rankingResult.authenticity_review_candidate_ids.length}
+              <Eye className="size-4" />
+              Auth Review:{' '}
+              {rankingResult.authenticity_review_candidate_ids.length}
             </Badge>
           )}
         </div>
@@ -291,12 +550,19 @@ export function RankingView() {
                   <th className="whitespace-nowrap px-4 py-3 text-center font-medium text-muted-foreground">
                     Flags
                   </th>
+                  <th className="whitespace-nowrap px-4 py-3 text-center font-medium text-muted-foreground">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {sortedItems.map((item) => (
                   <RankedCandidateRow
                     key={item.candidate_id}
+                    ref={(el) => {
+                      if (el)
+                        resultRowRefs.current.set(item.candidate_id, el)
+                    }}
                     item={item}
                     name={
                       candidateNameMap.get(item.candidate_id) ??
@@ -323,8 +589,25 @@ export function RankingView() {
   // Render: Selection state (default)
   // ---------------------------------------------------------------------------
   return (
-    <div className="mx-auto max-w-[1440px] space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-      <PageHeader />
+    <div
+      ref={pageRef}
+      className="relative mx-auto max-w-[1440px] space-y-6 px-4 pb-24 pt-8 sm:px-6 lg:px-8"
+    >
+      {/* Header with subtle gradient accent */}
+      <div data-animate-section>
+        <div className="relative overflow-hidden rounded-xl border border-border dark:border-white/10 bg-card px-6 py-6">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-violet-500/5" />
+          <div className="relative">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              AI Candidate Ranking
+            </h1>
+            <p className="mt-1.5 text-sm text-muted-foreground max-w-2xl">
+              Select candidates and run the ML ranking pipeline to generate
+              prioritised shortlists with explainable scores.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Mutation error */}
       {startMutation.isError && (
@@ -335,11 +618,22 @@ export function RankingView() {
         </div>
       )}
 
-      <div className="rounded-xl border border-border dark:border-white/10 bg-card">
-        {/* Header row */}
+      <div
+        data-animate-section
+        className="rounded-xl border border-border dark:border-white/10 bg-card"
+      >
+        {/* Header row with selection controls */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border dark:border-white/10 px-4 py-3 sm:px-6">
           <h2 className="text-base font-semibold">Select Candidates</h2>
           <div className="flex items-center gap-2">
+            {selectedIds.size > 0 && (
+              <Badge
+                variant="secondary"
+                className="bg-primary/10 text-primary tabular-nums"
+              >
+                {selectedIds.size} selected
+              </Badge>
+            )}
             <Button variant="outline" size="sm" onClick={selectAll}>
               Select All
             </Button>
@@ -349,20 +643,16 @@ export function RankingView() {
           </div>
         </div>
 
-        {/* Top K input */}
+        {/* Search bar */}
         <div className="border-b border-border dark:border-white/10 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-3">
-            <Label htmlFor="top-k-input" className="shrink-0 text-sm font-medium">
-              Top K (optional)
-            </Label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              id="top-k-input"
-              type="number"
-              min={1}
-              placeholder="e.g. 10"
-              value={topK}
-              onChange={(e) => setTopK(e.target.value)}
-              className="w-28"
+              type="text"
+              placeholder="Search candidates by name, program, or ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
             />
           </div>
         </div>
@@ -375,9 +665,11 @@ export function RankingView() {
                 <Skeleton key={i} className="h-10 w-full rounded-lg" />
               ))}
             </div>
-          ) : candidates.length === 0 ? (
+          ) : filteredCandidates.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
-              No candidates with ML assessments found.
+              {searchQuery
+                ? 'No candidates match your search.'
+                : 'No candidates with ML assessments found.'}
             </div>
           ) : (
             <table className="w-full text-sm">
@@ -399,17 +691,21 @@ export function RankingView() {
                 </tr>
               </thead>
               <tbody>
-                {candidates.map((candidate, idx) => {
+                {filteredCandidates.map((candidate, idx) => {
                   const numId = Number(candidate.candidate_id)
                   const checked = selectedIds.has(numId)
                   return (
                     <tr
                       key={candidate.candidate_id}
+                      ref={(el) => {
+                        if (el)
+                          selectionRowRefs.current.set(numId, el)
+                      }}
                       className={cn(
                         'border-b border-border/50 dark:border-white/5 transition-colors cursor-pointer',
                         checked
-                          ? 'bg-primary/5'
-                          : 'hover:bg-muted/30',
+                          ? 'bg-primary/5 border-l-2 border-l-primary'
+                          : 'hover:bg-muted/30 border-l-2 border-l-transparent',
                       )}
                       onClick={() => toggleCandidate(numId)}
                     >
@@ -424,13 +720,16 @@ export function RankingView() {
                         {idx + 1}
                       </td>
                       <td className="px-4 py-2.5 font-medium">
-                        {candidate.candidate_name ?? `#${candidate.candidate_id}`}
+                        {candidate.candidate_name ??
+                          `#${candidate.candidate_id}`}
                       </td>
                       <td className="px-4 py-2.5 text-muted-foreground">
                         {candidate.program_name}
                       </td>
-                      <td className="px-4 py-2.5 text-right tabular-nums font-medium">
-                        {candidate.merit_score}
+                      <td className="px-4 py-2.5 text-right">
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold tabular-nums text-primary">
+                          {candidate.merit_score}
+                        </span>
                       </td>
                     </tr>
                   )
@@ -439,15 +738,62 @@ export function RankingView() {
             </table>
           )}
         </div>
+      </div>
 
-        {/* Action bar */}
-        <div className="flex items-center justify-between border-t border-border dark:border-white/10 px-4 py-3 sm:px-6">
-          <p className="text-sm text-muted-foreground">
-            {selectedIds.size} of {candidates.length} selected
-          </p>
+      {/* Sticky action bar */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border dark:border-white/10 bg-background/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+          {/* Left: selected count */}
+          <div className="flex items-center gap-3">
+            <Badge
+              variant="secondary"
+              className="h-8 gap-1.5 px-3 text-sm bg-primary/10 text-primary tabular-nums"
+            >
+              <Users className="size-3.5" />
+              {selectedIds.size} of {candidates.length}
+            </Badge>
+          </div>
+
+          {/* Center: Top K chips + custom input */}
+          <div className="flex items-center gap-2">
+            <span className="hidden text-xs font-medium text-muted-foreground sm:inline">
+              Top K:
+            </span>
+            <div className="flex items-center gap-1">
+              {TOP_K_PRESETS.map((preset) => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => handleTopKPreset(preset.value)}
+                  className={cn(
+                    'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                    topK === preset.value
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80',
+                  )}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+            <Input
+              type="number"
+              min={1}
+              placeholder="Custom"
+              value={
+                TOP_K_PRESETS.some((p) => p.value === topK) ? '' : topK
+              }
+              onChange={(e) => setTopK(e.target.value)}
+              className="h-7 w-20 text-xs"
+            />
+          </div>
+
+          {/* Right: action button */}
           <Button
             onClick={handleStartRanking}
             disabled={selectedIds.size === 0 || startMutation.isPending}
+            size="sm"
+            className="h-9"
           >
             {startMutation.isPending ? (
               <>
@@ -473,36 +819,67 @@ export function RankingView() {
 
 function PageHeader() {
   return (
-    <div>
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">AI Candidate Ranking</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Select candidates and run the ML ranking pipeline to generate prioritised shortlists with
-        explainable scores.
-      </p>
+    <div className="relative overflow-hidden rounded-xl border border-border dark:border-white/10 bg-card px-6 py-6">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-violet-500/5" />
+      <div className="relative">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          AI Candidate Ranking
+        </h1>
+        <p className="mt-1.5 text-sm text-muted-foreground max-w-2xl">
+          Select candidates and run the ML ranking pipeline to generate
+          prioritised shortlists with explainable scores.
+        </p>
+      </div>
     </div>
   )
 }
 
-function StatCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-xl border border-border dark:border-white/10 bg-card px-4 py-3">
+const ResultStatCard = forwardRef<
+  HTMLDivElement,
+  { label: string; value: string | number; icon: React.ReactNode }
+>(({ label, value, icon }, ref) => (
+  <div
+    ref={ref}
+    className="rounded-xl border border-border dark:border-white/10 bg-card px-5 py-4"
+  >
+    <div className="flex items-center justify-between">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-0.5 text-lg font-semibold tabular-nums">{value}</p>
+      {icon}
     </div>
-  )
-}
+    <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
+  </div>
+))
+ResultStatCard.displayName = 'ResultStatCard'
 
-function RankedCandidateRow({ item, name }: { item: RankedCandidate; name: string }) {
+const RankedCandidateRow = forwardRef<
+  HTMLTableRowElement,
+  { item: RankedCandidate; name: string }
+>(({ item, name }, ref) => {
   const recStyle = RECOMMENDATION_STYLES[item.recommendation] ?? ''
   const recLabel =
-    RECOMMENDATION_LABELS[item.recommendation] ?? item.recommendation.replace(/_/g, ' ')
+    RECOMMENDATION_LABELS[item.recommendation] ??
+    item.recommendation.replace(/_/g, ' ')
+
+  const isTop3 = item.rank_position <= 3
 
   return (
-    <tr className="border-b border-border/50 dark:border-white/5 hover:bg-muted/30 transition-colors">
-      <td className="px-4 py-3 font-semibold tabular-nums">{item.rank_position}</td>
+    <tr
+      ref={ref}
+      className={cn(
+        'border-b border-border/50 dark:border-white/5 transition-colors',
+        isTop3
+          ? 'bg-amber-50/30 dark:bg-amber-500/5 hover:bg-amber-50/50 dark:hover:bg-amber-500/10'
+          : 'hover:bg-muted/30',
+      )}
+    >
+      <td className="px-4 py-3 text-center">
+        <RankMedal rank={item.rank_position} />
+      </td>
       <td className="px-4 py-3">
         <span className="font-medium">{name}</span>
-        <span className="ml-1.5 text-xs text-muted-foreground">#{item.candidate_id}</span>
+        <span className="ml-1.5 text-xs text-muted-foreground">
+          #{item.candidate_id}
+        </span>
       </td>
       <td className="px-4 py-3">
         <span
@@ -514,10 +891,20 @@ function RankedCandidateRow({ item, name }: { item: RankedCandidate; name: strin
           {recLabel}
         </span>
       </td>
-      <td className="px-4 py-3 text-right tabular-nums font-medium">{item.merit_score}</td>
-      <td className="px-4 py-3 text-right tabular-nums">{item.confidence_score}</td>
-      <td className="px-4 py-3 text-right tabular-nums">{item.authenticity_risk}</td>
-      <td className="px-4 py-3 text-right tabular-nums">{item.trajectory_score}</td>
+      <td className="px-4 py-3 text-right">
+        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold tabular-nums text-primary">
+          {item.merit_score}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-right tabular-nums">
+        {item.confidence_score}
+      </td>
+      <td className="px-4 py-3 text-right tabular-nums">
+        {item.authenticity_risk}
+      </td>
+      <td className="px-4 py-3 text-right tabular-nums">
+        {item.trajectory_score}
+      </td>
       <td className="px-4 py-3">
         <div className="flex items-center justify-center gap-1.5">
           <CategoryDot
@@ -542,6 +929,15 @@ function RankedCandidateRow({ item, name }: { item: RankedCandidate; name: strin
           />
         </div>
       </td>
+      <td className="px-4 py-3 text-center">
+        <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
+          <Link href={`/applicants/${item.candidate_id}`}>
+            <Eye className="mr-1 size-3.5" />
+            View
+          </Link>
+        </Button>
+      </td>
     </tr>
   )
-}
+})
+RankedCandidateRow.displayName = 'RankedCandidateRow'
