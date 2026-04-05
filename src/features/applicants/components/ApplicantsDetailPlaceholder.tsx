@@ -3,6 +3,7 @@
 import gsap from 'gsap'
 import {
   ArrowLeft,
+  Bot,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -41,6 +42,7 @@ import {
 import { useApplicantProfileQuery, useApplicantsRankingQuery } from '../api'
 import { DEFAULT_QUERY_PARAMS } from '../constants'
 import type {
+  AIDetectorTextSource,
   ApplicantProfile,
   CandidateDecision,
   Recommendation,
@@ -121,6 +123,100 @@ const REVIEW_FLAG_LABELS: Record<ReviewFlag, string> = {
   auxiliary_ai_generation_signal: 'Auxiliary AI generation signal',
 }
 
+
+/* -------------------------------------------------------------------------- */
+/*  AI Detection helpers                                                      */
+/* -------------------------------------------------------------------------- */
+
+type AIRiskLevel = 'safe' | 'caution' | 'high'
+
+function getAIRiskLevel(prob: number): AIRiskLevel {
+  if (prob < 0.25) return 'safe'
+  if (prob <= 0.55) return 'caution'
+  return 'high'
+}
+
+const AI_RISK_STYLES: Record<
+  AIRiskLevel,
+  {
+    cardBorder: string
+    cardBg: string
+    badgeBg: string
+    badgeText: string
+    barBg: string
+    label: string
+    icon: string
+    accentBorder: string
+  }
+> = {
+  safe: {
+    cardBorder: 'border-emerald-200 dark:border-emerald-500/30',
+    cardBg: 'bg-emerald-50/40 dark:bg-emerald-500/5',
+    badgeBg: 'bg-emerald-100 dark:bg-emerald-500/20',
+    badgeText: 'text-emerald-700 dark:text-emerald-400',
+    barBg: 'bg-emerald-500',
+    label: 'Low Risk',
+    icon: '\u2713',
+    accentBorder: 'border-l-emerald-500',
+  },
+  caution: {
+    cardBorder: 'border-amber-200 dark:border-amber-500/30',
+    cardBg: 'bg-amber-50/40 dark:bg-amber-500/5',
+    badgeBg: 'bg-amber-100 dark:bg-amber-500/20',
+    badgeText: 'text-amber-700 dark:text-amber-400',
+    barBg: 'bg-amber-500',
+    label: 'Moderate Risk',
+    icon: '!',
+    accentBorder: 'border-l-amber-500',
+  },
+  high: {
+    cardBorder: 'border-red-200 dark:border-red-500/30',
+    cardBg: 'bg-red-50/40 dark:bg-red-500/5',
+    badgeBg: 'bg-red-100 dark:bg-red-500/20',
+    badgeText: 'text-red-700 dark:text-red-400',
+    barBg: 'bg-red-500',
+    label: 'High Risk',
+    icon: '\u2717',
+    accentBorder: 'border-l-red-500',
+  },
+}
+
+const AI_SOURCE_LABELS: Record<string, string> = {
+  motivation_letter_text: 'Motivation Letter',
+  interview_text: 'Interview',
+  video_interview_transcript_text: 'Video Interview',
+  video_presentation_transcript_text: 'Video Presentation',
+}
+
+function AISourceRow({ source }: { source: AIDetectorTextSource }) {
+  const prob = source.probability_ai_generated
+  const riskLevel = prob != null ? getAIRiskLevel(prob) : null
+  const styles = riskLevel ? AI_RISK_STYLES[riskLevel] : null
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm text-foreground/80">
+          {source.question ?? AI_SOURCE_LABELS[source.source_key] ?? source.source_label}
+        </span>
+        <span className={cn('text-sm font-semibold', styles?.badgeText ?? 'text-muted-foreground')}>
+          {prob != null ? `${Math.round(prob * 100)}%` : 'N/A'}
+        </span>
+      </div>
+      {prob != null && styles && (
+        <div className="h-1.5 w-full rounded-full bg-muted">
+          <div
+            className={cn('h-1.5 rounded-full transition-all', styles.barBg)}
+            style={{ width: `${Math.round(prob * 100)}%` }}
+          />
+        </div>
+      )}
+      {source.note && (
+        <p className="text-xs italic text-muted-foreground">{source.note}</p>
+      )}
+    </div>
+  )
+}
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
@@ -720,6 +816,119 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
                 )}
               </CardContent>
             </Card>
+
+            {/* AI Detection */}
+            {(profile.ai_probability_ai_generated != null || profile.text_ai_probabilities != null) && (() => {
+              const overallProb = profile.ai_probability_ai_generated
+              const hasOverall = overallProb != null
+              const riskLevel = hasOverall ? getAIRiskLevel(overallProb) : null
+              const styles = riskLevel ? AI_RISK_STYLES[riskLevel] : null
+              const textProbs = profile.text_ai_probabilities
+
+              // Collect applicable sources for per-source breakdown
+              const applicableSources: AIDetectorTextSource[] = []
+              if (textProbs) {
+                const singleKeys = [
+                  'motivation_letter_text',
+                  'interview_text',
+                  'video_interview_transcript_text',
+                  'video_presentation_transcript_text',
+                ] as const
+                for (const key of singleKeys) {
+                  const src = textProbs[key]
+                  if (src?.applicable) applicableSources.push(src)
+                }
+                if (textProbs.motivation_questions) {
+                  for (const q of textProbs.motivation_questions) {
+                    if (q.applicable) applicableSources.push(q)
+                  }
+                }
+              }
+
+              return (
+                <Card
+                  data-animate-detail-section
+                  className={cn(
+                    'border-l-4 shadow-none',
+                    styles
+                      ? cn(styles.cardBorder, styles.cardBg, styles.accentBorder)
+                      : 'border-border dark:border-white/10 bg-card dark:bg-white/5 dark:backdrop-blur-xl border-l-muted-foreground/30',
+                  )}
+                >
+                  <CardContent className="space-y-4 px-4 py-4">
+                    {/* Header */}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Bot className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-sm font-semibold uppercase tracking-wide text-foreground">
+                          AI Detection
+                        </p>
+                      </div>
+                      {hasOverall && styles && (
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold',
+                            styles.badgeBg,
+                            styles.badgeText,
+                          )}
+                        >
+                          {Math.round(overallProb * 100)}%
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Overall score display */}
+                    {hasOverall && styles ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={cn(
+                              'flex h-14 w-14 items-center justify-center rounded-full text-xl font-bold',
+                              styles.badgeBg,
+                              styles.badgeText,
+                            )}
+                          >
+                            {Math.round(overallProb * 100)}%
+                          </span>
+                          <div>
+                            <p className={cn('text-sm font-semibold', styles.badgeText)}>
+                              {styles.label}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              AI-generated probability
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Progress bar */}
+                        <div className="h-2 w-full rounded-full bg-muted">
+                          <div
+                            className={cn('h-2 rounded-full transition-all', styles.barBg)}
+                            style={{ width: `${Math.round(overallProb * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        AI detection data not available
+                      </p>
+                    )}
+
+                    {/* Per-source breakdown */}
+                    {applicableSources.length > 0 && (
+                      <div className="space-y-3 border-t border-border/50 dark:border-white/10 pt-3">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          Source Breakdown
+                        </p>
+                        {applicableSources.map((src, idx) => (
+                          <AISourceRow key={`${src.source_key}-${idx}`} source={src} />
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })()}
 
             {/* Strengths & Gaps */}
             <Card

@@ -45,6 +45,8 @@ export interface ApplicantProfile {
   why_candidate_surfaced: string[]
   what_to_verify_manually: string[]
   suggested_follow_up_question: string
+  ai_probability_ai_generated?: number | null
+  text_ai_probabilities?: CandidateTextAIProbabilities | null
   evidence_highlights: EvidenceHighlight[]
   top_strengths: string[]
   main_gaps: string[]
@@ -108,6 +110,25 @@ export interface ApplicantsQueryParams {
   size: number
 }
 
+/* ─── AI detector types (new in API) ─── */
+
+export interface AIDetectorTextSource {
+  source_key: string
+  source_label: string
+  applicable: boolean
+  probability_ai_generated: number | null
+  note: string | null
+  question: string | null
+}
+
+export interface CandidateTextAIProbabilities {
+  motivation_letter_text: AIDetectorTextSource | null
+  interview_text: AIDetectorTextSource | null
+  video_interview_transcript_text: AIDetectorTextSource | null
+  video_presentation_transcript_text: AIDetectorTextSource | null
+  motivation_questions: AIDetectorTextSource[]
+}
+
 /* ─── ML Assessment list item (from GET /api/v1/ml-assessments) ─── */
 
 export interface MLAssessmentListItem {
@@ -122,6 +143,7 @@ export interface MLAssessmentListItem {
   merit_score: number
   confidence_score: number
   authenticity_risk: number
+  ai_probability_ai_generated: number | null
   hidden_potential_score: number
   support_needed_score: number
   shortlist_priority_score: number
@@ -162,6 +184,8 @@ export interface MLAssessmentDetail {
   why_candidate_surfaced: string[]
   what_to_verify_manually: string[]
   suggested_follow_up_question: string | null
+  ai_probability_ai_generated: number | null
+  text_ai_probabilities: CandidateTextAIProbabilities | null
   evidence_highlights: EvidenceHighlight[]
   top_strengths: string[]
   main_gaps: string[]
@@ -236,6 +260,7 @@ export interface RankedCandidate {
   merit_score: number
   confidence_score: number
   authenticity_risk: number
+  ai_probability_ai_generated: number | null
   shortlist_priority_score: number
   hidden_potential_score: number
   support_needed_score: number
