@@ -960,8 +960,8 @@ export function RankingView() {
 
       {/* ── Right: Recent Rankings panel ── */}
       {history.length > 0 && (
-        <div data-animate-section className="hidden lg:flex lg:flex-col gap-3">
-          <div className="flex items-center justify-between">
+        <div data-animate-section className="hidden lg:flex lg:flex-col gap-3 sticky top-[calc(4rem+1.5rem)] self-start">
+          <div className="sticky top-[calc(4rem+1.5rem)] z-10 flex items-center justify-between bg-background pb-2 pt-0.5">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Recent Rankings
             </h2>
