@@ -39,7 +39,7 @@ import {
   type ChartConfig,
 } from '@/shared/ui/chart'
 import { useApplicantProfileQuery, useApplicantsRankingQuery } from '../api'
-import { DEFAULT_SORT_DIRECTION, DEFAULT_SORT_FIELD } from '../constants'
+import { DEFAULT_QUERY_PARAMS } from '../constants'
 import type {
   ApplicantProfile,
   CandidateDecision,
@@ -193,12 +193,7 @@ interface ApplicantsDetailProps {
 export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
   const rootRef = useRef<HTMLDivElement | null>(null)
   const defaultSort = useMemo(
-    () => ({
-      sortField: DEFAULT_SORT_FIELD,
-      sortDirection: DEFAULT_SORT_DIRECTION,
-      page: 1,
-      size: 25,
-    }),
+    () => DEFAULT_QUERY_PARAMS,
     [],
   )
 

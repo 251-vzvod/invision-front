@@ -15,9 +15,21 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl
     const page = searchParams.get('page') ?? '1'
     const size = searchParams.get('size') ?? '25'
+    const sort = searchParams.get('sort') ?? 'DESC'
+    const recommendation = searchParams.get('recommendation')
+    const eligibility = searchParams.get('eligibility')
+    const decision = searchParams.get('decision')
+
+    const url = new URL(`${base}/api/v1/ml-assessments`)
+    url.searchParams.set('page', page)
+    url.searchParams.set('size', size)
+    url.searchParams.set('sort', sort)
+    if (recommendation) url.searchParams.set('recommendation', recommendation)
+    if (eligibility) url.searchParams.set('eligibility', eligibility)
+    if (decision) url.searchParams.set('decision', decision)
 
     const backendResponse = await fetch(
-      `${base}/api/v1/ml-assessments?page=${encodeURIComponent(page)}&size=${encodeURIComponent(size)}`,
+      url.toString(),
       { method: 'GET', headers: { 'Content-Type': 'application/json' } },
     )
 

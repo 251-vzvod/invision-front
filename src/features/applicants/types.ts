@@ -97,21 +97,13 @@ export type ReviewFlag =
 
 /* ─── Sort / query ─── */
 
-export type ApplicantsSortField =
-  | 'score'
-  | 'confidence'
-  | 'authenticity_risk'
-  | 'hidden_potential'
-  | 'trajectory'
-  | 'shortlist_priority'
-
 export type CandidateDecision = 'approved' | 'rejected' | 'shortlisted' | null
 
-export type ApplicantsSortDirection = 'asc' | 'desc'
-
 export interface ApplicantsQueryParams {
-  sortField: ApplicantsSortField
-  sortDirection: ApplicantsSortDirection
+  sort: 'ASC' | 'DESC'
+  recommendation?: string[] | null
+  eligibility?: string[] | null
+  decision?: string[] | null
   page: number
   size: number
 }
@@ -135,6 +127,7 @@ export interface MLAssessmentListItem {
   shortlist_priority_score: number
   evidence_coverage_score: number
   trajectory_score: number
+  decision: 'no_decision' | 'approved' | 'shortlisted' | 'rejected'
 }
 
 export interface MLAssessmentListResponse {

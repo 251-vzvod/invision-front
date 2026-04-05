@@ -81,8 +81,7 @@ export function RankingView() {
 
   // Fetch candidate list for selection
   const candidatesQuery = useApplicantsRankingQuery({
-    sortField: 'score',
-    sortDirection: 'desc',
+    sort: 'DESC',
     page: 1,
     size: 100,
   })

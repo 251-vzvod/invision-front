@@ -1,22 +1,15 @@
 import type {
-  ApplicantsSortDirection,
-  ApplicantsSortField,
+  ApplicantsQueryParams,
   CandidateDecision,
   EligibilityStatus,
   Recommendation,
 } from './types'
 
-export const DEFAULT_SORT_FIELD: ApplicantsSortField = 'score'
-export const DEFAULT_SORT_DIRECTION: ApplicantsSortDirection = 'desc'
-
-export const SORT_FIELD_BUTTONS: Array<{ value: ApplicantsSortField; label: string }> = [
-  { value: 'score', label: 'By score' },
-  { value: 'confidence', label: 'Confidence' },
-  { value: 'hidden_potential', label: 'Hidden Potential' },
-  { value: 'trajectory', label: 'Trajectory' },
-  { value: 'shortlist_priority', label: 'Shortlist Priority' },
-  { value: 'authenticity_risk', label: 'Authenticity Risk' },
-]
+export const DEFAULT_QUERY_PARAMS: ApplicantsQueryParams = {
+  sort: 'DESC',
+  page: 1,
+  size: 25,
+}
 
 export const ELIGIBILITY_OPTIONS: Array<{
   value: EligibilityStatus

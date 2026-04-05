@@ -129,39 +129,6 @@ const mapDetailResponseToProfile = (response: ApplicantDetailResponse): Applican
   }
 }
 
-/* ─── Sorting (client-side) ─── */
-
-const getSortValue = (
-  applicant: ApplicantProfile,
-  field: ApplicantsQueryParams['sortField'],
-): number => {
-  if (field === 'score') return applicant.merit_score
-  if (field === 'confidence') return applicant.confidence_score
-  if (field === 'authenticity_risk') return applicant.authenticity_risk
-  if (field === 'hidden_potential') return applicant.hidden_potential_score
-  if (field === 'trajectory') return applicant.trajectory_score
-  if (field === 'shortlist_priority') return applicant.shortlist_priority_score
-  return applicant.merit_score
-}
-
-const sortApplicants = (
-  applicants: ApplicantProfile[],
-  params: ApplicantsQueryParams,
-): ApplicantProfile[] => {
-  const { sortField, sortDirection } = params
-
-  return [...applicants].sort((first, second) => {
-    const firstValue = getSortValue(first, sortField)
-    const secondValue = getSortValue(second, sortField)
-
-    if (firstValue === secondValue) {
-      return second.merit_score - first.merit_score
-    }
-
-    return sortDirection === 'asc' ? firstValue - secondValue : secondValue - firstValue
-  })
-}
-
 /* ─── Analytics response (from /api/analytics route handler) ─── */
 
 export interface FormAnalyticsData {
@@ -182,13 +149,20 @@ export const useApplicantsRankingQuery = (params: ApplicantsQueryParams) =>
   useQuery({
     queryKey: applicantsQueryKeys.ranking(params),
     queryFn: async () => {
+      const searchParams = new URLSearchParams()
+      searchParams.set('page', String(params.page))
+      searchParams.set('size', String(params.size))
+      searchParams.set('sort', params.sort)
+      if (params.recommendation?.length) searchParams.set('recommendation', params.recommendation.join(','))
+      if (params.eligibility?.length) searchParams.set('eligibility', params.eligibility.join(','))
+      if (params.decision?.length) searchParams.set('decision', params.decision.join(','))
+
       const response = await apiClient.get<MLAssessmentListResponse>(
-        `/api/applicants?page=${params.page}&size=${params.size}`,
+        `/api/applicants?${searchParams.toString()}`,
       )
       const profiles = response.items.map(mapMLListItemToProfile)
-      const sorted = sortApplicants(profiles, params)
       return {
-        items: sorted,
+        items: profiles,
         page: response.page,
         size: response.size,
         total: response.total,

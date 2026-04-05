@@ -9,7 +9,6 @@ import {
   ArrowDown,
   ArrowLeftRight,
   ArrowUp,
-  ArrowUpDown,
   CheckCircle2,
   ChevronDown,
   ChevronLeft,
@@ -39,40 +38,17 @@ import { Button } from '@/shared/ui/button'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Input } from '@/shared/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { useApplicantsRankingQuery } from '../api'
 import { DECISION_OPTIONS, ELIGIBILITY_OPTIONS, RECOMMENDATION_OPTIONS, type DecisionFilterValue } from '../constants'
 import type {
   ApplicantProfile,
-  ApplicantsSortDirection,
-  ApplicantsSortField,
+  ApplicantsQueryParams,
   CandidateDecision,
   EligibilityStatus,
   Recommendation,
 } from '../types'
 
 gsap.registerPlugin(ScrollTrigger)
-
-// ---------------------------------------------------------------------------
-// Sort cycle: desc -> asc -> reset (back to score desc)
-// ---------------------------------------------------------------------------
-type SortState = {
-  field: ApplicantsSortField
-  direction: ApplicantsSortDirection
-} | null
-
-function nextSortState(
-  current: SortState,
-  clickedField: ApplicantsSortField,
-): SortState {
-  if (current?.field !== clickedField) {
-    return { field: clickedField, direction: 'desc' }
-  }
-  if (current.direction === 'desc') {
-    return { field: clickedField, direction: 'asc' }
-  }
-  return null // reset
-}
 
 // ---------------------------------------------------------------------------
 // Badge color helpers
@@ -144,7 +120,6 @@ function DecisionBadge({ decision }: { decision: CandidateDecision }) {
 interface ColumnDef {
   key: string
   label: string
-  sortField?: ApplicantsSortField
   className?: string
   headerClassName?: string
 }
@@ -153,19 +128,19 @@ const TABLE_COLUMNS: ColumnDef[] = [
   { key: 'rank', label: '#', className: 'w-12 text-center', headerClassName: 'justify-center' },
   { key: 'name', label: 'Name', className: 'min-w-[160px]' },
   { key: 'program', label: 'Program', className: 'min-w-[120px]' },
-  { key: 'score', label: 'Score', sortField: 'score', className: 'w-20 text-center', headerClassName: 'justify-center' },
-  { key: 'hidden_potential', label: 'Hidden Potential', sortField: 'hidden_potential', className: 'w-28 text-center', headerClassName: 'justify-center' },
-  { key: 'trajectory', label: 'Trajectory', sortField: 'trajectory', className: 'w-24 text-center', headerClassName: 'justify-center' },
-  { key: 'shortlist_priority', label: 'Shortlist Priority', sortField: 'shortlist_priority', className: 'w-28 text-center', headerClassName: 'justify-center' },
+  { key: 'score', label: 'Score', className: 'w-20 text-center', headerClassName: 'justify-center' },
+  { key: 'hidden_potential', label: 'Hidden Potential', className: 'w-28 text-center', headerClassName: 'justify-center' },
+  { key: 'trajectory', label: 'Trajectory', className: 'w-24 text-center', headerClassName: 'justify-center' },
+  { key: 'shortlist_priority', label: 'Shortlist Priority', className: 'w-28 text-center', headerClassName: 'justify-center' },
   { key: 'evidence_coverage', label: 'Evidence Coverage', className: 'w-28 text-center', headerClassName: 'justify-center' },
   { key: 'support_needed', label: 'Support Needed', className: 'w-28 text-center', headerClassName: 'justify-center' },
-  { key: 'auth_risk', label: 'Auth. Risk', sortField: 'authenticity_risk', className: 'w-24 text-center', headerClassName: 'justify-center' },
-  { key: 'confidence', label: 'Confidence', sortField: 'confidence', className: 'w-24 text-center', headerClassName: 'justify-center' },
+  { key: 'auth_risk', label: 'Auth. Risk', className: 'w-24 text-center', headerClassName: 'justify-center' },
+  { key: 'confidence', label: 'Confidence', className: 'w-24 text-center', headerClassName: 'justify-center' },
   { key: 'status', label: 'Status', className: 'w-28 text-center', headerClassName: 'justify-center' },
 ]
 
 // ---------------------------------------------------------------------------
-// MultiFilterPopover — reusable multi-select filter with popover + checkboxes
+// MultiFilterPopover — multi-select filter with popover + checkboxes
 // ---------------------------------------------------------------------------
 function MultiFilterPopover<T extends string>({
   label,
@@ -178,9 +153,7 @@ function MultiFilterPopover<T extends string>({
   selected: Set<T>
   onToggle: (value: T) => void
 }) {
-  const allSelected = selected.size === options.length
-  const count = allSelected ? 0 : selected.size
-
+  const count = selected.size
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -216,19 +189,6 @@ function MultiFilterPopover<T extends string>({
       </PopoverContent>
     </Popover>
   )
-}
-
-// ---------------------------------------------------------------------------
-// SortIcon for column headers
-// ---------------------------------------------------------------------------
-function SortIcon({ field, sortState }: { field: ApplicantsSortField; sortState: SortState }) {
-  if (sortState?.field !== field) {
-    return <ArrowUpDown className="size-3.5 opacity-30" />
-  }
-  if (sortState.direction === 'desc') {
-    return <ArrowDown className="text-primary size-3.5" />
-  }
-  return <ArrowUp className="text-primary size-3.5" />
 }
 
 // ---------------------------------------------------------------------------
@@ -394,25 +354,14 @@ export function ApplicantsDashboard() {
   const [page, setPage] = useState(1)
   const [pageSize] = useState(25)
 
-  // Sort state: null means default (score desc)
-  const [sortState, setSortState] = useState<SortState>({
-    field: 'score',
-    direction: 'desc',
-  })
+  // Sort state (server-side: ASC or DESC by score)
+  const [sort, setSort] = useState<'ASC' | 'DESC'>('DESC')
 
-  // Filter state
+  // Filter state (server-side — multiple values sent as comma-separated)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedEligibility, setSelectedEligibility] = useState<Set<EligibilityStatus>>(
-    () => new Set(ELIGIBILITY_OPTIONS.map((o) => o.value)),
-  )
-  const [selectedRecommendation, setSelectedRecommendation] = useState<Set<Recommendation>>(
-    () => new Set(RECOMMENDATION_OPTIONS.map((o) => o.value)),
-  )
-
-  // Decision filter
-  const [selectedDecisions, setSelectedDecisions] = useState<Set<DecisionFilterValue>>(
-    () => new Set(DECISION_OPTIONS.map((o) => o.value)),
-  )
+  const [selectedEligibility, setSelectedEligibility] = useState<Set<EligibilityStatus>>(new Set())
+  const [selectedRecommendation, setSelectedRecommendation] = useState<Set<Recommendation>>(new Set())
+  const [selectedDecision, setSelectedDecision] = useState<Set<DecisionFilterValue>>(new Set())
 
   // Selection state (no limit — batch actions work on any count)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -519,126 +468,89 @@ export function ApplicantsDashboard() {
     router.push(`/applicants/ranking?ids=${ids}`)
   }, [selectedIds, router])
 
-  // Mobile sort dropdown
-  const [mobileSortField, setMobileSortField] = useState<ApplicantsSortField>('score')
-
-  const queryParams = useMemo(
+  // Build query params for server-side filtering/sorting
+  const queryParams: ApplicantsQueryParams = useMemo(
     () => ({
-      sortField: sortState?.field ?? 'score',
-      sortDirection: sortState?.direction ?? 'desc',
+      sort,
+      recommendation: selectedRecommendation.size > 0 ? Array.from(selectedRecommendation) : null,
+      eligibility: selectedEligibility.size > 0 ? Array.from(selectedEligibility) : null,
+      decision: selectedDecision.size > 0
+        ? Array.from(selectedDecision).map((d) => (d === 'pending' ? 'no_decision' : d))
+        : null,
       page,
       size: pageSize,
     }),
-    [sortState, page, pageSize],
+    [sort, selectedRecommendation, selectedEligibility, selectedDecision, page, pageSize],
   )
 
   const { data, isLoading } = useApplicantsRankingQuery(queryParams)
   const applicants = data?.items ?? []
   const hasMore = data?.hasMore ?? false
 
-  // Filter applicants client-side
+  // Client-side search filter only (other filters are handled server-side)
   const filteredApplicants = useMemo(() => {
-    let result = applicants
+    if (!searchQuery.trim()) return applicants
 
-    // Search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.trim().toLowerCase()
-      result = result.filter((a) => {
-        const name = (a.candidate_name ?? a.candidate_id).toLowerCase()
-        return name.includes(query)
-      })
-    }
-
-    // Eligibility filter
-    if (selectedEligibility.size < ELIGIBILITY_OPTIONS.length) {
-      result = result.filter((a) => selectedEligibility.has(a.eligibility_status))
-    }
-
-    // Recommendation filter
-    if (selectedRecommendation.size < RECOMMENDATION_OPTIONS.length) {
-      result = result.filter((a) => selectedRecommendation.has(a.recommendation))
-    }
-
-    // Decision filter
-    if (selectedDecisions.size < DECISION_OPTIONS.length) {
-      result = result.filter((a) => {
-        const decision = decisions.get(a.candidate_id) ?? null
-        const filterValue: DecisionFilterValue = decision ?? 'pending'
-        return selectedDecisions.has(filterValue)
-      })
-    }
-
-    return result
-  }, [applicants, searchQuery, selectedEligibility, selectedRecommendation, selectedDecisions, decisions])
+    const query = searchQuery.trim().toLowerCase()
+    return applicants.filter((a) => {
+      const name = (a.candidate_name ?? a.candidate_id).toLowerCase()
+      return name.includes(query)
+    })
+  }, [applicants, searchQuery])
 
   // Keep ref in sync for shift+click range selection
   filteredApplicantsRef.current = filteredApplicants
 
-  // Toggle helpers
+  // Toggle helpers — multi-select
   const toggleEligibility = useCallback((value: EligibilityStatus) => {
     setSelectedEligibility((prev) => {
       const next = new Set(prev)
-      if (next.has(value)) {
-        if (next.size > 1) next.delete(value)
-      } else {
-        next.add(value)
-      }
+      if (next.has(value)) next.delete(value)
+      else next.add(value)
       return next
     })
+    setPage(1)
   }, [])
 
   const toggleRecommendation = useCallback((value: Recommendation) => {
     setSelectedRecommendation((prev) => {
       const next = new Set(prev)
-      if (next.has(value)) {
-        if (next.size > 1) next.delete(value)
-      } else {
-        next.add(value)
-      }
+      if (next.has(value)) next.delete(value)
+      else next.add(value)
       return next
     })
+    setPage(1)
   }, [])
 
   const toggleDecision = useCallback((value: DecisionFilterValue) => {
-    setSelectedDecisions((prev) => {
+    setSelectedDecision((prev) => {
       const next = new Set(prev)
-      if (next.has(value)) {
-        if (next.size > 1) next.delete(value)
-      } else {
-        next.add(value)
-      }
+      if (next.has(value)) next.delete(value)
+      else next.add(value)
       return next
     })
+    setPage(1)
+  }, [])
+
+  const toggleSort = useCallback(() => {
+    setSort((prev) => (prev === 'DESC' ? 'ASC' : 'DESC'))
+    setPage(1)
   }, [])
 
   const handleResetFilters = useCallback(() => {
     setSearchQuery('')
-    setSelectedEligibility(new Set(ELIGIBILITY_OPTIONS.map((o) => o.value)))
-    setSelectedRecommendation(new Set(RECOMMENDATION_OPTIONS.map((o) => o.value)))
-    setSelectedDecisions(new Set(DECISION_OPTIONS.map((o) => o.value)))
-    setSortState({ field: 'score', direction: 'desc' })
-    setMobileSortField('score')
+    setSelectedEligibility(new Set())
+    setSelectedRecommendation(new Set())
+    setSelectedDecision(new Set())
+    setSort('DESC')
     setPage(1)
-  }, [])
-
-  const handleColumnSort = useCallback(
-    (field: ApplicantsSortField) => {
-      setSortState((prev) => nextSortState(prev, field))
-    },
-    [],
-  )
-
-  const handleMobileSortChange = useCallback((value: string) => {
-    const field = value as ApplicantsSortField
-    setMobileSortField(field)
-    setSortState({ field, direction: 'desc' })
   }, [])
 
   const hasActiveFilters =
     searchQuery.trim().length > 0 ||
-    selectedEligibility.size < ELIGIBILITY_OPTIONS.length ||
-    selectedRecommendation.size < RECOMMENDATION_OPTIONS.length ||
-    selectedDecisions.size < DECISION_OPTIONS.length
+    selectedEligibility.size > 0 ||
+    selectedRecommendation.size > 0 ||
+    selectedDecision.size > 0
 
   // Subtle page-level fade-in animation
   useEffect(() => {
@@ -764,33 +676,30 @@ export function ApplicantsDashboard() {
               <MultiFilterPopover
                 label="Decision"
                 options={DECISION_OPTIONS}
-                selected={selectedDecisions}
+                selected={selectedDecision}
                 onToggle={toggleDecision}
               />
 
-              {/* Mobile sort dropdown */}
-              <div className="md:hidden">
-                <Select value={mobileSortField} onValueChange={handleMobileSortChange}>
-                  <SelectTrigger size="sm" className="h-9 w-32 gap-1 text-sm">
-                    <ArrowUpDown className="size-3.5 opacity-50" />
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="score">Score</SelectItem>
-                    <SelectItem value="potential">Potential</SelectItem>
-                    <SelectItem value="motivation">Motivation</SelectItem>
-                    <SelectItem value="leadership">Leadership</SelectItem>
-                    <SelectItem value="experience">Experience</SelectItem>
-                    <SelectItem value="trust">Trust</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Sort direction toggle */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleSort}
+                className="gap-1.5"
+              >
+                {sort === 'DESC' ? (
+                  <ArrowDown className="size-3.5" />
+                ) : (
+                  <ArrowUp className="size-3.5" />
+                )}
+                {sort === 'DESC' ? 'Highest first' : 'Lowest first'}
+              </Button>
 
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleResetFilters}
-                disabled={!hasActiveFilters}
+                disabled={!hasActiveFilters && sort === 'DESC'}
                 className="gap-1.5"
               >
                 <RotateCcw className="size-3.5" />
@@ -864,26 +773,11 @@ export function ApplicantsDashboard() {
                           className={cn(
                             'px-3 py-3 text-left text-sm font-semibold tracking-wide text-muted-foreground',
                             col.className,
-                            col.sortField && sortState?.field === col.sortField && 'text-foreground',
                           )}
                         >
-                          {col.sortField ? (
-                            <button
-                              type="button"
-                              onClick={() => handleColumnSort(col.sortField!)}
-                              className={cn(
-                                'inline-flex items-center gap-1 transition-colors hover:text-foreground',
-                                col.headerClassName,
-                              )}
-                            >
-                              {col.label}
-                              <SortIcon field={col.sortField} sortState={sortState} />
-                            </button>
-                          ) : (
-                            <span className={cn('inline-flex items-center', col.headerClassName)}>
-                              {col.label}
-                            </span>
-                          )}
+                          <span className={cn('inline-flex items-center', col.headerClassName)}>
+                            {col.label}
+                          </span>
                         </th>
                       ))}
                     </tr>
@@ -913,9 +807,6 @@ export function ApplicantsDashboard() {
                             className={cn(
                               'px-3 py-3 text-sm',
                               col.className,
-                              col.sortField &&
-                                sortState?.field === col.sortField &&
-                                'bg-primary/[0.03]',
                             )}
                           >
                             {getCellValue(applicant, col.key, index + 1, decisions.get(applicant.candidate_id))}

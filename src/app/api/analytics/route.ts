@@ -105,7 +105,7 @@ function computeAnalytics(forms: FormResponse[]): AnalyticsData {
     byProgram,
     byFaculty,
     byGender,
-    avgEnglishScore: Math.round((totalEnglish / total) * 10) / 10,
+    avgEnglishScore: Math.round((totalEnglish / total) * 2) / 2,
     avgUntScore: Math.round(totalUnt / total),
     englishScoreDistribution: Object.entries(englishBuckets).map(([range, count]) => ({
       range,
