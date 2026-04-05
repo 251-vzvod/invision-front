@@ -192,28 +192,16 @@ function AISourceRow({ source }: { source: AIDetectorTextSource }) {
   const prob = source.probability_ai_generated
   const riskLevel = prob != null ? getAIRiskLevel(prob) : null
   const styles = riskLevel ? AI_RISK_STYLES[riskLevel] : null
+  const label = source.question ?? AI_SOURCE_LABELS[source.source_key] ?? source.source_label
+  const pct = prob != null ? Math.round(prob * 100) : null
 
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm text-foreground/80">
-          {source.question ?? AI_SOURCE_LABELS[source.source_key] ?? source.source_label}
-        </span>
-        <span className={cn('text-sm font-semibold', styles?.badgeText ?? 'text-muted-foreground')}>
-          {prob != null ? `${Math.round(prob * 100)}%` : 'N/A'}
-        </span>
-      </div>
-      {prob != null && styles && (
-        <div className="h-1.5 w-full rounded-full bg-muted">
-          <div
-            className={cn('h-1.5 rounded-full transition-all', styles.barBg)}
-            style={{ width: `${Math.round(prob * 100)}%` }}
-          />
-        </div>
-      )}
-      {source.note && (
-        <p className="text-xs italic text-muted-foreground">{source.note}</p>
-      )}
+    <div className="flex gap-2">
+      <div className={cn('mt-1 h-1.5 w-1.5 shrink-0 rounded-full', styles?.barBg ?? 'bg-muted-foreground/30')} />
+      <span className="flex-1 text-xs leading-relaxed text-foreground/75">{label}</span>
+      <span className={cn('shrink-0 self-start text-xs font-semibold tabular-nums', styles?.badgeText ?? 'text-muted-foreground')}>
+        {pct != null ? `${pct}%` : '—'}
+      </span>
     </div>
   )
 }
@@ -857,69 +845,57 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
                 >
                   <CardContent className="space-y-4 px-4 py-4">
                     {/* Header */}
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <Bot className="h-4 w-4 text-muted-foreground" />
-                        <p className="text-sm font-semibold uppercase tracking-wide text-foreground">
-                          AI Detection
-                        </p>
-                      </div>
-                      {hasOverall && styles && (
-                        <span
-                          className={cn(
-                            'inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold',
-                            styles.badgeBg,
-                            styles.badgeText,
-                          )}
-                        >
-                          {Math.round(overallProb * 100)}%
-                        </span>
-                      )}
+                    <div className="flex items-center gap-2">
+                      <Bot className="h-4 w-4 text-muted-foreground" />
+                      <p className="text-sm font-semibold uppercase tracking-wide text-foreground">AI Detection</p>
                     </div>
 
-                    {/* Overall score display */}
                     {hasOverall && styles ? (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={cn(
-                              'flex h-14 w-14 items-center justify-center rounded-full text-xl font-bold',
-                              styles.badgeBg,
-                              styles.badgeText,
-                            )}
-                          >
+                      <div className="space-y-4">
+                        {/* Score + label */}
+                        <div className="flex items-end gap-3">
+                          <span className={cn('text-4xl font-black tabular-nums leading-none', styles.badgeText)}>
                             {Math.round(overallProb * 100)}%
                           </span>
-                          <div>
-                            <p className={cn('text-sm font-semibold', styles.badgeText)}>
+                          <div className="mb-0.5 space-y-0.5">
+                            <span className={cn('inline-block rounded-full px-2 py-0.5 text-xs font-semibold', styles.badgeBg, styles.badgeText)}>
                               {styles.label}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              AI-generated probability
-                            </p>
+                            </span>
+                            <p className="text-xs text-muted-foreground">probability of AI-generated content</p>
                           </div>
                         </div>
 
-                        {/* Progress bar */}
-                        <div className="h-2 w-full rounded-full bg-muted">
-                          <div
-                            className={cn('h-2 rounded-full transition-all', styles.barBg)}
-                            style={{ width: `${Math.round(overallProb * 100)}%` }}
-                          />
+                        {/* Segmented risk bar with needle */}
+                        <div className="space-y-1.5">
+                          <div className="relative h-2.5 w-full overflow-hidden rounded-full">
+                            <div className="absolute inset-0 flex">
+                              <div className="h-full bg-emerald-500" style={{ width: '25%' }} />
+                              <div className="h-full bg-amber-400" style={{ width: '30%' }} />
+                              <div className="h-full bg-red-500" style={{ width: '45%' }} />
+                            </div>
+                          </div>
+                          {/* Needle indicator — outside overflow:hidden */}
+                          <div className="relative h-1 w-full">
+                            <div
+                              className={cn('absolute -top-4 h-4 w-0.5 rounded-full', styles.barBg)}
+                              style={{ left: `clamp(1px, calc(${Math.round(overallProb * 100)}% - 1px), calc(100% - 2px))` }}
+                            />
+                          </div>
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>Safe</span>
+                            <span>Caution</span>
+                            <span>High</span>
+                          </div>
                         </div>
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground">
-                        AI detection data not available
-                      </p>
+                      <p className="text-sm text-muted-foreground">AI detection data not available</p>
                     )}
 
-                    {/* Per-source breakdown */}
+                    {/* Source breakdown */}
                     {applicableSources.length > 0 && (
-                      <div className="space-y-3 border-t border-border/50 dark:border-white/10 pt-3">
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                          Source Breakdown
-                        </p>
+                      <div className="space-y-2.5 border-t border-border/50 dark:border-white/10 pt-3">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Source Breakdown</p>
                         {applicableSources.map((src, idx) => (
                           <AISourceRow key={`${src.source_key}-${idx}`} source={src} />
                         ))}
