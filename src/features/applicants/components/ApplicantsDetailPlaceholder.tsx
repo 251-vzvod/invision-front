@@ -39,7 +39,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/shared/ui/chart'
-import { useApplicantProfileQuery, useApplicantsRankingQuery } from '../api'
+import { useApplicantProfileQuery, useApplicantsRankingQuery, useSetDecisionMutation } from '../api'
 import { DEFAULT_QUERY_PARAMS } from '../constants'
 import type {
   AIDetectorTextSource,
@@ -285,9 +285,17 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
   const { data: rankingData } = useApplicantsRankingQuery(defaultSort)
   const rankedApplicants = rankingData?.items ?? []
 
-  // Committee decision state (client-side session only)
+  // Committee decision state — initialised from API, optimistically updated on action
   const [committeeDecision, setCommitteeDecision] = useState<CandidateDecision>(null)
   const [pendingDecision, setPendingDecision] = useState<NonNullable<CandidateDecision> | null>(null)
+  const { mutate: setDecision, isPending: isDecisionPending } = useSetDecisionMutation()
+
+  // Sync decision from API whenever profile loads/refetches
+  useEffect(() => {
+    if (!profile) return
+    const d = profile.decision
+    setCommitteeDecision(!d || d === 'no_decision' ? null : d)
+  }, [profile?.decision])
 
   useEffect(() => {
     const root = rootRef.current
@@ -581,6 +589,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
             <div className="flex flex-wrap gap-2">
               <Button
                 size="default"
+                disabled={isDecisionPending}
                 className={cn(
                   'gap-1.5 active:scale-[0.97] transition-transform duration-100',
                   committeeDecision === 'approved'
@@ -594,6 +603,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
               </Button>
               <Button
                 size="default"
+                disabled={isDecisionPending}
                 className={cn(
                   'gap-1.5 active:scale-[0.97] transition-transform duration-100',
                   committeeDecision === 'shortlisted'
@@ -604,7 +614,10 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
                   if (committeeDecision === 'rejected') {
                     setPendingDecision('shortlisted')
                   } else {
-                    setCommitteeDecision('shortlisted')
+                    setDecision(
+                      { candidateId: applicantId, decision: 'shortlisted' },
+                      { onSuccess: () => setCommitteeDecision('shortlisted') },
+                    )
                   }
                 }}
               >
@@ -613,6 +626,7 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
               </Button>
               <Button
                 size="default"
+                disabled={isDecisionPending}
                 className={cn(
                   'gap-1.5 active:scale-[0.97] transition-transform duration-100',
                   committeeDecision === 'rejected'
@@ -661,7 +675,11 @@ export function ApplicantsDetail({ applicantId }: ApplicantsDetailProps) {
                 )}
                 onClick={() => {
                   if (pendingDecision) {
-                    setCommitteeDecision(pendingDecision)
+                    const decision = pendingDecision
+                    setDecision(
+                      { candidateId: applicantId, decision },
+                      { onSuccess: () => setCommitteeDecision(decision) },
+                    )
                   }
                   setPendingDecision(null)
                 }}

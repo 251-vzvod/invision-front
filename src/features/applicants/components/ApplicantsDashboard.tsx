@@ -9,6 +9,7 @@ import {
   ArrowDown,
   ArrowLeftRight,
   ArrowUp,
+  ArrowUpDown,
   CheckCircle2,
   ChevronDown,
   ChevronLeft,
@@ -48,7 +49,7 @@ import {
 } from '@/shared/ui/sheet'
 import { Separator } from '@/shared/ui/separator'
 import { useIsMobile } from '@/shared/hooks/use-mobile'
-import { useApplicantsRankingQuery } from '../api'
+import { useApplicantsRankingQuery, useSetDecisionMutation } from '../api'
 import { DECISION_OPTIONS, ELIGIBILITY_OPTIONS, RECOMMENDATION_OPTIONS, type DecisionFilterValue } from '../constants'
 import type {
   ApplicantProfile,
@@ -132,20 +133,21 @@ interface ColumnDef {
   label: string
   className?: string
   headerClassName?: string
+  sortField?: keyof ApplicantProfile
 }
 
 const TABLE_COLUMNS: ColumnDef[] = [
   { key: 'rank', label: '#', className: 'w-12 text-center', headerClassName: 'justify-center' },
   { key: 'name', label: 'Name', className: 'min-w-[160px]' },
   { key: 'program', label: 'Program', className: 'min-w-[120px]' },
-  { key: 'score', label: 'Score', className: 'w-20 text-center', headerClassName: 'justify-center' },
-  { key: 'hidden_potential', label: 'Hidden Potential', className: 'w-28 text-center', headerClassName: 'justify-center' },
-  { key: 'trajectory', label: 'Trajectory', className: 'w-24 text-center', headerClassName: 'justify-center' },
-  { key: 'shortlist_priority', label: 'Shortlist Priority', className: 'w-28 text-center', headerClassName: 'justify-center' },
-  { key: 'evidence_coverage', label: 'Evidence Coverage', className: 'w-28 text-center', headerClassName: 'justify-center' },
-  { key: 'support_needed', label: 'Support Needed', className: 'w-28 text-center', headerClassName: 'justify-center' },
-  { key: 'auth_risk', label: 'Auth. Risk', className: 'w-24 text-center', headerClassName: 'justify-center' },
-  { key: 'confidence', label: 'Confidence', className: 'w-24 text-center', headerClassName: 'justify-center' },
+  { key: 'score', label: 'Score', className: 'w-20 text-center', headerClassName: 'justify-center', sortField: 'merit_score' },
+  { key: 'hidden_potential', label: 'Hidden Potential', className: 'w-28 text-center', headerClassName: 'justify-center', sortField: 'hidden_potential_score' },
+  { key: 'trajectory', label: 'Trajectory', className: 'w-24 text-center', headerClassName: 'justify-center', sortField: 'trajectory_score' },
+  { key: 'shortlist_priority', label: 'Shortlist Priority', className: 'w-28 text-center', headerClassName: 'justify-center', sortField: 'shortlist_priority_score' },
+  { key: 'evidence_coverage', label: 'Evidence Coverage', className: 'w-28 text-center', headerClassName: 'justify-center', sortField: 'evidence_coverage_score' },
+  { key: 'support_needed', label: 'Support Needed', className: 'w-28 text-center', headerClassName: 'justify-center', sortField: 'support_needed_score' },
+  { key: 'auth_risk', label: 'Auth. Risk', className: 'w-24 text-center', headerClassName: 'justify-center', sortField: 'authenticity_risk' },
+  { key: 'confidence', label: 'Confidence', className: 'w-24 text-center', headerClassName: 'justify-center', sortField: 'confidence_score' },
   { key: 'status', label: 'Status', className: 'w-28 text-center', headerClassName: 'justify-center' },
 ]
 
@@ -466,6 +468,21 @@ export function ApplicantsDashboard() {
   // Sort state (server-side: ASC or DESC by score)
   const [sort, setSort] = useState<'ASC' | 'DESC'>('DESC')
 
+  // Client-side column sort
+  const [sortColKey, setSortColKey] = useState<string>('score')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+
+  const handleColSort = useCallback((colKey: string) => {
+    setSortColKey((prev) => {
+      if (prev === colKey) {
+        setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+      } else {
+        setSortDir('desc')
+      }
+      return colKey
+    })
+  }, [])
+
   // Filter state (server-side — multiple values sent as comma-separated)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedEligibility, setSelectedEligibility] = useState<Set<EligibilityStatus>>(new Set())
@@ -475,10 +492,20 @@ export function ApplicantsDashboard() {
   // Selection state (no limit — batch actions work on any count)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const lastClickedIndexRef = useRef<number | null>(null)
+  const { mutate: setDecision } = useSetDecisionMutation()
   const filteredApplicantsRef = useRef<ApplicantProfile[]>([])
 
-  // Decision state (client-side session only)
+  // Optimistic decision overrides (cleared when query refetches)
   const [decisions, setDecisions] = useState<Map<string, CandidateDecision>>(new Map())
+
+  const getDecision = useCallback(
+    (applicant: ApplicantProfile): CandidateDecision => {
+      if (decisions.has(applicant.candidate_id)) return decisions.get(applicant.candidate_id)!
+      if (!applicant.decision || applicant.decision === 'no_decision') return null
+      return applicant.decision
+    },
+    [decisions],
+  )
 
   // Batch confirmation dialog state
   const [pendingBatchDecision, setPendingBatchDecision] = useState<NonNullable<CandidateDecision> | null>(null)
@@ -528,16 +555,23 @@ export function ApplicantsDashboard() {
 
   const applyDecision = useCallback(
     (decision: NonNullable<CandidateDecision>) => {
-      setDecisions((prev) => {
-        const next = new Map(prev)
-        for (const id of selectedIds) {
-          next.set(id, decision)
-        }
-        return next
-      })
+      for (const id of selectedIds) {
+        setDecision(
+          { candidateId: id, decision },
+          {
+            onSuccess: () => {
+              setDecisions((prev) => {
+                const next = new Map(prev)
+                next.set(id, decision)
+                return next
+              })
+            },
+          },
+        )
+      }
       setSelectedIds(new Set())
     },
-    [selectedIds],
+    [selectedIds, setDecision],
   )
 
   const hasRejectedInSelection = useMemo(() => {
@@ -607,8 +641,20 @@ export function ApplicantsDashboard() {
     })
   }, [applicants, searchQuery])
 
+  // Client-side column sort applied on top of search filter
+  const sortedApplicants = useMemo(() => {
+    const col = TABLE_COLUMNS.find((c) => c.key === sortColKey)
+    if (!col?.sortField) return filteredApplicants
+    const field = col.sortField
+    return [...filteredApplicants].sort((a, b) => {
+      const aVal = (a[field] as number) ?? 0
+      const bVal = (b[field] as number) ?? 0
+      return sortDir === 'asc' ? aVal - bVal : bVal - aVal
+    })
+  }, [filteredApplicants, sortColKey, sortDir])
+
   // Keep ref in sync for shift+click range selection
-  filteredApplicantsRef.current = filteredApplicants
+  filteredApplicantsRef.current = sortedApplicants
 
   // Filter apply handlers — called by MultiFilterPopover on Apply/Reset
   const handleApplyEligibility = useCallback((value: Set<EligibilityStatus>) => {
@@ -845,16 +891,16 @@ export function ApplicantsDashboard() {
                       <th className="w-10 px-3 py-3">
                         <Checkbox
                           checked={
-                            filteredApplicants.length > 0 &&
-                            filteredApplicants.every((a) => selectedIds.has(a.candidate_id))
+                            sortedApplicants.length > 0 &&
+                            sortedApplicants.every((a) => selectedIds.has(a.candidate_id))
                               ? true
-                              : filteredApplicants.some((a) => selectedIds.has(a.candidate_id))
+                              : sortedApplicants.some((a) => selectedIds.has(a.candidate_id))
                                 ? 'indeterminate'
                                 : false
                           }
                           onCheckedChange={(checked) => {
                             if (checked) {
-                              setSelectedIds(new Set(filteredApplicants.map((a) => a.candidate_id)))
+                              setSelectedIds(new Set(sortedApplicants.map((a) => a.candidate_id)))
                             } else {
                               setSelectedIds(new Set())
                             }
@@ -867,17 +913,26 @@ export function ApplicantsDashboard() {
                           className={cn(
                             'px-3 py-3 text-left text-sm font-semibold tracking-wide text-muted-foreground',
                             col.className,
+                            col.sortField && 'cursor-pointer select-none hover:text-foreground',
                           )}
+                          onClick={col.sortField ? () => handleColSort(col.key) : undefined}
                         >
-                          <span className={cn('inline-flex items-center', col.headerClassName)}>
+                          <span className={cn('inline-flex items-center gap-1', col.headerClassName)}>
                             {col.label}
+                            {col.sortField && (
+                              sortColKey === col.key
+                                ? sortDir === 'desc'
+                                  ? <ArrowDown className="h-3 w-3 shrink-0 text-foreground" />
+                                  : <ArrowUp className="h-3 w-3 shrink-0 text-foreground" />
+                                : <ArrowUpDown className="h-3 w-3 shrink-0 opacity-30" />
+                            )}
                           </span>
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {filteredApplicants.map((applicant, index) => (
+                    {sortedApplicants.map((applicant, index) => (
                       <tr
                         key={applicant.candidate_id}
                         className="group cursor-pointer transition-colors hover:bg-accent"
@@ -903,7 +958,7 @@ export function ApplicantsDashboard() {
                               col.className,
                             )}
                           >
-                            {getCellValue(applicant, col.key, index + 1, decisions.get(applicant.candidate_id))}
+                            {getCellValue(applicant, col.key, index + 1, getDecision(applicant))}
                           </td>
                         ))}
                       </tr>
@@ -915,14 +970,14 @@ export function ApplicantsDashboard() {
 
             {/* Mobile cards */}
             <div className="flex flex-col gap-2.5 md:hidden">
-              {filteredApplicants.map((applicant, index) => (
+              {sortedApplicants.map((applicant, index) => (
                 <ApplicantMobileCard
                   key={applicant.candidate_id}
                   applicant={applicant}
                   rank={index + 1}
                   isSelected={selectedIds.has(applicant.candidate_id)}
                   onToggleSelect={(e: React.MouseEvent) => toggleSelection(applicant.candidate_id, index, e.shiftKey)}
-                  decision={decisions.get(applicant.candidate_id) ?? null}
+                  decision={getDecision(applicant)}
                 />
               ))}
             </div>
