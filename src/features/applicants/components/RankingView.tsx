@@ -779,12 +779,12 @@ export function RankingView() {
             <Input
               type="number"
               min={1}
-              placeholder="Custom"
+              placeholder="N"
               value={
                 TOP_K_PRESETS.some((p) => p.value === topK) ? '' : topK
               }
               onChange={(e) => setTopK(e.target.value)}
-              className="h-7 w-20 text-xs"
+              className="h-7 w-16 text-xs"
             />
           </div>
 

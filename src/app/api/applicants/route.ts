@@ -20,16 +20,13 @@ export async function GET(request: NextRequest) {
     const eligibility = searchParams.get('eligibility')
     const decision = searchParams.get('decision')
 
-    const url = new URL(`${base}/api/v1/ml-assessments`)
-    url.searchParams.set('page', page)
-    url.searchParams.set('size', size)
-    url.searchParams.set('sort', sort)
-    if (recommendation) url.searchParams.set('recommendation', recommendation)
-    if (eligibility) url.searchParams.set('eligibility', eligibility)
-    if (decision) url.searchParams.set('decision', decision)
+    const parts = [`page=${page}`, `size=${size}`, `sort=${sort}`]
+    if (recommendation) parts.push(`recommendation=${recommendation}`)
+    if (eligibility) parts.push(`eligibility=${eligibility}`)
+    if (decision) parts.push(`decision=${decision}`)
 
     const backendResponse = await fetch(
-      url.toString(),
+      `${base}/api/v1/ml-assessments?${parts.join('&')}`,
       { method: 'GET', headers: { 'Content-Type': 'application/json' } },
     )
 

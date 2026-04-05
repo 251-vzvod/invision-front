@@ -4,7 +4,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowDown,
   ArrowLeftRight,
@@ -38,6 +38,16 @@ import { Button } from '@/shared/ui/button'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Input } from '@/shared/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
+import {
+  Sheet,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/shared/ui/sheet'
+import { Separator } from '@/shared/ui/separator'
+import { useIsMobile } from '@/shared/hooks/use-mobile'
 import { useApplicantsRankingQuery } from '../api'
 import { DECISION_OPTIONS, ELIGIBILITY_OPTIONS, RECOMMENDATION_OPTIONS, type DecisionFilterValue } from '../constants'
 import type {
@@ -140,52 +150,151 @@ const TABLE_COLUMNS: ColumnDef[] = [
 ]
 
 // ---------------------------------------------------------------------------
-// MultiFilterPopover — multi-select filter with popover + checkboxes
+// MultiFilterPopover — multi-select filter with draft state, Apply/Reset
+// Desktop: Popover · Mobile: bottom Sheet
 // ---------------------------------------------------------------------------
 function MultiFilterPopover<T extends string>({
   label,
   options,
-  selected,
-  onToggle,
+  applied,
+  onApply,
 }: {
   label: string
   options: Array<{ value: T; label: string; dotClassName?: string }>
-  selected: Set<T>
-  onToggle: (value: T) => void
+  applied: Set<T>
+  onApply: (value: Set<T>) => void
 }) {
-  const count = selected.size
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <Filter className="size-3.5" />
-          {label}
-          {count > 0 && (
-            <span className="bg-primary text-primary-foreground flex size-5 items-center justify-center rounded-full text-xs font-semibold">
-              {count}
-            </span>
+  const isMobile = useIsMobile()
+  const [open, setOpen] = useState(false)
+
+  // Draft state — initialized from `applied` whenever the popover opens
+  const allValues = useMemo(() => new Set(options.map((o) => o.value)), [options])
+  const [draft, setDraft] = useState<Set<T>>(() => (applied.size === 0 ? new Set(allValues) : new Set(applied)))
+
+  // Re-sync draft when popover opens
+  useEffect(() => {
+    if (open) {
+      setDraft(applied.size === 0 ? new Set(allValues) : new Set(applied))
+    }
+  }, [open, applied, allValues])
+
+  const isAllSelected = draft.size === options.length
+  const isNoneSelected = draft.size === 0
+
+  const toggleDraftValue = useCallback((value: T) => {
+    setDraft((prev) => {
+      const next = new Set(prev)
+      if (next.has(value)) next.delete(value)
+      else next.add(value)
+      return next
+    })
+  }, [])
+
+  const handleSelectAll = useCallback(() => {
+    if (isAllSelected) {
+      setDraft(new Set())
+    } else {
+      setDraft(new Set(allValues))
+    }
+  }, [isAllSelected, allValues])
+
+  const handleApply = useCallback(() => {
+    // All selected or none selected → clear filter
+    if (draft.size === options.length || draft.size === 0) {
+      onApply(new Set())
+    } else {
+      onApply(new Set(draft))
+    }
+    setOpen(false)
+  }, [draft, options.length, onApply])
+
+  const handleReset = useCallback(() => {
+    onApply(new Set())
+    setOpen(false)
+  }, [onApply])
+
+  // Badge: show only when there is an active partial filter
+  const showBadge = applied.size > 0 && applied.size < options.length
+
+  // Shared checkbox list
+  const checkboxList: ReactNode = (
+    <div className="flex flex-col gap-0.5">
+      {/* Select All */}
+      <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-foreground hover:bg-accent">
+        <Checkbox
+          checked={isAllSelected ? true : isNoneSelected ? false : 'indeterminate'}
+          onCheckedChange={handleSelectAll}
+        />
+        <span>Select All</span>
+      </label>
+      <Separator className="my-0.5" />
+      {/* Options */}
+      {options.map((option) => (
+        <label
+          key={option.value}
+          className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground/80 hover:bg-accent"
+        >
+          <Checkbox
+            checked={draft.has(option.value)}
+            onCheckedChange={() => toggleDraftValue(option.value)}
+          />
+          {option.dotClassName && (
+            <span className={cn('size-2 shrink-0 rounded-full', option.dotClassName)} />
           )}
-          <ChevronDown className="size-3.5 opacity-50" />
-        </Button>
-      </PopoverTrigger>
+          <span>{option.label}</span>
+        </label>
+      ))}
+    </div>
+  )
+
+  // Shared footer buttons
+  const footerButtons: ReactNode = (
+    <div className="flex items-center justify-between gap-2">
+      <Button variant="ghost" size="sm" onClick={handleReset}>
+        Reset
+      </Button>
+      <Button size="sm" onClick={handleApply}>
+        Apply
+      </Button>
+    </div>
+  )
+
+  // Trigger button (shared between Popover and Sheet)
+  const triggerButton = (
+    <Button variant="outline" size="sm" className="gap-1.5">
+      <Filter className="size-3.5" />
+      {label}
+      {showBadge && (
+        <span className="bg-primary text-primary-foreground flex size-5 items-center justify-center rounded-full text-xs font-semibold">
+          {applied.size}
+        </span>
+      )}
+      <ChevronDown className="size-3.5 opacity-50" />
+    </Button>
+  )
+
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>{triggerButton}</SheetTrigger>
+        <SheetContent side="bottom" showCloseButton={false} className="rounded-t-2xl">
+          <SheetHeader>
+            <SheetTitle>{label}</SheetTitle>
+          </SheetHeader>
+          <div className="px-4 overflow-y-auto max-h-[50vh]">{checkboxList}</div>
+          <SheetFooter>{footerButtons}</SheetFooter>
+        </SheetContent>
+      </Sheet>
+    )
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
       <PopoverContent align="start" className="w-56 border-border dark:border-white/10 bg-popover p-2">
-        <div className="flex flex-col gap-0.5">
-          {options.map((option) => (
-            <label
-              key={option.value}
-              className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground/80 hover:bg-accent"
-            >
-              <Checkbox
-                checked={selected.has(option.value)}
-                onCheckedChange={() => onToggle(option.value)}
-              />
-              {option.dotClassName && (
-                <span className={cn('size-2 shrink-0 rounded-full', option.dotClassName)} />
-              )}
-              <span>{option.label}</span>
-            </label>
-          ))}
-        </div>
+        {checkboxList}
+        <Separator className="my-1.5" />
+        {footerButtons}
       </PopoverContent>
     </Popover>
   )
@@ -501,34 +610,19 @@ export function ApplicantsDashboard() {
   // Keep ref in sync for shift+click range selection
   filteredApplicantsRef.current = filteredApplicants
 
-  // Toggle helpers — multi-select
-  const toggleEligibility = useCallback((value: EligibilityStatus) => {
-    setSelectedEligibility((prev) => {
-      const next = new Set(prev)
-      if (next.has(value)) next.delete(value)
-      else next.add(value)
-      return next
-    })
+  // Filter apply handlers — called by MultiFilterPopover on Apply/Reset
+  const handleApplyEligibility = useCallback((value: Set<EligibilityStatus>) => {
+    setSelectedEligibility(value)
     setPage(1)
   }, [])
 
-  const toggleRecommendation = useCallback((value: Recommendation) => {
-    setSelectedRecommendation((prev) => {
-      const next = new Set(prev)
-      if (next.has(value)) next.delete(value)
-      else next.add(value)
-      return next
-    })
+  const handleApplyRecommendation = useCallback((value: Set<Recommendation>) => {
+    setSelectedRecommendation(value)
     setPage(1)
   }, [])
 
-  const toggleDecision = useCallback((value: DecisionFilterValue) => {
-    setSelectedDecision((prev) => {
-      const next = new Set(prev)
-      if (next.has(value)) next.delete(value)
-      else next.add(value)
-      return next
-    })
+  const handleApplyDecision = useCallback((value: Set<DecisionFilterValue>) => {
+    setSelectedDecision(value)
     setPage(1)
   }, [])
 
@@ -664,20 +758,20 @@ export function ApplicantsDashboard() {
               <MultiFilterPopover
                 label="Eligibility"
                 options={ELIGIBILITY_OPTIONS}
-                selected={selectedEligibility}
-                onToggle={toggleEligibility}
+                applied={selectedEligibility}
+                onApply={handleApplyEligibility}
               />
               <MultiFilterPopover
                 label="Recommendation"
                 options={RECOMMENDATION_OPTIONS}
-                selected={selectedRecommendation}
-                onToggle={toggleRecommendation}
+                applied={selectedRecommendation}
+                onApply={handleApplyRecommendation}
               />
               <MultiFilterPopover
                 label="Decision"
                 options={DECISION_OPTIONS}
-                selected={selectedDecision}
-                onToggle={toggleDecision}
+                applied={selectedDecision}
+                onApply={handleApplyDecision}
               />
 
               {/* Sort direction toggle */}

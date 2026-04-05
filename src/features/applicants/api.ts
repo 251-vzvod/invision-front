@@ -149,16 +149,17 @@ export const useApplicantsRankingQuery = (params: ApplicantsQueryParams) =>
   useQuery({
     queryKey: applicantsQueryKeys.ranking(params),
     queryFn: async () => {
-      const searchParams = new URLSearchParams()
-      searchParams.set('page', String(params.page))
-      searchParams.set('size', String(params.size))
-      searchParams.set('sort', params.sort)
-      if (params.recommendation?.length) searchParams.set('recommendation', params.recommendation.join(','))
-      if (params.eligibility?.length) searchParams.set('eligibility', params.eligibility.join(','))
-      if (params.decision?.length) searchParams.set('decision', params.decision.join(','))
+      const parts = [
+        `page=${params.page}`,
+        `size=${params.size}`,
+        `sort=${params.sort}`,
+      ]
+      if (params.recommendation?.length) parts.push(`recommendation=${params.recommendation.join(',')}`)
+      if (params.eligibility?.length) parts.push(`eligibility=${params.eligibility.join(',')}`)
+      if (params.decision?.length) parts.push(`decision=${params.decision.join(',')}`)
 
       const response = await apiClient.get<MLAssessmentListResponse>(
-        `/api/applicants?${searchParams.toString()}`,
+        `/api/applicants?${parts.join('&')}`,
       )
       const profiles = response.items.map(mapMLListItemToProfile)
       return {
