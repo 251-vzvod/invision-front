@@ -106,6 +106,176 @@ function CategoryDot({
 }
 
 // ---------------------------------------------------------------------------
+// Ranking history types & hook
+// ---------------------------------------------------------------------------
+interface SavedRanking {
+  id: number
+  startedAt: string
+  candidateIds: number[]
+  topK: number | null
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  errorMessage: string | null
+  count: number | null
+  returnedCount: number | null
+  shortlistCount: number | null
+  hiddenPotentialCount: number | null
+  authenticityReviewCount: number | null
+}
+
+function useRankingHistory() {
+  const [history, setHistory] = useState<SavedRanking[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      return JSON.parse(localStorage.getItem('ranking_history') ?? '[]')
+    } catch {
+      return []
+    }
+  })
+
+  const saveEntry = useCallback((entry: SavedRanking) => {
+    setHistory((prev) => {
+      const next = [entry, ...prev.filter((e) => e.id !== entry.id)].slice(
+        0,
+        20,
+      )
+      localStorage.setItem('ranking_history', JSON.stringify(next))
+      return next
+    })
+  }, [])
+
+  const updateEntry = useCallback(
+    (id: number, patch: Partial<SavedRanking>) => {
+      setHistory((prev) => {
+        const next = prev.map((e) => (e.id === id ? { ...e, ...patch } : e))
+        localStorage.setItem('ranking_history', JSON.stringify(next))
+        return next
+      })
+    },
+    [],
+  )
+
+  const clearHistory = useCallback(() => {
+    localStorage.removeItem('ranking_history')
+    setHistory([])
+  }, [])
+
+  return { history, saveEntry, updateEntry, clearHistory }
+}
+
+// ---------------------------------------------------------------------------
+// RecentRankingCard sub-component
+// ---------------------------------------------------------------------------
+function RecentRankingCard({
+  entry,
+  onLoad,
+}: {
+  entry: SavedRanking
+  onLoad: (entry: SavedRanking) => void
+}) {
+  const statusConfig = {
+    completed: {
+      label: 'Completed',
+      className:
+        'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
+    },
+    failed: {
+      label: 'Failed',
+      className:
+        'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
+    },
+    pending: {
+      label: 'Pending',
+      className:
+        'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
+    },
+    processing: {
+      label: 'Processing',
+      className:
+        'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
+    },
+  }
+  const status = statusConfig[entry.status]
+
+  const relativeTime = (() => {
+    const diff = Date.now() - new Date(entry.startedAt).getTime()
+    const mins = Math.floor(diff / 60000)
+    const hours = Math.floor(diff / 3600000)
+    const days = Math.floor(diff / 86400000)
+    if (days > 0) return `${days}d ago`
+    if (hours > 0) return `${hours}h ago`
+    if (mins > 0) return `${mins}m ago`
+    return 'Just now'
+  })()
+
+  return (
+    <div className="rounded-xl border border-border dark:border-white/10 bg-card dark:bg-white/5 p-4 space-y-3 hover:border-primary/30 transition-colors">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-xs text-muted-foreground">
+            Ranking #{entry.id}
+          </p>
+          <p className="text-xs text-muted-foreground">{relativeTime}</p>
+        </div>
+        <span
+          className={cn(
+            'rounded-full px-2 py-0.5 text-xs font-medium',
+            status.className,
+          )}
+        >
+          {status.label}
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span>
+          <span className="font-medium text-foreground">
+            {entry.candidateIds.length}
+          </span>{' '}
+          candidates
+        </span>
+        {entry.topK && (
+          <span>
+            Top{' '}
+            <span className="font-medium text-foreground">{entry.topK}</span>
+          </span>
+        )}
+        {entry.shortlistCount != null && (
+          <span>
+            <span className="font-medium text-amber-500">
+              {entry.shortlistCount}
+            </span>{' '}
+            shortlisted
+          </span>
+        )}
+        {entry.hiddenPotentialCount != null &&
+          entry.hiddenPotentialCount > 0 && (
+            <span>
+              <span className="font-medium text-violet-500">
+                {entry.hiddenPotentialCount}
+              </span>{' '}
+              hidden potential
+            </span>
+          )}
+      </div>
+
+      {entry.errorMessage && (
+        <p className="text-xs text-red-500 truncate">{entry.errorMessage}</p>
+      )}
+
+      <Button
+        size="sm"
+        variant="outline"
+        className="w-full gap-1.5"
+        onClick={() => onLoad(entry)}
+      >
+        <Eye className="size-3.5" />
+        View Results
+      </Button>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 export function RankingView() {
@@ -123,6 +293,9 @@ export function RankingView() {
   const [topK, setTopK] = useState('')
   const [rankingId, setRankingId] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Ranking history
+  const { history, saveEntry, updateEntry, clearHistory } = useRankingHistory()
 
   // Refs for GSAP animations
   const pageRef = useRef<HTMLDivElement>(null)
@@ -349,15 +522,58 @@ export function RankingView() {
     try {
       const result = await startMutation.mutateAsync(payload)
       setRankingId(result.ranking_id)
+      saveEntry({
+        id: result.ranking_id,
+        startedAt: new Date().toISOString(),
+        candidateIds: candidateIds,
+        topK: parsedTopK ?? null,
+        status: 'pending',
+        errorMessage: null,
+        count: null,
+        returnedCount: null,
+        shortlistCount: null,
+        hiddenPotentialCount: null,
+        authenticityReviewCount: null,
+      })
     } catch {
       // Error is handled by mutation state
     }
-  }, [selectedIds, topK, startMutation])
+  }, [selectedIds, topK, startMutation, saveEntry])
 
   const handleReset = useCallback(() => {
     setRankingId(null)
     startMutation.reset()
   }, [startMutation])
+
+  // ---------------------------------------------------------------------------
+  // Sync ranking result into history
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!rankingId || !rankingResult) return
+    if (rankingStatus === 'completed' || rankingStatus === 'failed') {
+      updateEntry(rankingId, {
+        status: rankingStatus,
+        errorMessage: rankingResult.error_message ?? null,
+        count: rankingResult.count ?? null,
+        returnedCount: rankingResult.returned_count ?? null,
+        shortlistCount:
+          rankingResult.shortlist_candidate_ids?.length ?? null,
+        hiddenPotentialCount:
+          rankingResult.hidden_potential_candidate_ids?.length ?? null,
+        authenticityReviewCount:
+          rankingResult.authenticity_review_candidate_ids?.length ?? null,
+      })
+    }
+  }, [rankingStatus, rankingResult, rankingId, updateEntry])
+
+  // ---------------------------------------------------------------------------
+  // Load a past ranking
+  // ---------------------------------------------------------------------------
+  const handleLoadRanking = useCallback((entry: SavedRanking) => {
+    setRankingId(entry.id)
+    setSelectedIds(new Set(entry.candidateIds))
+    setTopK(entry.topK ? String(entry.topK) : '')
+  }, [])
 
   // ---------------------------------------------------------------------------
   // Top K chip handler
@@ -618,9 +834,11 @@ export function RankingView() {
         </div>
       )}
 
+      <div className={cn('flex gap-6 items-start', history.length > 0 ? 'lg:grid lg:grid-cols-[1fr_280px]' : '')}>
+      {/* ── Left: candidate selection table ── */}
       <div
         data-animate-section
-        className="rounded-xl border border-border dark:border-white/10 bg-card"
+        className="min-w-0 flex-1 rounded-xl border border-border dark:border-white/10 bg-card"
       >
         {/* Header row with selection controls */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border dark:border-white/10 px-4 py-3 sm:px-6">
@@ -739,6 +957,34 @@ export function RankingView() {
           )}
         </div>
       </div>
+
+      {/* ── Right: Recent Rankings panel ── */}
+      {history.length > 0 && (
+        <div data-animate-section className="hidden lg:flex lg:flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Recent Rankings
+            </h2>
+            <button
+              onClick={clearHistory}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+          <div className="flex flex-col gap-3 overflow-y-auto max-h-[calc(100vh-220px)] pr-1">
+            {history.map((entry) => (
+              <RecentRankingCard
+                key={entry.id}
+                entry={entry}
+                onLoad={handleLoadRanking}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      </div>{/* end flex/grid wrapper */}
 
       {/* Sticky action bar */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border dark:border-white/10 bg-background/80 backdrop-blur-xl">

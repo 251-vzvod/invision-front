@@ -56,6 +56,7 @@ export interface ApplicantProfile {
   candidate_name?: string
   program_name?: string
   application_status?: string
+  decision?: 'no_decision' | 'approved' | 'shortlisted' | 'rejected'
 }
 
 /* ─── Enums ─── */
@@ -186,6 +187,7 @@ export interface MLAssessmentDetail {
   suggested_follow_up_question: string | null
   ai_probability_ai_generated: number | null
   text_ai_probabilities: CandidateTextAIProbabilities | null
+  decision?: 'no_decision' | 'approved' | 'shortlisted' | 'rejected' | null
   evidence_highlights: EvidenceHighlight[]
   top_strengths: string[]
   main_gaps: string[]

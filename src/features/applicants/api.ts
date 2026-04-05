@@ -50,6 +50,7 @@ const mapMLListItemToProfile = (item: MLAssessmentListItem): ApplicantProfile =>
   suggested_follow_up_question: '',
   ai_probability_ai_generated: item.ai_probability_ai_generated ?? null,
   text_ai_probabilities: null,
+  decision: item.decision,
   evidence_highlights: [],
   top_strengths: [],
   main_gaps: [],
@@ -126,6 +127,7 @@ const mapDetailResponseToProfile = (response: ApplicantDetailResponse): Applican
     suggested_follow_up_question: ml_assessment.suggested_follow_up_question ?? '',
     ai_probability_ai_generated: ml_assessment.ai_probability_ai_generated ?? null,
     text_ai_probabilities: ml_assessment.text_ai_probabilities ?? null,
+    decision: ml_assessment.decision ?? undefined,
     evidence_highlights: ml_assessment.evidence_highlights,
     top_strengths: ml_assessment.top_strengths,
     main_gaps: ml_assessment.main_gaps,
@@ -208,6 +210,18 @@ export const useApplicantProfileQuery = (candidateId: string) =>
   })
 
 /* ─── Ranking ─── */
+
+export const useSetDecisionMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ candidateId, decision }: { candidateId: string; decision: string }) =>
+      apiClient.patch(`/api/applicants/${encodeURIComponent(candidateId)}/decision`, { decision }),
+    onSuccess: (_data, { candidateId }) => {
+      queryClient.invalidateQueries({ queryKey: applicantsQueryKeys.all })
+      queryClient.invalidateQueries({ queryKey: applicantsQueryKeys.profile(candidateId) })
+    },
+  })
+}
 
 export const useStartRankingMutation = () =>
   useMutation({
